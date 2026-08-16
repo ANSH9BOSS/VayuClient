@@ -326,14 +326,12 @@ namespace VayuClient.Services.Modpack
                     relativePath = relativePath["client-overrides/".Length..];
                 }
 
-                // If jar is in processedMods or subfolder, copy directly to mods
-                if (relativePath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) && !relativePath.StartsWith("mods/", StringComparison.OrdinalIgnoreCase))
+                // Ignore internal loader cache folders (e.g. .fabric/processedMods)
+                if (relativePath.StartsWith(".fabric/", StringComparison.OrdinalIgnoreCase) || 
+                    relativePath.StartsWith(".quilt/", StringComparison.OrdinalIgnoreCase) ||
+                    relativePath.Contains("processedMods", StringComparison.OrdinalIgnoreCase))
                 {
-                    var destJar = Path.Combine(modsDir, entry.Name);
-                    if (!File.Exists(destJar))
-                    {
-                        entry.ExtractToFile(destJar, overwrite: true);
-                    }
+                    continue;
                 }
 
                 var destPath = Path.Combine(gameDir, relativePath);
@@ -456,6 +454,14 @@ namespace VayuClient.Services.Modpack
                 if (!string.IsNullOrEmpty(commonPrefix) && rel.StartsWith(commonPrefix, StringComparison.OrdinalIgnoreCase))
                 {
                     rel = rel[commonPrefix.Length..];
+                }
+
+                // Ignore internal loader cache folders (e.g. .fabric/processedMods)
+                if (rel.StartsWith(".fabric/", StringComparison.OrdinalIgnoreCase) || 
+                    rel.StartsWith(".quilt/", StringComparison.OrdinalIgnoreCase) ||
+                    rel.Contains("processedMods", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
                 }
 
                 var dest = Path.Combine(gameDir, rel);

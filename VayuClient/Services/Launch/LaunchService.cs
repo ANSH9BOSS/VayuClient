@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Account;
@@ -211,6 +214,9 @@ namespace VayuClient.Services.Launch
                         return false;
                     }
                 }
+
+                // 8.5 Sanitize Mods Directory (Purge duplicate mod IDs and loader caches)
+                SanitizeInstanceMods(instance.GameDirectory, instance.MinecraftVersion, Log);
 
                 // 9. Build Classpath (Deduplicating loader vs vanilla conflicting libraries)
                 SetState(LaunchState.Preparing, "Building classpath and launch arguments...");
@@ -476,6 +482,106 @@ namespace VayuClient.Services.Launch
             catch
             {
                 return Path.GetFileNameWithoutExtension(filePath).ToLowerInvariant();
+            }
+        }
+
+        private static void SanitizeInstanceMods(string gameDir, string targetMinecraftVersion, Action<string> log)
+        {
+            try
+            {
+                var modsDir = Path.Combine(gameDir, "mods");
+                if (!Directory.Exists(modsDir)) return;
+
+                // 1. Remove internal loader processed cache directories if leaked into mods/
+                var processedDir = Path.Combine(modsDir, "processedMods");
+                if (Directory.Exists(processedDir))
+                {
+                    try
+                    {
+                        Directory.Delete(processedDir, true);
+                        log("Cleaned internal processedMods cache folder from mods directory.");
+                    }
+                    catch { }
+                }
+
+                var jars = Directory.GetFiles(modsDir, "*.jar", SearchOption.TopDirectoryOnly);
+                if (jars.Length == 0) return;
+
+                var seenModIds = new Dictionary<string, (string FilePath, string Version, string TargetMc)>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var jarPath in jars)
+                {
+                    try
+                    {
+                        using var zip = ZipFile.OpenRead(jarPath);
+                        var modJsonEntry = zip.GetEntry("fabric.mod.json");
+                        if (modJsonEntry != null)
+                        {
+                            using var stream = modJsonEntry.Open();
+                            using var reader = new StreamReader(stream);
+                            var jsonText = reader.ReadToEnd();
+                            var jsonObj = JObject.Parse(jsonText);
+                            var modId = jsonObj["id"]?.ToString();
+                            var modVersion = jsonObj["version"]?.ToString() ?? "1.0.0";
+                            var depends = jsonObj["depends"] as JObject;
+                            var mcDep = depends?["minecraft"]?.ToString() ?? "";
+
+                            if (!string.IsNullOrEmpty(modId))
+                            {
+                                if (seenModIds.TryGetValue(modId, out var existing))
+                                {
+                                    bool isCurrentMatch = string.IsNullOrEmpty(mcDep) || mcDep.Contains(targetMinecraftVersion) || mcDep == "*";
+                                    bool isExistingMatch = string.IsNullOrEmpty(existing.TargetMc) || existing.TargetMc.Contains(targetMinecraftVersion) || existing.TargetMc == "*";
+
+                                    if (isCurrentMatch && !isExistingMatch)
+                                    {
+                                        DisableMod(existing.FilePath, $"Duplicate mod ID '{modId}' incompatible with MC {targetMinecraftVersion}", log);
+                                        seenModIds[modId] = (jarPath, modVersion, mcDep);
+                                    }
+                                    else
+                                    {
+                                        DisableMod(jarPath, $"Duplicate mod ID '{modId}' (retaining {Path.GetFileName(existing.FilePath)})", log);
+                                    }
+                                    continue;
+                                }
+
+                                if (!string.IsNullOrEmpty(mcDep) && mcDep != "*" && !string.IsNullOrEmpty(targetMinecraftVersion))
+                                {
+                                    if ((mcDep.StartsWith("1.21") || mcDep.Contains("1.21.4")) && targetMinecraftVersion.StartsWith("26."))
+                                    {
+                                        DisableMod(jarPath, $"Requires Minecraft {mcDep}, incompatible with target {targetMinecraftVersion}", log);
+                                        continue;
+                                    }
+                                }
+
+                                seenModIds[modId] = (jarPath, modVersion, mcDep);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore unreadable or native binary jars
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log($"[ModSanitizer] Notice: {ex.Message}");
+            }
+        }
+
+        private static void DisableMod(string jarPath, string reason, Action<string> log)
+        {
+            try
+            {
+                var disabledPath = jarPath + ".disabled";
+                if (File.Exists(disabledPath)) File.Delete(disabledPath);
+                File.Move(jarPath, disabledPath);
+                log($"[ModSanitizer] Automatically disabled conflicting mod: {Path.GetFileName(jarPath)} ({reason})");
+            }
+            catch (Exception ex)
+            {
+                log($"[ModSanitizer] Failed to disable {Path.GetFileName(jarPath)}: {ex.Message}");
             }
         }
     }
