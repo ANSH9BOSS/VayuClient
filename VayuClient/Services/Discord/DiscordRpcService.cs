@@ -178,17 +178,6 @@ namespace VayuClient.Services.Discord
                     activity["assets"] = assets;
                 }
 
-                // Official VayuClient Buttons
-                var buttons = new JArray
-                {
-                    new JObject
-                    {
-                        ["label"] = "Get VayuClient",
-                        ["url"] = "https://github.com/ANSH9BOSS/VayuClient"
-                    }
-                };
-                activity["buttons"] = buttons;
-
                 var root = new JObject
                 {
                     ["cmd"] = "SET_ACTIVITY",
