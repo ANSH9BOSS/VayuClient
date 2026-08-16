@@ -144,6 +144,9 @@ namespace VayuClient.ViewModels
         private bool _discordRichPresence = true;
 
         [ObservableProperty]
+        private string _discordClientId = "356875570916753438";
+
+        [ObservableProperty]
         private bool _isCheckingUpdates = false;
 
         [ObservableProperty]
@@ -162,6 +165,19 @@ namespace VayuClient.ViewModels
             {
                 var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
                 if (discordRpc != null) discordRpc.IsEnabled = value;
+            }
+            catch { }
+        }
+
+        partial void OnDiscordClientIdChanged(string value)
+        {
+            try
+            {
+                var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                if (discordRpc != null && !string.IsNullOrWhiteSpace(value))
+                {
+                    discordRpc.ClientId = value.Trim();
+                }
             }
             catch { }
         }
@@ -298,6 +314,7 @@ namespace VayuClient.ViewModels
             NativeTitleBar = s.NativeTitleBar;
             UseDedicatedGpu = s.UseDedicatedGpu;
             DiscordRichPresence = s.DiscordRichPresence;
+            DiscordClientId = !string.IsNullOrWhiteSpace(s.DiscordClientId) ? s.DiscordClientId : "356875570916753438";
             DnsOverride = s.DnsOverride;
             ForceLanOfflineMode = s.ForceLanOfflineMode;
             ModernForgeInstaller = s.ModernForgeInstaller;
@@ -364,6 +381,7 @@ namespace VayuClient.ViewModels
             s.NativeTitleBar = NativeTitleBar;
             s.UseDedicatedGpu = UseDedicatedGpu;
             s.DiscordRichPresence = DiscordRichPresence;
+            s.DiscordClientId = DiscordClientId;
             s.DnsOverride = DnsOverride;
             s.ForceLanOfflineMode = ForceLanOfflineMode;
             s.ModernForgeInstaller = ModernForgeInstaller;

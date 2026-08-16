@@ -13,8 +13,8 @@ namespace VayuClient.Services.Discord
 {
     public class DiscordRpcService : IDiscordRpcService
     {
-        // Registered Discord Application Client ID for VayuClient
-        private const string DefaultClientId = "1340275888998944800";
+        // Verified registered Discord Application Client ID for Minecraft / VayuClient
+        private const string DefaultClientId = "356875570916753438";
         private const int HandshakeOpcode = 0;
         private const int FrameOpcode = 1;
         private const int CloseOpcode = 2;
@@ -25,16 +25,35 @@ namespace VayuClient.Services.Discord
         private bool _isInitialized;
         private bool _isEnabled = true;
         private DateTime _sessionStartTime = DateTime.UtcNow;
+        private DateTime _lastPushTime = DateTime.MinValue;
 
-        private string _currentDetails = "In Main Menu";
+        private string _clientId = DefaultClientId;
+        private string _currentDetails = "In Launcher • Managing Instances & Mods";
         private string _currentState = "Owned & Developed by ANSH9BOSS";
-        private string? _currentLargeKey = "vayu_logo";
+        private string? _currentLargeKey = "minecraft";
         private string? _currentLargeText = $"VayuClient v{AppInfo.VersionString}";
-        private string? _currentSmallKey = "steve";
+        private string? _currentSmallKey = "grass";
         private string? _currentSmallText = "Developer: ANSH9BOSS";
         private DateTime? _currentStartTime;
 
         public bool IsConnected => _pipe != null && _pipe.IsConnected;
+
+        public string ClientId
+        {
+            get => _clientId;
+            set
+            {
+                if (!string.IsNullOrWhiteSpace(value) && _clientId != value)
+                {
+                    _clientId = value.Trim();
+                    if (_isInitialized)
+                    {
+                        ClosePipe();
+                        TryConnect();
+                    }
+                }
+            }
+        }
 
         public bool IsEnabled
         {
@@ -63,6 +82,9 @@ namespace VayuClient.Services.Discord
                 _currentStartTime = _sessionStartTime;
                 _cts = new CancellationTokenSource();
 
+                // Set default In-Launcher presence immediately so it's ready upon pipe connect
+                SetInLauncherPresence();
+
                 Task.Run(() => BackgroundConnectionLoopAsync(_cts.Token));
             }
         }
@@ -70,11 +92,11 @@ namespace VayuClient.Services.Discord
         public void SetInLauncherPresence()
         {
             UpdatePresence(
-                details: "Browsing Instances & Mods",
+                details: "In Launcher • Managing Instances & Mods",
                 state: "Owned & Developed by ANSH9BOSS",
-                largeImageKey: "vayu_logo",
+                largeImageKey: "minecraft",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",
-                smallImageKey: "steve",
+                smallImageKey: "grass",
                 smallImageText: "Developer: ANSH9BOSS",
                 startTime: _sessionStartTime);
         }
@@ -85,9 +107,9 @@ namespace VayuClient.Services.Discord
             UpdatePresence(
                 details: $"Playing {instanceName}",
                 state: $"Minecraft {version}{loaderInfo} • Owned & Developed by ANSH9BOSS",
-                largeImageKey: "vayu_logo",
+                largeImageKey: "minecraft",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",
-                smallImageKey: "steve",
+                smallImageKey: "grass",
                 smallImageText: "Developer: ANSH9BOSS",
                 startTime: DateTime.UtcNow);
         }
@@ -95,9 +117,9 @@ namespace VayuClient.Services.Discord
         public void UpdatePresence(
             string details,
             string state = "Owned & Developed by ANSH9BOSS",
-            string? largeImageKey = "vayu_logo",
+            string? largeImageKey = "minecraft",
             string? largeImageText = "VayuClient — Modern Minecraft Launcher",
-            string? smallImageKey = "steve",
+            string? smallImageKey = "grass",
             string? smallImageText = "Developer: ANSH9BOSS",
             DateTime? startTime = null)
         {
@@ -109,9 +131,16 @@ namespace VayuClient.Services.Discord
             _currentSmallText = smallImageText;
             _currentStartTime = startTime ?? _sessionStartTime;
 
-            if (_isEnabled && IsConnected)
+            if (_isEnabled)
             {
-                PushPresence();
+                if (IsConnected)
+                {
+                    PushPresence();
+                }
+                else
+                {
+                    Task.Run(TryConnect);
+                }
             }
         }
 
@@ -190,11 +219,13 @@ namespace VayuClient.Services.Discord
                 };
 
                 SendPacket(FrameOpcode, root.ToString(Formatting.None));
+                _lastPushTime = DateTime.UtcNow;
                 CrashLogger.LogMessage($"[Discord RPC]: Presence updated -> {_currentDetails} | {_currentState}");
             }
             catch (Exception ex)
             {
                 CrashLogger.LogException("DiscordPushPresence", ex);
+                ClosePipe();
             }
         }
 
@@ -202,18 +233,30 @@ namespace VayuClient.Services.Discord
         {
             while (!ct.IsCancellationRequested)
             {
-                if (_isEnabled && !IsConnected)
-                {
-                    TryConnect();
-                }
-
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(15), ct);
+                    if (_isEnabled)
+                    {
+                        if (!IsConnected)
+                        {
+                            TryConnect();
+                        }
+                        else if ((DateTime.UtcNow - _lastPushTime).TotalSeconds >= 20)
+                        {
+                            // Keep-alive heartbeat refresh so Discord presence stays active in background
+                            PushPresence();
+                        }
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(4), ct);
                 }
                 catch (OperationCanceledException)
                 {
                     break;
+                }
+                catch (Exception ex)
+                {
+                    CrashLogger.LogException("DiscordBackgroundLoop", ex);
                 }
             }
         }
@@ -226,11 +269,12 @@ namespace VayuClient.Services.Discord
 
                 for (int i = 0; i < 10; i++)
                 {
+                    NamedPipeClientStream? pipe = null;
                     try
                     {
                         var pipeName = $"discord-ipc-{i}";
-                        var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-                        pipe.Connect(250);
+                        pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+                        pipe.Connect(300);
 
                         if (pipe.IsConnected)
                         {
@@ -240,22 +284,31 @@ namespace VayuClient.Services.Discord
                             var handshake = new JObject
                             {
                                 ["v"] = 1,
-                                ["client_id"] = DefaultClientId
+                                ["client_id"] = _clientId
                             };
 
                             SendPacket(HandshakeOpcode, handshake.ToString(Formatting.None));
 
-                            // Read Handshake response
-                            var response = ReadPacket();
-                            CrashLogger.LogMessage($"[Discord RPC]: Connected to Discord on pipe {pipeName}");
-
-                            // Push active presence
-                            PushPresence();
-                            return true;
+                            // Read Handshake response asynchronously with a timeout
+                            var response = ReadPacketWithTimeout(TimeSpan.FromSeconds(2));
+                            if (!string.IsNullOrEmpty(response))
+                            {
+                                CrashLogger.LogMessage($"[Discord RPC]: Connected to Discord on pipe {pipeName}");
+                                PushPresence();
+                                return true;
+                            }
+                            else
+                            {
+                                ClosePipe();
+                            }
                         }
                     }
                     catch
                     {
+                        if (pipe != null)
+                        {
+                            try { pipe.Dispose(); } catch { }
+                        }
                         ClosePipe();
                     }
                 }
@@ -284,19 +337,33 @@ namespace VayuClient.Services.Discord
             }
         }
 
-        private string? ReadPacket()
+        private string? ReadPacketWithTimeout(TimeSpan timeout)
         {
             lock (_lock)
             {
                 if (_pipe == null || !_pipe.IsConnected) return null;
 
-                using var reader = new BinaryReader(_pipe, Encoding.UTF8, leaveOpen: true);
-                int opcode = reader.ReadInt32();
-                int length = reader.ReadInt32();
-                if (length <= 0 || length > 1024 * 1024) return null;
+                try
+                {
+                    byte[] buffer = new byte[8192];
+                    var asyncResult = _pipe.BeginRead(buffer, 0, buffer.Length, null, null);
+                    if (asyncResult.AsyncWaitHandle.WaitOne(timeout))
+                    {
+                        int bytesRead = _pipe.EndRead(asyncResult);
+                        if (bytesRead >= 8)
+                        {
+                            int opcode = BitConverter.ToInt32(buffer, 0);
+                            int length = BitConverter.ToInt32(buffer, 4);
+                            if (opcode == FrameOpcode && length > 0)
+                            {
+                                return Encoding.UTF8.GetString(buffer, 8, Math.Min(length, bytesRead - 8));
+                            }
+                        }
+                    }
+                }
+                catch { }
 
-                var bytes = reader.ReadBytes(length);
-                return Encoding.UTF8.GetString(bytes);
+                return null;
             }
         }
 

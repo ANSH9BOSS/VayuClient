@@ -387,6 +387,13 @@
                                     <CheckBox IsChecked="{Binding DiscordRichPresence}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,10">
                                         <TextBlock Text="Enable Discord Rich Presence Activity Status" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
+                                    
+                                    <StackPanel Margin="24,0,0,12" Visibility="{Binding DiscordRichPresence, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="DISCORD APPLICATION CLIENT ID" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding DiscordClientId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VayuGlassTextBox}" Height="34" Margin="0,0,0,4"/>
+                                        <TextBlock Text="Displays 'Playing VayuClient' / 'In Launcher' status with developer 'ANSH9BOSS' even in background." FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    </StackPanel>
+
                                     <CheckBox IsChecked="{Binding ShowLauncherConsole}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,12">
                                         <TextBlock Text="Show Live Minecraft Output &amp; Crash Console" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>

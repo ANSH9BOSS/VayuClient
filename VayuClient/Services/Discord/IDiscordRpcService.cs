@@ -6,6 +6,7 @@ namespace VayuClient.Services.Discord
     {
         bool IsConnected { get; }
         bool IsEnabled { get; set; }
+        string ClientId { get; set; }
 
         void Initialize();
         void UpdatePresence(

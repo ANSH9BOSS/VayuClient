@@ -28,6 +28,7 @@ namespace VayuClient.Models
         public bool CloseLauncherOnGameStart { get; set; } = false;
         public bool MinimizeOnLaunch { get; set; } = false;
         public bool DiscordRichPresence { get; set; } = true;
+        public string DiscordClientId { get; set; } = "356875570916753438";
         public bool DnsOverride { get; set; } = true;
         public bool ForceLanOfflineMode { get; set; } = false;
         public bool ModernForgeInstaller { get; set; } = true;
