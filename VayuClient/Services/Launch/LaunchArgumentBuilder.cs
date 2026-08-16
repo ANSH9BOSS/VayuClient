@@ -76,9 +76,8 @@ namespace VayuClient.Services.Launch
 
             jvmArgs.Add($"-XX:ParallelGCThreads={parallelGcThreads}");
             jvmArgs.Add($"-XX:ConcGCThreads={concGcThreads}");
-            jvmArgs.Add("-Dsun.java2d.d3d=true");
-            jvmArgs.Add("-Dsun.java2d.noddraw=true");
-            jvmArgs.Add("-Dsun.awt.noerasebackground=true");
+
+            int javaMajor = parameters.JavaRuntime?.MajorVersion ?? 21;
 
             // Check if arguments.jvm defined in version JSON
             if (parameters.VersionPackage.Arguments?.Jvm != null && parameters.VersionPackage.Arguments.Jvm.Count > 0)
@@ -87,8 +86,7 @@ namespace VayuClient.Services.Launch
                 {
                     if (jvmItem is string strVal)
                     {
-                        var resolved = ReplaceTokens(strVal, tokenMap);
-                        if (!string.IsNullOrWhiteSpace(resolved)) jvmArgs.Add(resolved);
+                        AddJvmArgumentIfCompatible(strVal, tokenMap, jvmArgs, javaMajor);
                     }
                     else if (jvmItem is JObject jObj)
                     {
@@ -101,28 +99,38 @@ namespace VayuClient.Services.Launch
                                 {
                                     if (sub != null)
                                     {
-                                        var resolved = ReplaceTokens(sub.ToString(), tokenMap);
-                                        if (!string.IsNullOrWhiteSpace(resolved)) jvmArgs.Add(resolved);
+                                        AddJvmArgumentIfCompatible(sub.ToString(), tokenMap, jvmArgs, javaMajor);
                                     }
                                 }
                             }
                             else if (val != null)
                             {
-                                var resolved = ReplaceTokens(val.ToString(), tokenMap);
-                                if (!string.IsNullOrWhiteSpace(resolved)) jvmArgs.Add(resolved);
+                                AddJvmArgumentIfCompatible(val.ToString(), tokenMap, jvmArgs, javaMajor);
                             }
                         }
                     }
                 }
             }
 
-            // Add user additional JVM args if any
+            // Add user additional JVM args if any (split by whitespace so each flag is passed individually)
             if (parameters.AdditionalJvmArgs != null)
             {
-                jvmArgs.AddRange(parameters.AdditionalJvmArgs);
+                foreach (var arg in parameters.AdditionalJvmArgs)
+                {
+                    if (string.IsNullOrWhiteSpace(arg)) continue;
+                    var tokens = arg.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var token in tokens)
+                    {
+                        if (token == "-cp" || token == "-classpath") continue;
+                        if (!jvmArgs.Contains(token, StringComparer.OrdinalIgnoreCase))
+                        {
+                            jvmArgs.Add(token);
+                        }
+                    }
+                }
             }
 
-            // Classpath
+            // Classpath is placed exactly once at the end of JVM flags
             jvmArgs.Add("-cp");
             jvmArgs.Add(string.Join(";", parameters.Classpath));
 
@@ -265,6 +273,45 @@ namespace VayuClient.Services.Launch
                 var key = match.Groups[1].Value;
                 return tokenMap.TryGetValue(key, out var val) ? (val ?? string.Empty) : match.Value;
             });
+        }
+
+        private static void AddJvmArgumentIfCompatible(string rawArg, Dictionary<string, string> tokenMap, List<string> jvmArgs, int javaMajor)
+        {
+            if (string.IsNullOrWhiteSpace(rawArg)) return;
+            var trimmed = rawArg.Trim();
+
+            // 1. Skip classpath tokens inside arguments.jvm (we append -cp <classpath> atomically at the end)
+            if (trimmed == "-cp" || trimmed == "-classpath" || trimmed.Contains("${classpath}"))
+            {
+                return;
+            }
+
+            // 2. Filter out Java version incompatible flags
+            // Java 24+ flag: --sun-misc-unsafe-memory-access=allow
+            if (trimmed.StartsWith("--sun-misc-unsafe-memory-access", StringComparison.OrdinalIgnoreCase) && javaMajor < 24)
+            {
+                return;
+            }
+
+            // Java 22+ flag: --enable-native-access=ALL-UNNAMED
+            if (trimmed.StartsWith("--enable-native-access", StringComparison.OrdinalIgnoreCase) && javaMajor < 22)
+            {
+                return;
+            }
+
+            var resolved = ReplaceTokens(rawArg, tokenMap);
+            if (!string.IsNullOrWhiteSpace(resolved))
+            {
+                var tokens = resolved.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var token in tokens)
+                {
+                    if (token == "-cp" || token == "-classpath") continue;
+                    if (!jvmArgs.Contains(token, StringComparer.OrdinalIgnoreCase))
+                    {
+                        jvmArgs.Add(token);
+                    }
+                }
+            }
         }
 
         private static string Quote(string val)

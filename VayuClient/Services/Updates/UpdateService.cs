@@ -50,7 +50,10 @@ namespace VayuClient.Services.Updates
         public UpdateService()
         {
             _downloadService = ServiceLocator.Resolve<IDownloadService>();
-            _http = new HttpClient();
+            _http = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(6)
+            };
             _http.DefaultRequestHeaders.Add("User-Agent", AppInfo.UserAgent);
             _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
 
