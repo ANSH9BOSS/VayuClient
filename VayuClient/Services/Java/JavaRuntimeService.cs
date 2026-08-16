@@ -171,15 +171,18 @@ namespace VayuClient.Services.Java
 
         public int GetRequiredJavaVersion(string minecraftVersion, int manifestMajorVersion = 0)
         {
+            // Minecraft 26.x strictly requires Java 25 or later (never downgrade to 21)
+            if (MinecraftVersionComparer.CompareVersionStrings(minecraftVersion, "26") >= 0 ||
+                minecraftVersion.StartsWith("26.", StringComparison.OrdinalIgnoreCase) ||
+                minecraftVersion.Contains("26w", StringComparison.OrdinalIgnoreCase) ||
+                minecraftVersion.StartsWith("26-", StringComparison.OrdinalIgnoreCase))
+            {
+                return Math.Max(25, manifestMajorVersion);
+            }
+
             if (manifestMajorVersion > 0)
             {
                 return manifestMajorVersion;
-            }
-
-            // Minecraft 26.x requires Java 25
-            if (MinecraftVersionComparer.CompareVersionStrings(minecraftVersion, "26") >= 0)
-            {
-                return 25;
             }
 
             // Modern 1.20.5+
@@ -213,51 +216,45 @@ namespace VayuClient.Services.Java
             var exact = runtimes.FirstOrDefault(r => r.MajorVersion == requiredMajorVersion && r.Is64Bit);
             if (exact != null) return exact;
 
-            // 2. For Java >= 25 (Minecraft 26+): Java >= 25
+            // 2. For Java >= 25 (Minecraft 26+): Strictly Java >= 25
             if (requiredMajorVersion >= 25)
             {
-                var java25 = runtimes.FirstOrDefault(r => r.MajorVersion >= 25 && r.Is64Bit)
-                             ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 25);
-                if (java25 != null) return java25;
+                return runtimes.FirstOrDefault(r => r.MajorVersion >= 25 && r.Is64Bit)
+                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 25);
             }
 
-            // 3. For Java 21 (Minecraft 1.20.5 - 1.21.x): Java 21 or 22
+            // 3. For Java 21 (Minecraft 1.20.5 - 1.21.x): Java >= 21
             if (requiredMajorVersion == 21)
             {
-                var java21 = runtimes.FirstOrDefault(r => r.MajorVersion == 21 && r.Is64Bit)
-                             ?? runtimes.FirstOrDefault(r => r.MajorVersion == 22 && r.Is64Bit);
-                if (java21 != null) return java21;
+                return runtimes.FirstOrDefault(r => r.MajorVersion >= 21 && r.Is64Bit)
+                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 21);
             }
 
-            // 4. For Java 17 (Minecraft 1.18 - 1.20.4): Java 17 or 21
+            // 4. For Java 17 (Minecraft 1.18 - 1.20.4): Java >= 17
             if (requiredMajorVersion == 17)
             {
-                var java17 = runtimes.FirstOrDefault(r => r.MajorVersion == 17 && r.Is64Bit)
-                             ?? runtimes.FirstOrDefault(r => r.MajorVersion == 21 && r.Is64Bit);
-                if (java17 != null) return java17;
+                return runtimes.FirstOrDefault(r => r.MajorVersion >= 17 && r.Is64Bit)
+                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 17);
             }
 
-            // 5. For Java 16: Java 16, 17 or 21
+            // 5. For Java 16: Java >= 16
             if (requiredMajorVersion == 16)
             {
-                var java16 = runtimes.FirstOrDefault(r => r.MajorVersion == 16 && r.Is64Bit)
-                             ?? runtimes.FirstOrDefault(r => r.MajorVersion == 17 && r.Is64Bit)
-                             ?? runtimes.FirstOrDefault(r => r.MajorVersion == 21 && r.Is64Bit);
-                if (java16 != null) return java16;
+                return runtimes.FirstOrDefault(r => r.MajorVersion >= 16 && r.Is64Bit)
+                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 16);
             }
 
             // 6. For legacy Java 8: Java 8 or 11
             if (requiredMajorVersion <= 8)
             {
-                var java8 = runtimes.FirstOrDefault(r => r.MajorVersion == 8 && r.Is64Bit)
-                            ?? runtimes.FirstOrDefault(r => r.MajorVersion == 11 && r.Is64Bit);
-                if (java8 != null) return java8;
+                return runtimes.FirstOrDefault(r => r.MajorVersion == 8 && r.Is64Bit)
+                       ?? runtimes.FirstOrDefault(r => r.MajorVersion == 11 && r.Is64Bit)
+                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 8 && r.Is64Bit);
             }
 
-            // 7. Safe fallback
+            // 7. Strict Safe fallback: ONLY accept runtime where MajorVersion >= requiredMajorVersion
             return runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion && r.Is64Bit)
-                   ?? runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion)
-                   ?? runtimes.First();
+                   ?? runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion);
         }
 
         private static void AddJavaExeIfValid(HashSet<string> paths, string path)
@@ -555,9 +552,9 @@ namespace VayuClient.Services.Java
             int totalCount = files.Count;
             int currentCount = 0;
 
+            // First pass: create all required directories
             foreach (var prop in files.Properties())
             {
-                ct.ThrowIfCancellationRequested();
                 var relPath = prop.Name.Replace('/', Path.DirectorySeparatorChar);
                 var fullPath = Path.Combine(targetDir, relPath);
                 var fileObj = prop.Value as JObject;
@@ -567,31 +564,53 @@ namespace VayuClient.Services.Java
                 {
                     Directory.CreateDirectory(fullPath);
                 }
-                else if (type == "file")
+                else
                 {
+                    var parent = Path.GetDirectoryName(fullPath);
+                    if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
+                }
+            }
+
+            // Second pass: parallel download of files
+            using var semaphore = new SemaphoreSlim(16, 16);
+            var fileProperties = files.Properties().Where(p => (p.Value as JObject)?["type"]?.ToString() == "file").ToList();
+
+            var downloadTasks = fileProperties.Select(async prop =>
+            {
+                await semaphore.WaitAsync(ct);
+                try
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var relPath = prop.Name.Replace('/', Path.DirectorySeparatorChar);
+                    var fullPath = Path.Combine(targetDir, relPath);
+                    var fileObj = prop.Value as JObject;
                     var rawUrl = fileObj?["downloads"]?["raw"]?["url"]?.ToString();
+
                     if (!string.IsNullOrEmpty(rawUrl))
                     {
-                        var dir = Path.GetDirectoryName(fullPath);
-                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-
-                        if (!File.Exists(fullPath))
+                        if (!File.Exists(fullPath) || new FileInfo(fullPath).Length == 0)
                         {
                             var bytes = await client.GetByteArrayAsync(rawUrl, ct);
                             await File.WriteAllBytesAsync(fullPath, bytes, ct);
                         }
                     }
-                }
 
-                currentCount++;
-                progress?.Report(new DownloadProgressInfo
+                    int finished = Interlocked.Increment(ref currentCount);
+                    progress?.Report(new DownloadProgressInfo
+                    {
+                        TotalFiles = totalCount,
+                        CompletedFiles = finished,
+                        CurrentFileName = Path.GetFileName(fullPath),
+                        CurrentOperation = $"Installing Java files ({finished}/{totalCount})..."
+                    });
+                }
+                finally
                 {
-                    TotalFiles = totalCount,
-                    CompletedFiles = currentCount,
-                    CurrentFileName = Path.GetFileName(fullPath),
-                    CurrentOperation = $"Installing Java files ({currentCount}/{totalCount})..."
-                });
-            }
+                    semaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(downloadTasks);
         }
     }
 }

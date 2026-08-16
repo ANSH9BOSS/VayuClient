@@ -973,7 +973,8 @@ namespace VayuClient.QA
                 {
                     throw new Exception($"Expected Java version to be 25 for Minecraft 26.2, but got {reqJava}!");
                 }
-                var selectedRuntime = jService.FindCompatibleRuntime(reqJava);
+                var selectedRuntime = jService.FindCompatibleRuntime(reqJava)
+                                      ?? await jService.EnsureJavaRuntimeAsync(reqJava);
                 if (selectedRuntime == null || selectedRuntime.MajorVersion < 25)
                 {
                     throw new Exception($"Selected runtime is unsafe for Minecraft 26.2 / Fabric 26.2! Version: {selectedRuntime?.MajorVersion}");

@@ -188,6 +188,35 @@ namespace VayuClient.ViewModels
                     }
                     catch { }
                 });
+
+                // Automated Startup Java 21 & 25 Pre-Provisioning (Ensures Java 25 and 21 are immediately available on all PCs)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var javaService = ServiceLocator.Resolve<Services.Java.IJavaRuntimeService>();
+                        if (javaService != null)
+                        {
+                            if (javaService.FindCompatibleRuntime(25) == null)
+                            {
+                                CrashLogger.LogMessage("[JavaService]: Pre-installing required Java 25 runtime for Minecraft 26+...");
+                                await javaService.EnsureJavaRuntimeAsync(25);
+                                CrashLogger.LogMessage("[JavaService]: Java 25 runtime successfully installed and ready.");
+                            }
+
+                            if (javaService.FindCompatibleRuntime(21) == null)
+                            {
+                                CrashLogger.LogMessage("[JavaService]: Pre-installing required Java 21 LTS runtime...");
+                                await javaService.EnsureJavaRuntimeAsync(21);
+                                CrashLogger.LogMessage("[JavaService]: Java 21 LTS runtime successfully installed and ready.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CrashLogger.LogException("Background Java Runtime Pre-Provisioning", ex);
+                    }
+                });
             }
             catch { /* ServiceLocator during design time */ }
         }
