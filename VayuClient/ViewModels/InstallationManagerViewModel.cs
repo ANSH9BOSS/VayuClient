@@ -29,7 +29,7 @@ namespace VayuClient.ViewModels
         {
             if (!_httpClient.DefaultRequestHeaders.Contains("User-Agent"))
             {
-                _httpClient.DefaultRequestHeaders.Add("User-Agent", "VayuClient/1.1.0 (ANSH9BOSS)");
+                _httpClient.DefaultRequestHeaders.Add("User-Agent", AppInfo.UserAgent);
             }
         }
 
@@ -532,7 +532,7 @@ namespace VayuClient.ViewModels
 
                                     if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
                                     {
-                                        try { app.Dispatcher.BeginInvoke(ApplyVersions); } catch { ApplyVersions(); }
+                                        try { app.Dispatcher.Invoke(ApplyVersions); } catch { ApplyVersions(); }
                                     }
                                     else
                                     {
@@ -943,7 +943,7 @@ namespace VayuClient.ViewModels
 
             if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
             {
-                try { app.Dispatcher.BeginInvoke(ApplyState); } catch { ApplyState(); }
+                try { app.Dispatcher.Invoke(ApplyState); } catch { ApplyState(); }
             }
             else
             {
