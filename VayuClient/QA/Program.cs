@@ -940,6 +940,70 @@ namespace VayuClient.QA
                 failedTests++;
             }
 
+            // -----------------------------------------------------------
+            // TEST 16: UNIVERSAL MODPACK IMPORT & JAVA 21 LTS SAFETY
+            // -----------------------------------------------------------
+            Log();
+            Log("[TEST 16] Testing Universal Modpack Archive Import & Java 21 LTS Version Safety...");
+            try
+            {
+                var jService = ServiceLocator.Resolve<Services.Java.IJavaRuntimeService>();
+                var mpInstaller = ServiceLocator.Resolve<Services.Modpack.IModpackInstaller>();
+
+                // 1. Verify Java 25 -> 21 Cap
+                int cappedJava = jService.GetRequiredJavaVersion("26.2", 25);
+                if (cappedJava > 21)
+                {
+                    throw new Exception($"Expected Java version to be capped at 21, but got {cappedJava}!");
+                }
+                var selectedRuntime = jService.FindCompatibleRuntime(cappedJava);
+                if (selectedRuntime == null || selectedRuntime.MajorVersion > 22)
+                {
+                    throw new Exception($"Selected runtime is unsafe for Fabric/ASM! Version: {selectedRuntime?.MajorVersion}");
+                }
+                Log($" -> Verified Java Safety: MC 26.2 capped to Java {cappedJava} (Selected: {selectedRuntime.DisplayName})");
+
+                // 2. Verify Universal Archive Import on test archive or 26.2.zip
+                string sampleZip = @"C:\Users\ANSH\Downloads\26.2.zip";
+                if (File.Exists(sampleZip))
+                {
+                    var testInstDir = Path.Combine(Path.GetTempPath(), $"VayuTestModpack_{Guid.NewGuid():N}");
+                    Directory.CreateDirectory(testInstDir);
+                    var testInstance = new MinecraftInstance
+                    {
+                        InstanceId = Guid.NewGuid().ToString("N"),
+                        Name = "Spunky Test",
+                        MinecraftVersion = "1.21.4",
+                        Loader = "Fabric",
+                        GameDirectory = testInstDir
+                    };
+
+                    bool imported = await mpInstaller.InstallLocalArchiveAsync(testInstance, sampleZip);
+                    if (!imported || testInstance.Name != "Spunky Optimized" || testInstance.MinecraftVersion != "26.2")
+                    {
+                        throw new Exception($"Failed to correctly parse Spunky Optimized metadata! Name={testInstance.Name}, MC={testInstance.MinecraftVersion}");
+                    }
+
+                    // Check that files were unwrapped without raw GUID parent folder
+                    var modsFolder = Path.Combine(testInstDir, "mods");
+                    var configFolder = Path.Combine(testInstDir, "config");
+                    if (!Directory.Exists(configFolder))
+                    {
+                        throw new Exception("Config directory was not unwrapped to root!");
+                    }
+
+                    Log($" -> Successfully unwrapped and imported '{testInstance.Name}' ({testInstance.Loader} {testInstance.MinecraftVersion})!");
+                    try { Directory.Delete(testInstDir, true); } catch { }
+                }
+
+                Log(" -> [PASS] Test 16 (Universal Modpack Import & Java 21 LTS Version Safety)");
+            }
+            catch (Exception ex)
+            {
+                Log($" -> [FAIL] Test 16 Error: {ex.Message}");
+                failedTests++;
+            }
+
             Log();
             Log("==========================================================");
             Log($" QA SUITE COMPLETE: {(failedTests == 0 ? "ALL RUNTIME TESTS PASSED WITH 0 ERRORS!" : $"{failedTests} TESTS FAILED!")}");

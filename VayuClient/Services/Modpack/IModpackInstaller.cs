@@ -11,5 +11,11 @@ namespace VayuClient.Services.Modpack
             string modpackId,
             IProgress<DownloadProgressInfo>? progress = null,
             CancellationToken ct = default);
+
+        Task<bool> InstallLocalArchiveAsync(
+            MinecraftInstance instance,
+            string archivePath,
+            IProgress<DownloadProgressInfo>? progress = null,
+            CancellationToken ct = default);
     }
 }

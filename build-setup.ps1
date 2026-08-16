@@ -133,6 +133,27 @@ if (Test-Path $discordFolder) {
     Write-Host "-> Synced installer to Discord folder: $discordSetup" -ForegroundColor Green
 }
 
+# 6. Sign installer with local Code Signing certificate to establish authentic publisher identity
+Write-Host "`n[4/4] Signing installer executable with ANSH9BOSS Publisher Certificate..." -ForegroundColor Yellow
+try {
+    $cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Subject -like "*VayuClient*" -or $_.Subject -like "*ANSH9BOSS*" } | Select-Object -First 1
+    if (-not $cert) {
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ANSH9BOSS (VayuClient), O=VayuClient, C=IN" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(5)
+    }
+    if ($cert) {
+        try {
+            Set-AuthenticodeSignature -FilePath $finalSetupExe -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop
+            Write-Host "-> Successfully signed VayuClientSetup.exe with Authenticode (SHA256 + Timestamp)!" -ForegroundColor Green
+        }
+        catch {
+            Set-AuthenticodeSignature -FilePath $finalSetupExe -Certificate $cert -HashAlgorithm SHA256
+            Write-Host "-> Successfully signed VayuClientSetup.exe with Authenticode (SHA256)!" -ForegroundColor Green
+        }
+    }
+} catch {
+    Write-Host "-> Code signing skipped: $_" -ForegroundColor DarkGray
+}
+
 if (Test-Path $finalSetupExe) {
     Write-Host "`n==========================================================" -ForegroundColor Green
     Write-Host " SUCCESS: REAL WINDOWS INSTALLER CREATED!" -ForegroundColor Green

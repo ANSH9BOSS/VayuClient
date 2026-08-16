@@ -508,8 +508,9 @@
                         </StackPanel>
 
                         <Button Grid.Column="1" Command="{Binding CancelModpackInstallCommand}"
-                                Content="✕" FontSize="14" Foreground="{StaticResource VayuTextDimBrush}"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4"/>
+                                Content="✕" FontSize="12" FontWeight="Bold"
+                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0"
+                                Cursor="Hand" VerticalAlignment="Top"/>
                     </Grid>
 
                     <!-- Modpack Details Badge -->
@@ -595,8 +596,9 @@
 
                         <TextBlock Grid.Column="0" Text="Edit Instance Configuration" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
                         <Button Grid.Column="1" Command="{Binding CancelEditCommand}"
-                                Content="✕" FontSize="14" Foreground="{StaticResource VayuTextDimBrush}"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4"/>
+                                Content="✕" FontSize="12" FontWeight="Bold"
+                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0"
+                                Cursor="Hand" VerticalAlignment="Top"/>
                     </Grid>
 
                     <TextBlock Text="INSTANCE NAME" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
@@ -642,8 +644,9 @@
                         </StackPanel>
 
                         <Button Grid.Column="1" Command="{Binding CancelContentInstallCommand}"
-                                Content="✕" FontSize="14" Foreground="{StaticResource VayuTextDimBrush}"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4"/>
+                                Content="✕" FontSize="12" FontWeight="Bold"
+                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0"
+                                Cursor="Hand" VerticalAlignment="Top"/>
                     </Grid>
 
                     <!-- Project Summary Card with Logo -->

@@ -131,150 +131,7 @@ namespace VayuClient.Services.Modpack
 
             try
             {
-                // 3. Extract and Parse modrinth.index.json
-                using var archive = ZipFile.OpenRead(tempMrpackPath);
-                var indexEntry = archive.GetEntry("modrinth.index.json");
-                if (indexEntry == null)
-                {
-                    throw new InvalidOperationException("Corrupt modpack: modrinth.index.json not found in archive.");
-                }
-
-                using var indexStream = indexEntry.Open();
-                using var reader = new StreamReader(indexStream);
-                var indexJson = await reader.ReadToEndAsync(ct);
-                var indexObj = JObject.Parse(indexJson);
-
-                // Synchronize true Minecraft and Loader versions from modpack metadata
-                var deps = indexObj["dependencies"] as JObject;
-                if (deps != null)
-                {
-                    var realMcVersion = deps["minecraft"]?.ToString();
-                    if (!string.IsNullOrEmpty(realMcVersion))
-                    {
-                        instance.MinecraftVersion = realMcVersion;
-                    }
-
-                    var fabricVer = deps["fabric-loader"]?.ToString();
-                    if (!string.IsNullOrEmpty(fabricVer))
-                    {
-                        instance.Loader = "Fabric";
-                        instance.LoaderVersion = fabricVer;
-                    }
-                    else if (deps["neoforge"] != null)
-                    {
-                        instance.Loader = "NeoForge";
-                        instance.LoaderVersion = deps["neoforge"]?.ToString();
-                    }
-                    else if (deps["forge"] != null)
-                    {
-                        instance.Loader = "Forge";
-                        instance.LoaderVersion = deps["forge"]?.ToString();
-                    }
-                    else if (deps["quilt-loader"] != null)
-                    {
-                        instance.Loader = "Quilt";
-                        instance.LoaderVersion = deps["quilt-loader"]?.ToString();
-                    }
-
-                    try
-                    {
-                        var instanceService = ServiceLocator.Resolve<IInstanceService>();
-                        if (instanceService != null)
-                        {
-                            await instanceService.SaveInstanceAsync(instance);
-                        }
-                    }
-                    catch { }
-                }
-
-                var modpackFiles = indexObj["files"] as JArray;
-                if (modpackFiles != null && modpackFiles.Count > 0)
-                {
-                    var fileDownloads = new List<DownloadItem>();
-                    var gameDir = instance.GameDirectory;
-                    Directory.CreateDirectory(gameDir);
-
-                    foreach (var f in modpackFiles)
-                    {
-                        var relPath = f["path"]?.ToString();
-                        var downloads = f["downloads"] as JArray;
-                        var fileUrl = downloads?.FirstOrDefault()?.ToString();
-                        var fileSize = f["fileSize"]?.Value<long>() ?? f["size"]?.Value<long>() ?? 0;
-                        var sha1 = f["hashes"]?["sha1"]?.ToString();
-
-                        // Skip server-only unsupported client files
-                        var envObj = f["env"] as JObject;
-                        var clientEnv = envObj?["client"]?.ToString();
-                        if (clientEnv != null && clientEnv.Equals("unsupported", StringComparison.OrdinalIgnoreCase))
-                        {
-                            continue;
-                        }
-
-                        if (!string.IsNullOrEmpty(relPath) && !string.IsNullOrEmpty(fileUrl))
-                        {
-                            var destPath = Path.Combine(gameDir, relPath);
-                            
-                            // If file already exists and is non-empty, skip to save bandwidth unless hash check fails
-                            if (File.Exists(destPath) && new FileInfo(destPath).Length > 0)
-                            {
-                                continue;
-                            }
-
-                            fileDownloads.Add(new DownloadItem
-                            {
-                                Url = fileUrl,
-                                DestinationPath = destPath,
-                                Sha1Hash = sha1,
-                                ExpectedSize = fileSize,
-                                Category = "ModpackFile",
-                                Description = Path.GetFileName(destPath)
-                            });
-                        }
-                    }
-
-                    if (fileDownloads.Count > 0)
-                    {
-                        progress?.Report(new DownloadProgressInfo
-                        {
-                            CurrentFileName = "Modpack Mods",
-                            CurrentOperation = $"Downloading {fileDownloads.Count} modpack files...",
-                            CompletedFiles = 0,
-                            TotalFiles = fileDownloads.Count
-                        });
-
-                        var batchResult = await _downloadService.DownloadBatchAsync(fileDownloads, 10, progress, ct);
-                        if (!batchResult.Success && batchResult.FailedItems > 0)
-                        {
-                            CrashLogger.LogMessage($"[Modpack]: Warning: {batchResult.FailedItems} files had download errors: {string.Join(", ", batchResult.Errors.Take(3))}");
-                        }
-                    }
-                }
-
-                // 4. Extract Overrides & Client-Overrides
-                foreach (var entry in archive.Entries)
-                {
-                    if (string.IsNullOrEmpty(entry.Name)) continue; // skip directory entries
-
-                    string? relativePath = null;
-                    if (entry.FullName.StartsWith("overrides/", StringComparison.OrdinalIgnoreCase))
-                    {
-                        relativePath = entry.FullName["overrides/".Length..];
-                    }
-                    else if (entry.FullName.StartsWith("client-overrides/", StringComparison.OrdinalIgnoreCase))
-                    {
-                        relativePath = entry.FullName["client-overrides/".Length..];
-                    }
-
-                    if (!string.IsNullOrEmpty(relativePath))
-                    {
-                        var destPath = Path.Combine(instance.GameDirectory, relativePath);
-                        var parent = Path.GetDirectoryName(destPath);
-                        if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
-                        entry.ExtractToFile(destPath, overwrite: true);
-                    }
-                }
-
-                return true;
+                return await InstallLocalArchiveAsync(instance, tempMrpackPath, progress, ct);
             }
             finally
             {
@@ -283,6 +140,332 @@ namespace VayuClient.Services.Modpack
                     try { File.Delete(tempMrpackPath); } catch { }
                 }
             }
+        }
+
+        public async Task<bool> InstallLocalArchiveAsync(
+            MinecraftInstance instance,
+            string archivePath,
+            IProgress<DownloadProgressInfo>? progress = null,
+            CancellationToken ct = default)
+        {
+            if (!File.Exists(archivePath))
+            {
+                throw new FileNotFoundException("Modpack archive file not found", archivePath);
+            }
+
+            using var archive = ZipFile.OpenRead(archivePath);
+
+            // 1. Check for Modrinth modpack (at root or nested in a folder like 881269a6-8c36-3215-905d-9d46a4602190/)
+            var modrinthIndexEntry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("modrinth.index.json", StringComparison.OrdinalIgnoreCase));
+            if (modrinthIndexEntry != null)
+            {
+                return await ProcessModrinthArchiveAsync(instance, archive, modrinthIndexEntry, progress, ct);
+            }
+
+            // 2. Check for CurseForge manifest.json
+            var curseforgeManifest = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("manifest.json", StringComparison.OrdinalIgnoreCase));
+            if (curseforgeManifest != null)
+            {
+                return await ProcessCurseForgeArchiveAsync(instance, archive, curseforgeManifest, progress, ct);
+            }
+
+            // 3. Fallback: Raw Minecraft instance archive (stripping common single root folder if nested)
+            return await ProcessRawInstanceArchiveAsync(instance, archive, progress, ct);
+        }
+
+        private async Task<bool> ProcessModrinthArchiveAsync(
+            MinecraftInstance instance,
+            ZipArchive archive,
+            ZipArchiveEntry indexEntry,
+            IProgress<DownloadProgressInfo>? progress,
+            CancellationToken ct)
+        {
+            string rootPrefix = "";
+            if (indexEntry.FullName.Length > "modrinth.index.json".Length)
+            {
+                rootPrefix = indexEntry.FullName[..^("modrinth.index.json".Length)];
+            }
+
+            using var indexStream = indexEntry.Open();
+            using var reader = new StreamReader(indexStream);
+            var indexJson = await reader.ReadToEndAsync(ct);
+            var indexObj = JObject.Parse(indexJson);
+
+            // Synchronize metadata
+            var packName = indexObj["name"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(packName))
+            {
+                instance.Name = packName;
+            }
+
+            var deps = indexObj["dependencies"] as JObject;
+            if (deps != null)
+            {
+                var realMcVersion = deps["minecraft"]?.ToString();
+                if (!string.IsNullOrEmpty(realMcVersion))
+                {
+                    instance.MinecraftVersion = realMcVersion;
+                }
+
+                var fabricVer = deps["fabric-loader"]?.ToString();
+                if (!string.IsNullOrEmpty(fabricVer))
+                {
+                    instance.Loader = "Fabric";
+                    instance.LoaderVersion = fabricVer;
+                }
+                else if (deps["neoforge"] != null)
+                {
+                    instance.Loader = "NeoForge";
+                    instance.LoaderVersion = deps["neoforge"]?.ToString() ?? "";
+                }
+                else if (deps["forge"] != null)
+                {
+                    instance.Loader = "Forge";
+                    instance.LoaderVersion = deps["forge"]?.ToString() ?? "";
+                }
+                else if (deps["quilt-loader"] != null)
+                {
+                    instance.Loader = "Quilt";
+                    instance.LoaderVersion = deps["quilt-loader"]?.ToString() ?? "";
+                }
+
+                try
+                {
+                    var instanceService = ServiceLocator.Resolve<IInstanceService>();
+                    if (instanceService != null)
+                    {
+                        await instanceService.SaveInstanceAsync(instance);
+                    }
+                }
+                catch { }
+            }
+
+            var gameDir = instance.GameDirectory;
+            Directory.CreateDirectory(gameDir);
+            var modsDir = Path.Combine(gameDir, "mods");
+            Directory.CreateDirectory(modsDir);
+
+            // A. Download all remote mod files declared in files[]
+            var modpackFiles = indexObj["files"] as JArray;
+            if (modpackFiles != null && modpackFiles.Count > 0)
+            {
+                var fileDownloads = new List<DownloadItem>();
+
+                foreach (var f in modpackFiles)
+                {
+                    var relPath = f["path"]?.ToString();
+                    var downloads = f["downloads"] as JArray;
+                    var fileUrl = downloads?.FirstOrDefault()?.ToString();
+                    var fileSize = f["fileSize"]?.Value<long>() ?? f["size"]?.Value<long>() ?? 0;
+                    var sha1 = f["hashes"]?["sha1"]?.ToString();
+
+                    var envObj = f["env"] as JObject;
+                    var clientEnv = envObj?["client"]?.ToString();
+                    if (clientEnv != null && clientEnv.Equals("unsupported", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrEmpty(relPath) && !string.IsNullOrEmpty(fileUrl))
+                    {
+                        var destPath = Path.Combine(gameDir, relPath);
+                        if (File.Exists(destPath) && new FileInfo(destPath).Length > 0)
+                        {
+                            continue;
+                        }
+
+                        fileDownloads.Add(new DownloadItem
+                        {
+                            Url = fileUrl,
+                            DestinationPath = destPath,
+                            Sha1Hash = sha1,
+                            ExpectedSize = fileSize,
+                            Category = "ModpackFile",
+                            Description = Path.GetFileName(destPath)
+                        });
+                    }
+                }
+
+                if (fileDownloads.Count > 0)
+                {
+                    progress?.Report(new DownloadProgressInfo
+                    {
+                        CurrentFileName = "Modpack Mods",
+                        CurrentOperation = $"Downloading {fileDownloads.Count} mods for {instance.Name}...",
+                        CompletedFiles = 0,
+                        TotalFiles = fileDownloads.Count
+                    });
+
+                    var batchResult = await _downloadService.DownloadBatchAsync(fileDownloads, 10, progress, ct);
+                    if (!batchResult.Success && batchResult.FailedItems > 0)
+                    {
+                        CrashLogger.LogMessage($"[Modpack]: Warning: {batchResult.FailedItems} files had download errors: {string.Join(", ", batchResult.Errors.Take(3))}");
+                    }
+                }
+            }
+
+            // B. Extract local files & overrides (unwrapping rootPrefix cleanly)
+            foreach (var entry in archive.Entries)
+            {
+                if (string.IsNullOrEmpty(entry.Name) || entry.FullName.EndsWith("/")) continue;
+                if (entry.FullName.Equals(indexEntry.FullName, StringComparison.OrdinalIgnoreCase)) continue;
+
+                string fullName = entry.FullName;
+                if (!string.IsNullOrEmpty(rootPrefix) && fullName.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    fullName = fullName[rootPrefix.Length..];
+                }
+
+                string relativePath = fullName;
+                if (relativePath.StartsWith("overrides/", StringComparison.OrdinalIgnoreCase))
+                {
+                    relativePath = relativePath["overrides/".Length..];
+                }
+                else if (relativePath.StartsWith("client-overrides/", StringComparison.OrdinalIgnoreCase))
+                {
+                    relativePath = relativePath["client-overrides/".Length..];
+                }
+
+                // If jar is in processedMods or subfolder, copy directly to mods
+                if (relativePath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) && !relativePath.StartsWith("mods/", StringComparison.OrdinalIgnoreCase))
+                {
+                    var destJar = Path.Combine(modsDir, entry.Name);
+                    if (!File.Exists(destJar))
+                    {
+                        entry.ExtractToFile(destJar, overwrite: true);
+                    }
+                }
+
+                var destPath = Path.Combine(gameDir, relativePath);
+                var parent = Path.GetDirectoryName(destPath);
+                if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
+                entry.ExtractToFile(destPath, overwrite: true);
+            }
+
+            return true;
+        }
+
+        private async Task<bool> ProcessCurseForgeArchiveAsync(
+            MinecraftInstance instance,
+            ZipArchive archive,
+            ZipArchiveEntry manifestEntry,
+            IProgress<DownloadProgressInfo>? progress,
+            CancellationToken ct)
+        {
+            string rootPrefix = "";
+            if (manifestEntry.FullName.Length > "manifest.json".Length)
+            {
+                rootPrefix = manifestEntry.FullName[..^("manifest.json".Length)];
+            }
+
+            using var manifestStream = manifestEntry.Open();
+            using var reader = new StreamReader(manifestStream);
+            var manifestJson = await reader.ReadToEndAsync(ct);
+            var manifestObj = JObject.Parse(manifestJson);
+
+            var packName = manifestObj["name"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(packName))
+            {
+                instance.Name = packName;
+            }
+
+            var mcObj = manifestObj["minecraft"] as JObject;
+            if (mcObj != null)
+            {
+                var mcVer = mcObj["version"]?.ToString();
+                if (!string.IsNullOrEmpty(mcVer)) instance.MinecraftVersion = mcVer;
+
+                var loaders = mcObj["modLoaders"] as JArray;
+                var primaryLoader = loaders?.FirstOrDefault()?["id"]?.ToString();
+                if (!string.IsNullOrEmpty(primaryLoader))
+                {
+                    if (primaryLoader.StartsWith("fabric-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        instance.Loader = "Fabric";
+                        instance.LoaderVersion = primaryLoader["fabric-".Length..];
+                    }
+                    else if (primaryLoader.StartsWith("forge-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        instance.Loader = "Forge";
+                        instance.LoaderVersion = primaryLoader["forge-".Length..];
+                    }
+                    else if (primaryLoader.StartsWith("neoforge-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        instance.Loader = "NeoForge";
+                        instance.LoaderVersion = primaryLoader["neoforge-".Length..];
+                    }
+                }
+            }
+
+            var gameDir = instance.GameDirectory;
+            Directory.CreateDirectory(gameDir);
+
+            // Extract overrides
+            string overridesPrefix = manifestObj["overrides"]?.ToString() ?? "overrides";
+            if (!overridesPrefix.EndsWith('/')) overridesPrefix += "/";
+
+            foreach (var entry in archive.Entries)
+            {
+                if (string.IsNullOrEmpty(entry.Name) || entry.FullName.EndsWith("/")) continue;
+
+                string fn = entry.FullName;
+                if (!string.IsNullOrEmpty(rootPrefix) && fn.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    fn = fn[rootPrefix.Length..];
+                }
+
+                if (fn.StartsWith(overridesPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    string rel = fn[overridesPrefix.Length..];
+                    var dest = Path.Combine(gameDir, rel);
+                    var parent = Path.GetDirectoryName(dest);
+                    if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
+                    entry.ExtractToFile(dest, overwrite: true);
+                }
+            }
+
+            return true;
+        }
+
+        private async Task<bool> ProcessRawInstanceArchiveAsync(
+            MinecraftInstance instance,
+            ZipArchive archive,
+            IProgress<DownloadProgressInfo>? progress,
+            CancellationToken ct)
+        {
+            var gameDir = instance.GameDirectory;
+            Directory.CreateDirectory(gameDir);
+
+            // Detect if all files share a common root directory
+            var firstEntry = archive.Entries.FirstOrDefault(e => !string.IsNullOrEmpty(e.Name));
+            string commonPrefix = "";
+            if (firstEntry != null && firstEntry.FullName.Contains('/'))
+            {
+                var candidate = firstEntry.FullName[..(firstEntry.FullName.IndexOf('/') + 1)];
+                if (archive.Entries.All(e => string.IsNullOrEmpty(e.Name) || e.FullName.StartsWith(candidate, StringComparison.OrdinalIgnoreCase)))
+                {
+                    commonPrefix = candidate;
+                }
+            }
+
+            foreach (var entry in archive.Entries)
+            {
+                if (string.IsNullOrEmpty(entry.Name) || entry.FullName.EndsWith("/")) continue;
+
+                string rel = entry.FullName;
+                if (!string.IsNullOrEmpty(commonPrefix) && rel.StartsWith(commonPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    rel = rel[commonPrefix.Length..];
+                }
+
+                var dest = Path.Combine(gameDir, rel);
+                var parent = Path.GetDirectoryName(dest);
+                if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
+                entry.ExtractToFile(dest, overwrite: true);
+            }
+
+            await Task.CompletedTask;
+            return true;
         }
     }
 }

@@ -314,7 +314,6 @@ namespace VayuClient.ViewModels
 
                 string filePath = dialog.FileName;
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
-                string ext = Path.GetExtension(filePath).ToLowerInvariant();
 
                 string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string instanceName = fileName;
@@ -329,75 +328,46 @@ namespace VayuClient.ViewModels
 
                 Directory.CreateDirectory(instanceDir);
 
-                string mcVersion = "1.21.4";
-                string loader = "Fabric";
-
-                if (ext == ".mrpack")
+                var instance = new MinecraftInstance
                 {
-                    using var archive = System.IO.Compression.ZipFile.OpenRead(filePath);
-                    var indexEntry = archive.GetEntry("modrinth.index.json");
-                    if (indexEntry != null)
-                    {
-                        using var s = indexEntry.Open();
-                        using var doc = await JsonDocument.ParseAsync(s);
-                        if (doc.RootElement.TryGetProperty("name", out var nProp))
-                        {
-                            var parsedName = nProp.GetString();
-                            if (!string.IsNullOrWhiteSpace(parsedName)) instanceName = parsedName;
-                        }
-                        if (doc.RootElement.TryGetProperty("game", out var gProp) && gProp.GetString() == "minecraft")
-                        {
-                            if (doc.RootElement.TryGetProperty("dependencies", out var depProp))
-                            {
-                                if (depProp.TryGetProperty("minecraft", out var mcProp)) mcVersion = mcProp.GetString() ?? mcVersion;
-                                if (depProp.TryGetProperty("fabric-loader", out _)) loader = "Fabric";
-                                else if (depProp.TryGetProperty("neoforge", out _)) loader = "NeoForge";
-                                else if (depProp.TryGetProperty("forge", out _)) loader = "Forge";
-                                else if (depProp.TryGetProperty("quilt-loader", out _)) loader = "Quilt";
-                            }
-                        }
-                    }
-
-                    // Extract overrides
-                    foreach (var entry in archive.Entries)
-                    {
-                        if (entry.FullName.StartsWith("overrides/", StringComparison.OrdinalIgnoreCase))
-                        {
-                            string rel = entry.FullName.Substring("overrides/".Length);
-                            if (!string.IsNullOrEmpty(rel) && !entry.FullName.EndsWith("/"))
-                            {
-                                string dest = Path.Combine(instanceDir, rel);
-                                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                                entry.ExtractToFile(dest, true);
-                            }
-                        }
-                    }
-                }
-                else if (ext == ".zip")
-                {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(filePath, instanceDir, true);
-                }
+                    InstanceId = Guid.NewGuid().ToString("N"),
+                    Name = instanceName,
+                    MinecraftVersion = "1.21.4",
+                    Loader = "Fabric",
+                    GameDirectory = instanceDir,
+                    RamMB = 4096,
+                    CreatedAt = DateTime.UtcNow,
+                    LastPlayedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
 
                 if (_instanceService != null)
                 {
-                    var instance = new MinecraftInstance
-                    {
-                        InstanceId = Guid.NewGuid().ToString("N"),
-                        Name = instanceName,
-                        MinecraftVersion = mcVersion,
-                        Loader = loader,
-                        GameDirectory = instanceDir,
-                        RamMB = 4096,
-                        CreatedAt = DateTime.UtcNow,
-                        LastPlayedAt = DateTime.UtcNow,
-                        IsActive = true
-                    };
                     await _instanceService.CreateInstanceAsync(instance);
                     _instanceService.SetActiveInstance(instance.InstanceId);
                 }
 
+                _main.ShowNotification("Importing Modpack", $"Analyzing and extracting package '{fileName}'...", NotificationType.Info);
+
+                var modpackInstaller = ServiceLocator.Resolve<IModpackInstaller>();
+                if (modpackInstaller != null)
+                {
+                    var progress = new Progress<DownloadProgressInfo>(p =>
+                    {
+                        CrashLogger.LogMessage($"[Import]: {p.CurrentOperation} ({p.CompletedFiles}/{p.TotalFiles})");
+                    });
+
+                    await Task.Run(() => modpackInstaller.InstallLocalArchiveAsync(instance, filePath, progress));
+                }
+
+                if (_instanceService != null)
+                {
+                    await _instanceService.SaveInstanceAsync(instance);
+                    _instanceService.SetActiveInstance(instance.InstanceId);
+                }
+
                 LoadInstallations();
-                _main.ShowNotification("Instance Imported", $"Successfully imported '{instanceName}' ({loader} {mcVersion})!", NotificationType.Success);
+                _main.ShowNotification("Instance Imported", $"Successfully imported '{instance.Name}' ({instance.Loader} {instance.MinecraftVersion}) with all mods and settings!", NotificationType.Success);
             }
             catch (Exception ex)
             {
@@ -560,9 +530,9 @@ namespace VayuClient.ViewModels
                                         }
                                     }
 
-                                    if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
+                                    if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
                                     {
-                                        app.Dispatcher.Invoke(ApplyVersions);
+                                        try { app.Dispatcher.BeginInvoke(ApplyVersions); } catch { ApplyVersions(); }
                                     }
                                     else
                                     {
@@ -808,9 +778,22 @@ namespace VayuClient.ViewModels
         }
 
         [RelayCommand]
+        private async Task ConfirmContentInstall()
+        {
+            await ConfirmTargetInstance();
+        }
+
+        [RelayCommand]
+        private void CancelContentInstall()
+        {
+            CancelTargetInstance();
+        }
+
+        [RelayCommand]
         private void CancelTargetInstance()
         {
             IsTargetInstanceModalOpen = false;
+            PendingContentProject = null;
         }
 
         public async Task LoadModrinthProjectsAsync()
@@ -958,9 +941,9 @@ namespace VayuClient.ViewModels
                     : "No projects found on Modrinth for this category.";
             }
 
-            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
+            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
             {
-                app.Dispatcher.Invoke(ApplyState);
+                try { app.Dispatcher.BeginInvoke(ApplyState); } catch { ApplyState(); }
             }
             else
             {

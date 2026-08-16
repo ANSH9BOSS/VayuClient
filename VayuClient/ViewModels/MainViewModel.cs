@@ -273,9 +273,16 @@ namespace VayuClient.ViewModels
         private static void Dispatch(Action action)
         {
             var app = Application.Current;
-            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
+            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
             {
-                app.Dispatcher.Invoke(action);
+                try
+                {
+                    app.Dispatcher.BeginInvoke(action);
+                }
+                catch
+                {
+                    action();
+                }
             }
             else
             {
