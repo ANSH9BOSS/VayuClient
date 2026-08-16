@@ -207,24 +207,29 @@ namespace VayuClient.Services.Download
                 return result;
             }
 
-            // Identify existing valid files vs items to download
-            var toDownload = new List<DownloadItem>();
+            // Parallel pre-verification of existing files on disk using all CPU cores
+            var toDownload = new ConcurrentBag<DownloadItem>();
             long totalBatchBytes = 0;
             long alreadyVerifiedBytes = 0;
+            int skippedCount = 0;
 
-            foreach (var item in itemList)
+            Parallel.ForEach(itemList, item =>
             {
-                totalBatchBytes += Math.Max(item.ExpectedSize, 0);
+                long size = Math.Max(item.ExpectedSize, 0);
+                Interlocked.Add(ref totalBatchBytes, size);
+
                 if (VerifyFileChecksum(item.DestinationPath, item.Sha1Hash, item.Sha256Hash, item.ExpectedSize))
                 {
-                    result.SkippedItems++;
-                    alreadyVerifiedBytes += Math.Max(item.ExpectedSize, 0);
+                    Interlocked.Increment(ref skippedCount);
+                    Interlocked.Add(ref alreadyVerifiedBytes, size);
                 }
                 else
                 {
                     toDownload.Add(item);
                 }
-            }
+            });
+
+            result.SkippedItems = skippedCount;
 
             if (toDownload.Count == 0)
             {

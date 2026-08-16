@@ -338,6 +338,12 @@ namespace VayuClient.Services.Launch
                 _activeGameProcess = process;
                 try
                 {
+                    ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().RegisterMinecraftProcess(process);
+                }
+                catch { }
+
+                try
+                {
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
                 }
@@ -355,6 +361,7 @@ namespace VayuClient.Services.Launch
                         int exitCode = process.ExitCode;
                         Log($"Game process exited with ExitCode: {exitCode}");
                         _activeGameProcess = null;
+                        try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
 
                         if (exitCode == 0)
                         {
@@ -375,6 +382,7 @@ namespace VayuClient.Services.Launch
                     {
                         Log($"Error monitoring process: {ex.Message}");
                         _activeGameProcess = null;
+                        try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
                         SetState(LaunchState.Idle, "Ready");
                     }
                 });

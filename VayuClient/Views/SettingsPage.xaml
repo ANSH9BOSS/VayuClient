@@ -4,7 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="720" d:DesignWidth="1050"
+             d:DesignHeight="780" d:DesignWidth="1080"
              Background="#070B14">
 
     <Grid>
@@ -43,7 +43,7 @@
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Tab 1: Performance -->
-                    <Button Content="🚀 Performance &amp; JVM" 
+                    <Button Content="🚀 Performance &amp; Hardware" 
                             Command="{Binding SelectTabCommand}" CommandParameter="Performance"
                             FontSize="13" FontWeight="Bold" Margin="0,0,16,0" Cursor="Hand">
                         <Button.Style>
@@ -123,7 +123,7 @@
                     </Button>
 
                     <!-- Tab 5: About & Specs -->
-                    <Button Content="ℹ️ About &amp; System" 
+                    <Button Content="ℹ️ Hardware &amp; Specs" 
                             Command="{Binding SelectTabCommand}" CommandParameter="About"
                             FontSize="13" FontWeight="Bold" Cursor="Hand">
                         <Button.Style>
@@ -153,69 +153,158 @@
             <!-- ═══ CONTENT AREA ═══ -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Style="{StaticResource VayuScrollViewer}">
                 <Grid>
-                    <!-- ─── 1. PERFORMANCE TAB ─── -->
+                    <!-- ─── 1. PERFORMANCE & HARDWARE TAB ─── -->
                     <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualValueToVis}, ConverterParameter=Performance}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="28"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                        <!-- Left Column: RAM & Java Runtime -->
-                        <StackPanel Grid.Column="0">
-                            <!-- RAM Slider Card -->
-                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,10">
-                                        <TextBlock Text="DEFAULT MEMORY ALLOCATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                        <TextBlock Text="{Binding RamDisplay}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
-                                    </Grid>
-                                    <Slider Value="{Binding DefaultRamMB}" Minimum="1024" Maximum="16384" SmallChange="512" LargeChange="1024"
-                                            Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,8"/>
-                                    <TextBlock Text="Allocated maximum heap (-Xmx) for newly created instances and default launches."
-                                               FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}"/>
-                                </StackPanel>
-                            </Border>
+                        <!-- Live Performance Telemetry Gauge Banner -->
+                        <Border Grid.Row="0" CornerRadius="8" Background="#181E2E" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="16,12" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                            <!-- Java Runtime Selector Card -->
-                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="INSTALLED JAVA RUNTIMES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,6"/>
-                                    <ComboBox ItemsSource="{Binding AvailableJavaRuntimes}"
-                                              SelectedItem="{Binding SelectedJavaRuntime}"
-                                              Style="{StaticResource VayuComboBox}" Height="36" Margin="0,0,0,8"/>
-                                    <TextBlock Text="Auto-Detect automatically chooses the optimal LTS runtime (Java 21 for 1.21+, Java 17 for 1.18-1.20, Java 8 for legacy)."
-                                               FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" TextWrapping="Wrap"/>
+                                <!-- Metric 1: Launcher CPU -->
+                                <StackPanel Grid.Column="0" Margin="4,0">
+                                    <TextBlock Text="LAUNCHER CPU" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="{Binding LiveLauncherCpu, StringFormat={}{0:F1}%}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Differential Process Time" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
-                            </Border>
-                        </StackPanel>
 
-                        <!-- Right Column: GPU & JVM Optimization -->
-                        <StackPanel Grid.Column="2">
-                            <!-- Dedicated GPU & Hardware Toggle -->
-                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="HARDWARE ACCELERATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
-                                    <CheckBox IsChecked="{Binding UseDedicatedGpu}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,10">
-                                        <TextBlock Text="Force Dedicated High-Performance GPU" FontSize="12.5" Foreground="#FFFFFF"/>
-                                    </CheckBox>
-                                    <TextBlock Text="Forces Windows &amp; Minecraft to utilize the discrete NVIDIA / AMD graphics adapter."
-                                               FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                <!-- Metric 2: Launcher RAM -->
+                                <StackPanel Grid.Column="1" Margin="4,0">
+                                    <TextBlock Text="LAUNCHER MEMORY" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="{Binding LiveLauncherMemoryMB, StringFormat={}{0:F0} MB}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Working Set (RAM)" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
-                            </Border>
 
-                            <!-- JVM Preset Card -->
-                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="JVM OPTIMIZER PRESETS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,6"/>
-                                    <ComboBox ItemsSource="{Binding JvmPresets}"
-                                              SelectedItem="{Binding SelectedJvmPreset}"
-                                              Style="{StaticResource VayuComboBox}" Height="36" Margin="0,0,0,8"/>
-                                    <TextBlock Text="Optimizes garbage collection parameters, heap region sizing, and thread priority for zero stutter."
-                                               FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" TextWrapping="Wrap"/>
+                                <!-- Metric 3: Host Available RAM -->
+                                <StackPanel Grid.Column="2" Margin="4,0">
+                                    <TextBlock Text="AVAILABLE SYSTEM RAM" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="{Binding LiveHostAvailableRamGB, StringFormat={}{0:F1} GB}" FontSize="15" FontWeight="Bold" Foreground="#38BDF8"/>
+                                    <TextBlock Text="Free Physical Memory" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
-                            </Border>
-                        </StackPanel>
+
+                                <!-- Metric 4: Minecraft Process State -->
+                                <StackPanel Grid.Column="3" Margin="4,0">
+                                    <TextBlock Text="MINECRAFT PROCESS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="{Binding LiveMinecraftStatus}" FontSize="12.5" FontWeight="Bold" Foreground="#4ADE80" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="Active Game Session" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Two Column Settings Controls -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="28"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left Column: Performance Mode & RAM -->
+                            <StackPanel Grid.Column="0">
+                                <!-- Performance Mode Card -->
+                                <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="SYSTEM PERFORMANCE MODE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,6"/>
+                                        <ComboBox ItemsSource="{Binding PerformanceModes}"
+                                                  SelectedItem="{Binding SelectedPerformanceMode}"
+                                                  Style="{StaticResource VayuComboBox}" Height="36" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Dynamically configures CPU threads, discrete GPU offload, GC flags, and memory limits."
+                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Dynamic System Recommendation Tip -->
+                                <Border CornerRadius="8" Background="#132338" BorderBrush="#2563EB" BorderThickness="1" Padding="14,12" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="💡 HARDWARE RECOMMENDATION" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding Hardware.RecommendationTip}" FontSize="11" Foreground="#E2E8F0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- RAM Slider Card -->
+                                <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <TextBlock Text="DEFAULT MINECRAFT RAM ALLOCATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                            <TextBlock Text="{Binding RamDisplay}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <Slider Value="{Binding DefaultRamMB}" Minimum="1024" Maximum="16384" SmallChange="512" LargeChange="1024"
+                                                Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Allocated maximum heap (-Xmx). Automatically bounded to prevent OS memory starvation."
+                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Right Column: GPU & JVM Optimization -->
+                            <StackPanel Grid.Column="2">
+                                <!-- Dedicated GPU & Hardware Toggle -->
+                                <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="HARDWARE ACCELERATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
+                                        <CheckBox IsChecked="{Binding UseDedicatedGpu}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,10">
+                                            <TextBlock Text="Prefer Dedicated High-Performance GPU" FontSize="12.5" Foreground="#FFFFFF"/>
+                                        </CheckBox>
+                                        <TextBlock Text="Directs Windows graphics scheduler to assign discrete NVIDIA / AMD GPUs to Minecraft."
+                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Java Runtime Selector Card -->
+                                <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="INSTALLED JAVA RUNTIMES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,6"/>
+                                        <ComboBox ItemsSource="{Binding AvailableJavaRuntimes}"
+                                                  SelectedItem="{Binding SelectedJavaRuntime}"
+                                                  Style="{StaticResource VayuComboBox}" Height="36" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Auto-Detect LTS prevents bytecode version 69 crashes by strictly matching Java 21 LTS to 1.20.5+."
+                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- JVM Preset Card -->
+                                <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="JVM OPTIMIZER PRESETS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,6"/>
+                                        <ComboBox ItemsSource="{Binding JvmPresets}"
+                                                  SelectedItem="{Binding SelectedJvmPreset}"
+                                                  Style="{StaticResource VayuComboBox}" Height="36" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Optimizes garbage collection parameters, heap region sizing, and thread priority for zero stutter."
+                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- System Benchmark Diagnostic Section -->
+                        <Border Grid.Row="2" CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="SYSTEM &amp; PIPELINE BENCHMARK" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,6"/>
+                                    <TextBlock Text="{Binding BenchmarkReport}" FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" FontFamily="Consolas, monospace"/>
+                                </StackPanel>
+
+                                <Button Grid.Column="1" Content="⚡ Run Benchmark"
+                                        Command="{Binding RunBenchmarkCommand}"
+                                        Style="{StaticResource VayuPrimaryButton}"
+                                        VerticalAlignment="Center" Margin="16,0,0,0" Padding="16,8" Cursor="Hand"/>
+                            </Grid>
+                        </Border>
                     </Grid>
 
                     <!-- ─── 2. APPEARANCE TAB ─── -->
@@ -299,10 +388,10 @@
                                         <TextBlock Text="Enable Discord Rich Presence Activity Status" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
                                     <CheckBox IsChecked="{Binding ShowLauncherConsole}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,12">
-                                        <TextBlock Text="Show Live Minecraft Console Log on Game Launch" FontSize="12.5" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Show Live Minecraft Output &amp; Crash Console" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
-                                    <CheckBox IsChecked="{Binding NativeTitleBar}" Style="{StaticResource VayuCheckBox}">
-                                        <TextBlock Text="Use Standard Windows OS Title Bar" FontSize="12.5" Foreground="#FFFFFF"/>
+                                    <CheckBox IsChecked="{Binding NativeTitleBar}" Style="{StaticResource VayuCheckBox}" Margin="0,0,10,0">
+                                        <TextBlock Text="Use Windows Native Window Frame" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
                                 </StackPanel>
                             </Border>
@@ -317,42 +406,42 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Left Column: Concurrency -->
+                        <!-- Left Column: Concurrency & Acceleration -->
                         <StackPanel Grid.Column="0">
                             <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="DOWNLOAD CONCURRENCY THREADS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                        <TextBlock Text="{Binding DownloadConcurrency, StringFormat='{}{0} Threads'}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <TextBlock Text="PARALLEL DOWNLOAD THREADS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                        <TextBlock Text="{Binding DownloadConcurrency, StringFormat={}{0} Connections}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
                                     </Grid>
                                     <Slider Value="{Binding DownloadConcurrency}" Minimum="1" Maximum="16" SmallChange="1" LargeChange="2"
                                             Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,8"/>
-                                    <TextBlock Text="Controls parallel asset, library, and mod downloading concurrency."
+                                    <TextBlock Text="Parallel connection count for downloading asset indexes, libraries, and modpacks."
                                                FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
 
-                        <!-- Right Column: Protocol Options -->
+                        <!-- Right Column: DNS & Protocol Settings -->
                         <StackPanel Grid.Column="2">
                             <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <TextBlock Text="NETWORK PROTOCOLS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
+                                    <TextBlock Text="NETWORK &amp; CDN PROTOCOLS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
                                     <CheckBox IsChecked="{Binding DnsOverride}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,10">
-                                        <TextBlock Text="DNS-over-HTTPS (Cloudflare / Google Secure DNS)" FontSize="12.5" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Enable Fast Cloudflare / Google DoH Routing" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
-                                    <CheckBox IsChecked="{Binding ModernForgeInstaller}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,10">
-                                        <TextBlock Text="High-Speed Parallel Modrinth CDN Mirror" FontSize="12.5" Foreground="#FFFFFF"/>
+                                    <CheckBox IsChecked="{Binding ForceLanOfflineMode}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,10">
+                                        <TextBlock Text="Force Offline LAN Play (Zero Internet Requirement)" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
-                                    <CheckBox IsChecked="{Binding ForceLanOfflineMode}" Style="{StaticResource VayuCheckBox}">
-                                        <TextBlock Text="Enable Local LAN Offline Discovery" FontSize="12.5" Foreground="#FFFFFF"/>
+                                    <CheckBox IsChecked="{Binding ModernForgeInstaller}" Style="{StaticResource VayuCheckBox}">
+                                        <TextBlock Text="Use Direct NeoForge / Fabric CDN Mirror" FontSize="12.5" Foreground="#FFFFFF"/>
                                     </CheckBox>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
                     </Grid>
 
-                    <!-- ─── 5. ABOUT & SYSTEM TAB ─── -->
+                    <!-- ─── 5. HARDWARE & SPECS TAB ─── -->
                     <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualValueToVis}, ConverterParameter=About}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -360,90 +449,67 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Left Column: System Hardware Specs -->
+                        <!-- Left Column: Detected Hardware Specs -->
                         <StackPanel Grid.Column="0">
                             <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <TextBlock Text="HOST SYSTEM SPECIFICATIONS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
-                                    
-                                    <TextBlock Text="PROCESSOR (CPU)" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource VayuTextDimBrush}"/>
-                                    <TextBlock Text="{Binding SystemCpuInfo}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,2,0,10"/>
+                                    <TextBlock Text="REAL SYSTEM HARDWARE TOPOLOGY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
 
-                                    <TextBlock Text="SYSTEM MEMORY (RAM)" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource VayuTextDimBrush}"/>
-                                    <TextBlock Text="{Binding SystemRamInfo}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,2,0,10"/>
+                                    <TextBlock Text="PROCESSOR (CPU)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SystemCpuInfo}" FontSize="12.5" Foreground="#FFFFFF" Margin="0,2,0,10"/>
 
-                                    <TextBlock Text="OPERATING SYSTEM" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource VayuTextDimBrush}"/>
-                                    <TextBlock Text="{Binding SystemOsInfo}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,2,0,10"/>
+                                    <TextBlock Text="GRAPHICS ADAPTER (GPU)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SystemGpuInfo}" FontSize="12.5" Foreground="#FFFFFF" Margin="0,2,0,10"/>
 
-                                    <TextBlock Text="GRAPHICS ARCHITECTURE" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource VayuTextDimBrush}"/>
-                                    <TextBlock Text="{Binding GraphicsEngine}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                </StackPanel>
-                            </Border>
+                                    <TextBlock Text="PHYSICAL MEMORY (RAM)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SystemRamInfo}" FontSize="12.5" Foreground="#FFFFFF" Margin="0,2,0,10"/>
 
-                            <!-- Data & Logs Actions -->
-                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16">
-                                <StackPanel>
-                                    <TextBlock Text="DIAGNOSTICS &amp; DIRECTORIES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Style="{StaticResource VayuDarkButton}" Padding="14,7" Command="{Binding OpenAppDataFolderCommand}" Margin="0,0,8,0">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Path Data="{StaticResource VayuIconFolder}" Fill="#94A3B8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                <TextBlock Text="Open %AppData% Folder" FontSize="11.5"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Style="{StaticResource VayuDarkButton}" Padding="14,7" Command="{Binding ResetToDefaultsAsyncCommand}">
-                                            <TextBlock Text="Reset Settings" FontSize="11.5" Foreground="#EF4444"/>
-                                        </Button>
-                                    </StackPanel>
+                                    <TextBlock Text="DISK CAPACITY" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SystemDiskInfo}" FontSize="12.5" Foreground="#FFFFFF" Margin="0,2,0,10"/>
+
+                                    <TextBlock Text="OPERATING SYSTEM" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SystemOsInfo}" FontSize="12.5" Foreground="#FFFFFF"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
 
-                        <!-- Right Column: GitHub Updater & Developer -->
+                        <!-- Right Column: Software Architecture & Updates -->
                         <StackPanel Grid.Column="2">
-                            <!-- Live GitHub Auto-Updater Card -->
-                            <Border CornerRadius="8" Background="#111A2C" BorderBrush="#2563EB" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
                                 <StackPanel>
+                                    <TextBlock Text="VAYUCLIENT™ ARCHITECTURE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
+
                                     <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="GITHUB 1-CLICK AUTO-UPDATER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                        <Border CornerRadius="3" Background="#10251C" Padding="6,2" HorizontalAlignment="Right">
-                                            <TextBlock Text="Online" FontSize="10" FontWeight="Bold" Foreground="#22C55E"/>
-                                        </Border>
+                                        <TextBlock Text="Client Version:" Foreground="{StaticResource VayuTextDimBrush}" FontSize="12"/>
+                                        <TextBlock Text="{Binding AppVersion}" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold" HorizontalAlignment="Right"/>
                                     </Grid>
-                                    <TextBlock Text="Check for official releases, bug fixes, and client updates directly from GitHub."
-                                               FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,14" TextWrapping="Wrap"/>
-                                    <Button Style="{StaticResource VayuAccentButton}" Padding="16,8"
-                                            Command="{Binding CheckForUpdatesAsyncCommand}" HorizontalAlignment="Left">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Path Data="{StaticResource VayuIconVersions}" Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Check for Updates Now" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Developer Credits Card -->
-                            <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16">
-                                <StackPanel>
-                                    <TextBlock Text="DEVELOPER TEAM &amp; CREDITS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,12"/>
-                                    <Grid Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="22" Background="#152033" BorderBrush="#2563EB" BorderThickness="1.5" Margin="0,0,12,0">
-                                            <TextBlock Text="A" FontSize="20" FontWeight="Black" Foreground="{StaticResource VayuBrightBlueBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DeveloperName}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                            <TextBlock Text="Lead Creator &amp; Systems Architect" FontSize="11.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
-                                        </StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Lead Developer:" Foreground="{StaticResource VayuTextDimBrush}" FontSize="12"/>
+                                        <TextBlock Text="{Binding DeveloperName}" Foreground="{StaticResource VayuBrightBlueBrush}" FontSize="12" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Runtime Architecture:" Foreground="{StaticResource VayuTextDimBrush}" FontSize="12"/>
+                                        <TextBlock Text="{Binding Architecture}" Foreground="#FFFFFF" FontSize="12" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Graphics Engine:" Foreground="{StaticResource VayuTextDimBrush}" FontSize="12"/>
+                                        <TextBlock Text="{Binding GraphicsEngine}" Foreground="#FFFFFF" FontSize="12" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,14">
+                                        <TextBlock Text="Distribution:" Foreground="{StaticResource VayuTextDimBrush}" FontSize="12"/>
+                                        <TextBlock Text="{Binding ReleaseInfo}" Foreground="#4ADE80" FontSize="12" FontWeight="Bold" HorizontalAlignment="Right"/>
                                     </Grid>
 
-                                    <TextBlock FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}" TextWrapping="Wrap" Margin="0,0,0,8">
-                                        <Run Text="VayuClient™ is a registered high-performance native Minecraft desktop launcher engineered for maximum FPS, multi-instance isolation, and seamless mod management."/>
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding AppVersion}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    <!-- Action Buttons -->
+                                    <Button Content="🔄 Check for GitHub Updates"
+                                            Command="{Binding CheckForUpdatesCommand}"
+                                            Style="{StaticResource VayuPrimaryButton}"
+                                            Height="36" Margin="0,0,0,10" Cursor="Hand"/>
+
+                                    <Button Content="📂 Open AppData Directory"
+                                            Command="{Binding OpenAppDataFolderCommand}"
+                                            Style="{StaticResource VayuDarkButton}"
+                                            Height="36" Cursor="Hand"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -453,11 +519,27 @@
 
             <!-- ═══ BOTTOM ACTION BAR ═══ -->
             <Grid Grid.Row="2" Margin="0,16,0,0">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Command="{Binding CloseSettingsCommand}"
-                            Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,10,0"/>
-                    <Button Content="Save Preferences" Command="{Binding SaveSettingsAsyncCommand}"
-                            Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Content="Restore Defaults"
+                        Command="{Binding ResetToDefaultsCommand}"
+                        Style="{StaticResource VayuDarkButton}"
+                        Padding="16,8" Cursor="Hand"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="Cancel"
+                            Command="{Binding CloseSettingsCommand}"
+                            Style="{StaticResource VayuDarkButton}"
+                            Margin="0,0,12,0" Padding="18,8" Cursor="Hand"/>
+
+                    <Button Content="Save Preferences"
+                            Command="{Binding SaveSettingsCommand}"
+                            Style="{StaticResource VayuPrimaryButton}"
+                            Padding="22,8" Cursor="Hand"/>
                 </StackPanel>
             </Grid>
         </Grid>

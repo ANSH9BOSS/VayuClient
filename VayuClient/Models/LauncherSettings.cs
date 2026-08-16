@@ -16,6 +16,8 @@ namespace VayuClient.Models
         public bool ShowLauncherConsole { get; set; } = false;
 
         // Performance & Java
+        public string PerformanceMode { get; set; } = "Balanced";
+        public int DownloadConcurrency { get; set; } = 8;
         public int DefaultMemoryMB { get; set; } = 4096;
         public string? CustomJavaPath { get; set; } = null;
         public bool NativeTitleBar { get; set; } = false;

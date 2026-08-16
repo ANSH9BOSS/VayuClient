@@ -69,6 +69,17 @@ namespace VayuClient.Services.Launch
             jvmArgs.Add("-Dminecraft.launcher.brand=VayuClient");
             jvmArgs.Add($"-Dminecraft.launcher.version={Core.AppInfo.VersionString}");
 
+            // Hardware-optimized thread allocation & 2D/3D hardware pipeline flags
+            int logicalCores = Math.Max(2, Environment.ProcessorCount);
+            int parallelGcThreads = Math.Max(2, logicalCores > 8 ? logicalCores / 2 : logicalCores - 1);
+            int concGcThreads = Math.Max(1, parallelGcThreads / 2);
+
+            jvmArgs.Add($"-XX:ParallelGCThreads={parallelGcThreads}");
+            jvmArgs.Add($"-XX:ConcGCThreads={concGcThreads}");
+            jvmArgs.Add("-Dsun.java2d.d3d=true");
+            jvmArgs.Add("-Dsun.java2d.noddraw=true");
+            jvmArgs.Add("-Dsun.awt.noerasebackground=true");
+
             // Check if arguments.jvm defined in version JSON
             if (parameters.VersionPackage.Arguments?.Jvm != null && parameters.VersionPackage.Arguments.Jvm.Count > 0)
             {

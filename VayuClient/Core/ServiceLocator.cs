@@ -7,6 +7,8 @@ using VayuClient.Services.Launch;
 using VayuClient.Services.Loaders;
 using VayuClient.Services.Minecraft;
 using VayuClient.Services.Modpack;
+using VayuClient.Services.Hardware;
+using VayuClient.Services.Monitoring;
 using VayuClient.Services.Profiles;
 using VayuClient.Services.Settings;
 using VayuClient.Services.Updates;
@@ -24,6 +26,11 @@ namespace VayuClient.Core
 
         public static void Initialize()
         {
+            var hardwareInfoService = new HardwareInfoService();
+            Register<IHardwareInfoService>(hardwareInfoService);
+
+            var performanceMonitor = new PerformanceMonitorService(hardwareInfoService);
+            Register<IPerformanceMonitorService>(performanceMonitor);
             var settingsService = new SettingsService();
             Register<ISettingsService>(settingsService);
 

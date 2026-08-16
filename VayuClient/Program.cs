@@ -31,6 +31,14 @@ namespace VayuClient
                 return;
             }
 
+            if (args.Length > 0 && args.Any(a => a.Equals("--benchmark", StringComparison.OrdinalIgnoreCase) || a.Equals("/benchmark", StringComparison.OrdinalIgnoreCase)))
+            {
+                AttachConsole(ATTACH_PARENT_PROCESS);
+                int exitCode = QaRunner.RunBenchmarkAsync(args).GetAwaiter().GetResult();
+                Environment.Exit(exitCode);
+                return;
+            }
+
             StartupProfiler.Start();
             CrashLogger.Initialize();
             StartupProfiler.Record("Crash logger initialized");

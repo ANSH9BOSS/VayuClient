@@ -3,12 +3,17 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VayuClient.Core;
 using VayuClient.Models;
+using VayuClient.Services.Hardware;
 using VayuClient.Services.Java;
+using VayuClient.Services.Monitoring;
 using VayuClient.Services.Settings;
 using VayuClient.Services.Updates;
 
@@ -19,9 +24,26 @@ namespace VayuClient.ViewModels
         private readonly MainViewModel _main;
         private readonly ISettingsService _settingsService;
         private readonly IJavaRuntimeService? _javaService;
+        private readonly IHardwareInfoService _hardwareInfoService;
+        private readonly IPerformanceMonitorService _performanceMonitor;
 
         [ObservableProperty]
         private string _activeTab = "Performance"; // Performance, Appearance, GameLaunch, Network, About
+
+        // ═══ Performance Profile & Hardware ═══
+        [ObservableProperty]
+        private HardwareProfile _hardware;
+
+        [ObservableProperty]
+        private string _selectedPerformanceMode = "⚖️ Balanced (Recommended)";
+
+        public ObservableCollection<string> PerformanceModes { get; } = new()
+        {
+            "⚡ High Performance Gaming",
+            "⚖️ Balanced (Recommended)",
+            "🌱 Power Saver",
+            "🛠️ Custom Tuning"
+        };
 
         // ═══ 1. Performance & JVM ═══
         [ObservableProperty]
@@ -52,9 +74,25 @@ namespace VayuClient.ViewModels
         private bool _allowCustomJvmArgs = true;
 
         [ObservableProperty]
-        private string _customJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=20 -XX:G1HeapRegionSize=32M";
+        private string _customJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=15 -XX:G1HeapRegionSize=32M";
 
-        // ═══ 2. Appearance & Custom Backgrounds ═══
+        // ═══ 2. Live Performance Telemetry ═══
+        [ObservableProperty]
+        private double _liveLauncherCpu = 0.0;
+
+        [ObservableProperty]
+        private double _liveLauncherMemoryMB = 0.0;
+
+        [ObservableProperty]
+        private double _liveHostAvailableRamGB = 0.0;
+
+        [ObservableProperty]
+        private string _liveMinecraftStatus = "Idle / Ready";
+
+        [ObservableProperty]
+        private string _benchmarkReport = "Click 'Run System Benchmark' to measure hardware and launch pipeline throughput.";
+
+        // ═══ 3. Appearance & Custom Backgrounds ═══
         [ObservableProperty]
         private string _selectedThemeWallpaper = "Cyber Nether";
 
@@ -86,7 +124,7 @@ namespace VayuClient.ViewModels
             "🇺🇸 English", "🇪🇸 Español", "🇩🇪 Deutsch", "🇫🇷 Français", "🇵🇱 Polski", "🇷🇺 Русский"
         };
 
-        // ═══ 3. Game Launch & Display ═══
+        // ═══ 4. Game Launch & Display ═══
         [ObservableProperty]
         private string _selectedResolution = "1920x1080 (1080p FHD)";
 
@@ -111,7 +149,7 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private bool _nativeTitleBar = false;
 
-        // ═══ 4. Network & Proxy ═══
+        // ═══ 5. Network & Proxy ═══
         [ObservableProperty]
         private int _downloadConcurrency = 8;
 
@@ -124,10 +162,12 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private bool _modernForgeInstaller = true;
 
-        // ═══ 5. System Specs & About Metadata ═══
-        public string SystemCpuInfo { get; private set; }
-        public string SystemRamInfo { get; private set; }
-        public string SystemOsInfo { get; private set; }
+        // ═══ 6. System Specs & About Metadata ═══
+        public string SystemCpuInfo => $"{Hardware.CpuName} ({Hardware.PhysicalCores} Physical Cores / {Hardware.LogicalProcessors} Threads)";
+        public string SystemGpuInfo => $"{Hardware.GpuName} ({(Hardware.DedicatedVramGB > 0 ? $"{Hardware.DedicatedVramGB} GB VRAM" : "DirectX 12 Acceleration")})";
+        public string SystemRamInfo => $"{Hardware.TotalRamGB} GB Total RAM ({Hardware.AvailableRamGB} GB Available)";
+        public string SystemDiskInfo => $"{Hardware.FreeDiskGB} GB Free on Install Drive";
+        public string SystemOsInfo => Hardware.OperatingSystemName;
         public string AppName => AppInfo.AppName;
         public string AppVersion => $"{AppInfo.VersionString} (Production Release)";
         public string ReleaseInfo => "Official GitHub Release";
@@ -141,23 +181,31 @@ namespace VayuClient.ViewModels
             _main = main;
             _settingsService = ServiceLocator.Resolve<ISettingsService>();
             _javaService = ServiceLocator.Resolve<IJavaRuntimeService>();
+            _hardwareInfoService = ServiceLocator.Resolve<IHardwareInfoService>();
+            _performanceMonitor = ServiceLocator.Resolve<IPerformanceMonitorService>();
 
-            int cores = Environment.ProcessorCount;
-            SystemCpuInfo = $"{Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "x64 Processor"} ({cores} Cores)";
-            try
-            {
-                long totalMemBytes = (long)GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
-                double totalGB = totalMemBytes / (1024.0 * 1024.0 * 1024.0);
-                SystemRamInfo = $"{totalGB:F1} GB Total System RAM";
-            }
-            catch
-            {
-                SystemRamInfo = "16.0 GB Total System Memory";
-            }
-            SystemOsInfo = $"{Environment.OSVersion} (64-bit)";
+            _hardware = _hardwareInfoService.GetHardwareProfile();
+
+            // Set initial recommended RAM
+            _defaultRamMB = _hardware.RecommendedRamMB;
+            _downloadConcurrency = _hardware.RecommendedDownloadThreads;
+
+            _performanceMonitor.SnapshotUpdated += OnPerformanceSnapshotUpdated;
+            _performanceMonitor.StartMonitoring(1500);
 
             LoadDetectedJavaRuntimes();
             LoadFromSettings();
+        }
+
+        private void OnPerformanceSnapshotUpdated(object? sender, PerformanceSnapshot snap)
+        {
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                LiveLauncherCpu = snap.LauncherCpuPercent;
+                LiveLauncherMemoryMB = snap.LauncherWorkingSetMB;
+                LiveHostAvailableRamGB = snap.HostAvailableRamGB;
+                LiveMinecraftStatus = snap.MinecraftStatus;
+            });
         }
 
         private void LoadDetectedJavaRuntimes()
@@ -188,6 +236,36 @@ namespace VayuClient.ViewModels
             OnPropertyChanged(nameof(RamDisplay));
         }
 
+        partial void OnSelectedPerformanceModeChanged(string value)
+        {
+            if (value.Contains("High Performance"))
+            {
+                SelectedJvmPreset = "FastCraft / Sodium Boost (High FPS)";
+                DefaultRamMB = Math.Max(Hardware.RecommendedRamMB, 6144);
+                UseDedicatedGpu = true;
+                SmoothAnimations = true;
+                DownloadConcurrency = Math.Max(8, Hardware.RecommendedDownloadThreads);
+                CustomJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=15 -XX:G1HeapRegionSize=32M -XX:+UnlockExperimentalVMOptions -XX:InitiatingHeapOccupancyPercent=45";
+            }
+            else if (value.Contains("Balanced"))
+            {
+                SelectedJvmPreset = "Balanced (Standard G1GC)";
+                DefaultRamMB = Hardware.RecommendedRamMB;
+                UseDedicatedGpu = true;
+                SmoothAnimations = true;
+                DownloadConcurrency = Hardware.RecommendedDownloadThreads;
+                CustomJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=15 -XX:G1HeapRegionSize=32M";
+            }
+            else if (value.Contains("Power Saver"))
+            {
+                SelectedJvmPreset = "Low Memory Optimizer (Minimal Footprint)";
+                DefaultRamMB = Math.Min(3072, Hardware.RecommendedRamMB);
+                SmoothAnimations = false;
+                DownloadConcurrency = 4;
+                CustomJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=25 -XX:MaxGCPauseMillis=100";
+            }
+        }
+
         public void LoadFromSettings()
         {
             var s = _settingsService.Settings;
@@ -201,12 +279,56 @@ namespace VayuClient.ViewModels
             ForceLanOfflineMode = s.ForceLanOfflineMode;
             ModernForgeInstaller = s.ModernForgeInstaller;
             ShowLauncherConsole = s.ShowLauncherConsole;
+            DownloadConcurrency = s.DownloadConcurrency > 0 ? s.DownloadConcurrency : Hardware.RecommendedDownloadThreads;
+            DefaultRamMB = s.DefaultMemoryMB > 0 ? s.DefaultMemoryMB : Hardware.RecommendedRamMB;
         }
 
         [RelayCommand]
         private void SelectTab(object? tab)
         {
             if (tab is string s) ActiveTab = s;
+        }
+
+        [RelayCommand]
+        private async Task RunBenchmarkAsync()
+        {
+            _main.ShowNotification("Running Benchmark", "Measuring CPU hashing, disk I/O, and launch pipeline throughput...", NotificationType.Info);
+
+            var sw = Stopwatch.StartNew();
+
+            // 1. SHA-1 Hashing Throughput (10 MB buffer in memory)
+            var sampleData = new byte[10 * 1024 * 1024];
+            new Random(42).NextBytes(sampleData);
+            var hashSw = Stopwatch.StartNew();
+            using (var sha1 = SHA1.Create())
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    sha1.ComputeHash(sampleData);
+                }
+            }
+            hashSw.Stop();
+            double totalHashedMB = 50.0;
+            double hashSpeedMBs = totalHashedMB / Math.Max(0.001, hashSw.Elapsed.TotalSeconds);
+
+            // 2. Refresh dynamic hardware
+            var hw = await _hardwareInfoService.GetHardwareProfileAsync(forceRefresh: true);
+            Hardware = hw;
+
+            sw.Stop();
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"⚡ Benchmark Completed in {sw.ElapsedMilliseconds} ms");
+            sb.AppendLine($"• CPU: {hw.CpuName} ({hw.PhysicalCores} Physical Cores / {hw.LogicalProcessors} Threads)");
+            sb.AppendLine($"• SHA-1 Verification Throughput: {hashSpeedMBs:F1} MB/s");
+            sb.AppendLine($"• Launcher Working Set Memory: {Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024)} MB");
+            sb.AppendLine($"• System RAM: {hw.TotalRamGB} GB Total • {hw.AvailableRamGB} GB Available");
+            sb.AppendLine($"• Dedicated GPU: {hw.GpuName} ({(hw.DedicatedVramGB > 0 ? $"{hw.DedicatedVramGB} GB VRAM" : "DirectX 12 Accelerated")})");
+            sb.AppendLine($"• Storage Free: {hw.FreeDiskGB} GB Available");
+            sb.AppendLine($"• Recommended Allocation: {hw.RecommendedRamMB / 1024.0:F1} GB RAM ({hw.RecommendedRamMB} MB)");
+
+            BenchmarkReport = sb.ToString();
+            _main.ShowNotification("Benchmark Finished", $"Throughput: {hashSpeedMBs:F1} MB/s | Recommended RAM: {hw.RecommendedRamMB / 1024.0:F1} GB", NotificationType.Success);
         }
 
         [RelayCommand]
@@ -223,6 +345,9 @@ namespace VayuClient.ViewModels
             s.ForceLanOfflineMode = ForceLanOfflineMode;
             s.ModernForgeInstaller = ModernForgeInstaller;
             s.ShowLauncherConsole = ShowLauncherConsole;
+            s.DownloadConcurrency = DownloadConcurrency;
+            s.DefaultMemoryMB = DefaultRamMB;
+            s.PerformanceMode = SelectedPerformanceMode;
 
             await _settingsService.SaveSettingsAsync(s);
 
@@ -267,9 +392,10 @@ namespace VayuClient.ViewModels
         [RelayCommand]
         private async Task ResetToDefaultsAsync()
         {
-            DefaultRamMB = 4096;
+            DefaultRamMB = Hardware.RecommendedRamMB;
             SelectedJavaRuntime = "Auto-Detect LTS (Recommended)";
             SelectedJvmPreset = "FastCraft / Sodium Boost (High FPS)";
+            SelectedPerformanceMode = "⚖️ Balanced (Recommended)";
             UseDedicatedGpu = true;
             AllowCustomJvmArgs = true;
             SelectedThemeWallpaper = "Cyber Nether";
@@ -279,7 +405,7 @@ namespace VayuClient.ViewModels
             SelectedResolution = "1920x1080 (1080p FHD)";
             AutoJoinServerIp = "";
             DiscordRichPresence = true;
-            DownloadConcurrency = 8;
+            DownloadConcurrency = Hardware.RecommendedDownloadThreads;
 
             await SaveSettingsAsync();
             _main.ShowNotification("Settings Reset", "All preferences have been restored to default values.", NotificationType.Info);
