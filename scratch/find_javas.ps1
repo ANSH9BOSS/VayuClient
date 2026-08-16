@@ -1,0 +1,1 @@
+Get-ChildItem -Path "$env:ProgramFiles\Java", "$env:ProgramFiles\Eclipse Adoptium", "$env:ProgramFiles\Microsoft\jdk*", "$env:LOCALAPPDATA\Programs\Common\Oracle\Java", "$env:APPDATA\.minecraft\runtime" -Recurse -Filter "java.exe" -ErrorAction SilentlyContinue | Select-Object FullName

@@ -112,20 +112,17 @@ namespace VayuClient.Services.Launch
                 }
             }
 
-            // Add user additional JVM args if any (split by whitespace so each flag is passed individually)
+            // Add user additional JVM args if any
             if (parameters.AdditionalJvmArgs != null)
             {
                 foreach (var arg in parameters.AdditionalJvmArgs)
                 {
                     if (string.IsNullOrWhiteSpace(arg)) continue;
-                    var tokens = arg.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var token in tokens)
+                    var trimmed = arg.Trim();
+                    if (trimmed == "-cp" || trimmed == "-classpath") continue;
+                    if (!jvmArgs.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
                     {
-                        if (token == "-cp" || token == "-classpath") continue;
-                        if (!jvmArgs.Contains(token, StringComparer.OrdinalIgnoreCase))
-                        {
-                            jvmArgs.Add(token);
-                        }
+                        jvmArgs.Add(trimmed);
                     }
                 }
             }
@@ -302,14 +299,11 @@ namespace VayuClient.Services.Launch
             var resolved = ReplaceTokens(rawArg, tokenMap);
             if (!string.IsNullOrWhiteSpace(resolved))
             {
-                var tokens = resolved.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var token in tokens)
+                var trimmedVal = resolved.Trim();
+                if (trimmedVal == "-cp" || trimmedVal == "-classpath") return;
+                if (!jvmArgs.Contains(trimmedVal, StringComparer.OrdinalIgnoreCase))
                 {
-                    if (token == "-cp" || token == "-classpath") continue;
-                    if (!jvmArgs.Contains(token, StringComparer.OrdinalIgnoreCase))
-                    {
-                        jvmArgs.Add(token);
-                    }
+                    jvmArgs.Add(trimmedVal);
                 }
             }
         }

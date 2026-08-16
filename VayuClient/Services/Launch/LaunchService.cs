@@ -264,15 +264,72 @@ namespace VayuClient.Services.Launch
                     javaCandidates.Add(Path.Combine(dirName, "javaw.exe"));
                 }
 
-                // Add any other compatible installed runtimes (strictly <= 22 to prevent ASM class file version 69 crash)
+                // Add any other compatible installed runtimes
                 var allRuntimes = _javaService.DetectInstalledRuntimes();
-                foreach (var rt in allRuntimes.Where(r => r.MajorVersion >= javaRuntime.MajorVersion && r.MajorVersion <= 22))
+                foreach (var rt in allRuntimes.Where(r => r.MajorVersion >= javaRuntime.MajorVersion))
                 {
                     if (!javaCandidates.Contains(rt.Path, StringComparer.OrdinalIgnoreCase))
                     {
                         javaCandidates.Add(rt.Path);
                     }
                 }
+
+                // Build JVM and game command line with safe Windows quoting
+                var sbArgs = new StringBuilder();
+                foreach (var jvmArg in argsResult.JvmArguments)
+                {
+                    if (string.IsNullOrWhiteSpace(jvmArg)) continue;
+                    if (jvmArg.StartsWith("-D", StringComparison.OrdinalIgnoreCase) && jvmArg.Contains('='))
+                    {
+                        int eqIndex = jvmArg.IndexOf('=');
+                        string key = jvmArg.Substring(0, eqIndex);
+                        string val = jvmArg.Substring(eqIndex + 1);
+                        if (val.StartsWith("\"") && val.EndsWith("\""))
+                        {
+                            sbArgs.Append($"{key}={val} ");
+                        }
+                        else if (val.Contains(' '))
+                        {
+                            sbArgs.Append($"{key}=\"{val}\" ");
+                        }
+                        else
+                        {
+                            sbArgs.Append($"{key}={val} ");
+                        }
+                    }
+                    else if (jvmArg == "-cp" || jvmArg == "-classpath")
+                    {
+                        sbArgs.Append($"{jvmArg} ");
+                    }
+                    else
+                    {
+                        if (jvmArg.Contains(' ') && !jvmArg.StartsWith("\""))
+                        {
+                            sbArgs.Append($"\"{jvmArg}\" ");
+                        }
+                        else
+                        {
+                            sbArgs.Append($"{jvmArg} ");
+                        }
+                    }
+                }
+
+                sbArgs.Append($"{argsResult.MainClass} ");
+
+                foreach (var gameArg in argsResult.GameArguments)
+                {
+                    if (string.IsNullOrWhiteSpace(gameArg)) continue;
+                    if (gameArg.Contains(' ') && !gameArg.StartsWith("\""))
+                    {
+                        sbArgs.Append($"\"{gameArg}\" ");
+                    }
+                    else
+                    {
+                        sbArgs.Append($"{gameArg} ");
+                    }
+                }
+
+                string finalArguments = sbArgs.ToString().TrimEnd();
 
                 Exception? lastLaunchEx = null;
                 foreach (var javaPath in javaCandidates)
@@ -284,22 +341,13 @@ namespace VayuClient.Services.Launch
                         var startInfo = new ProcessStartInfo
                         {
                             FileName = javaPath,
+                            Arguments = finalArguments,
                             WorkingDirectory = instance.GameDirectory,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
                             CreateNoWindow = true
                         };
-
-                        foreach (var jvmArg in argsResult.JvmArguments)
-                        {
-                            startInfo.ArgumentList.Add(jvmArg);
-                        }
-                        startInfo.ArgumentList.Add(argsResult.MainClass);
-                        foreach (var gameArg in argsResult.GameArguments)
-                        {
-                            startInfo.ArgumentList.Add(gameArg);
-                        }
 
                         var p = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
 

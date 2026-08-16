@@ -160,16 +160,16 @@ namespace VayuClient.Services.Java
         {
             if (manifestMajorVersion > 0)
             {
-                // Mod loaders (Fabric, Forge, NeoForge, Quilt) use ASM which currently only supports up to Java 21/22 bytecode (class version <= 66).
-                // Java 25 preview produces class version 69 which crashes Fabric ClassReader.
-                if (manifestMajorVersion > 21)
-                {
-                    return 21;
-                }
                 return manifestMajorVersion;
             }
 
-            // Modern snapshot / 26.x or 1.20.5+
+            // Minecraft 26.x requires Java 25
+            if (MinecraftVersionComparer.CompareVersionStrings(minecraftVersion, "26") >= 0)
+            {
+                return 25;
+            }
+
+            // Modern 1.20.5+
             if (MinecraftVersionComparer.CompareVersionStrings(minecraftVersion, "1.20.5") >= 0)
             {
                 return 21;
@@ -196,31 +196,36 @@ namespace VayuClient.Services.Java
             var runtimes = DetectInstalledRuntimes();
             if (runtimes.Count == 0) return null;
 
-            // Strict cap to Java 21 LTS: Prevents picking Java 25 (bytecode 69) which breaks Fabric/Forge ASM reader
-            int targetMajor = requiredMajorVersion > 21 ? 21 : requiredMajorVersion;
-
-            // 1. Exact match for target LTS version (e.g. 21 == 21, 17 == 17, 8 == 8)
-            var exact = runtimes.FirstOrDefault(r => r.MajorVersion == targetMajor && r.Is64Bit);
+            // 1. Exact match for required version (e.g. 25, 21, 17, 8)
+            var exact = runtimes.FirstOrDefault(r => r.MajorVersion == requiredMajorVersion && r.Is64Bit);
             if (exact != null) return exact;
 
-            // 2. For Java >= 21 (Minecraft 1.20.5+ / 26.x): Strictly Java 21 LTS or 22
-            if (targetMajor >= 21)
+            // 2. For Java >= 25 (Minecraft 26+): Java >= 25
+            if (requiredMajorVersion >= 25)
             {
-                var stableModern = runtimes.FirstOrDefault(r => r.MajorVersion == 21 && r.Is64Bit)
-                                   ?? runtimes.FirstOrDefault(r => r.MajorVersion == 22 && r.Is64Bit);
-                if (stableModern != null) return stableModern;
+                var java25 = runtimes.FirstOrDefault(r => r.MajorVersion >= 25 && r.Is64Bit)
+                             ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 25);
+                if (java25 != null) return java25;
             }
 
-            // 3. For Java 17 (Minecraft 1.18 - 1.20.4): Java 17 or 21
-            if (targetMajor == 17)
+            // 3. For Java 21 (Minecraft 1.20.5 - 1.21.x): Java 21 or 22
+            if (requiredMajorVersion == 21)
+            {
+                var java21 = runtimes.FirstOrDefault(r => r.MajorVersion == 21 && r.Is64Bit)
+                             ?? runtimes.FirstOrDefault(r => r.MajorVersion == 22 && r.Is64Bit);
+                if (java21 != null) return java21;
+            }
+
+            // 4. For Java 17 (Minecraft 1.18 - 1.20.4): Java 17 or 21
+            if (requiredMajorVersion == 17)
             {
                 var java17 = runtimes.FirstOrDefault(r => r.MajorVersion == 17 && r.Is64Bit)
                              ?? runtimes.FirstOrDefault(r => r.MajorVersion == 21 && r.Is64Bit);
                 if (java17 != null) return java17;
             }
 
-            // 4. For Java 16: Java 16, 17 or 21
-            if (targetMajor == 16)
+            // 5. For Java 16: Java 16, 17 or 21
+            if (requiredMajorVersion == 16)
             {
                 var java16 = runtimes.FirstOrDefault(r => r.MajorVersion == 16 && r.Is64Bit)
                              ?? runtimes.FirstOrDefault(r => r.MajorVersion == 17 && r.Is64Bit)
@@ -228,20 +233,18 @@ namespace VayuClient.Services.Java
                 if (java16 != null) return java16;
             }
 
-            // 5. For legacy Java 8: Java 8 or 11
-            if (targetMajor <= 8)
+            // 6. For legacy Java 8: Java 8 or 11
+            if (requiredMajorVersion <= 8)
             {
                 var java8 = runtimes.FirstOrDefault(r => r.MajorVersion == 8 && r.Is64Bit)
                             ?? runtimes.FirstOrDefault(r => r.MajorVersion == 11 && r.Is64Bit);
                 if (java8 != null) return java8;
             }
 
-            // 6. Safe fallback (strictly avoid preview versions > 22 unless no other 64-bit runtime exists)
-            var safeFallback = runtimes.FirstOrDefault(r => r.MajorVersion >= targetMajor && r.MajorVersion <= 22 && r.Is64Bit)
-                               ?? runtimes.FirstOrDefault(r => r.Is64Bit && r.MajorVersion <= 22)
-                               ?? runtimes.FirstOrDefault(r => r.Is64Bit)
-                               ?? runtimes.FirstOrDefault();
-            return safeFallback;
+            // 7. Safe fallback
+            return runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion && r.Is64Bit)
+                   ?? runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion)
+                   ?? runtimes.First();
         }
 
         private static void AddJavaExeIfValid(HashSet<string> paths, string path)

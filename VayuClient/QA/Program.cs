@@ -191,7 +191,7 @@ namespace VayuClient.QA
                 int req112 = javaService.GetRequiredJavaVersion("1.12.2");
 
                 Log($" -> Required Java mapping: 26.2 -> Java {req26}, 1.21.4 -> Java {req121}, 1.18.2 -> Java {req118}, 1.17.1 -> Java {req117}, 1.12.2 -> Java {req112}");
-                if (req26 != 21 || req121 != 21 || req118 != 17 || req117 != 16 || req112 != 8)
+                if (req26 != 25 || req121 != 21 || req118 != 17 || req117 != 16 || req112 != 8)
                 {
                     throw new Exception("Java version mapping logic failed!");
                 }
@@ -951,18 +951,18 @@ namespace VayuClient.QA
                 var jService = ServiceLocator.Resolve<Services.Java.IJavaRuntimeService>();
                 var mpInstaller = ServiceLocator.Resolve<Services.Modpack.IModpackInstaller>();
 
-                // 1. Verify Java 25 -> 21 Cap
-                int cappedJava = jService.GetRequiredJavaVersion("26.2", 25);
-                if (cappedJava > 21)
+                // 1. Verify Java 25 for Minecraft 26.2
+                int reqJava = jService.GetRequiredJavaVersion("26.2", 25);
+                if (reqJava < 25)
                 {
-                    throw new Exception($"Expected Java version to be capped at 21, but got {cappedJava}!");
+                    throw new Exception($"Expected Java version to be 25 for Minecraft 26.2, but got {reqJava}!");
                 }
-                var selectedRuntime = jService.FindCompatibleRuntime(cappedJava);
-                if (selectedRuntime == null || selectedRuntime.MajorVersion > 22)
+                var selectedRuntime = jService.FindCompatibleRuntime(reqJava);
+                if (selectedRuntime == null || selectedRuntime.MajorVersion < 25)
                 {
-                    throw new Exception($"Selected runtime is unsafe for Fabric/ASM! Version: {selectedRuntime?.MajorVersion}");
+                    throw new Exception($"Selected runtime is unsafe for Minecraft 26.2 / Fabric 26.2! Version: {selectedRuntime?.MajorVersion}");
                 }
-                Log($" -> Verified Java Safety: MC 26.2 capped to Java {cappedJava} (Selected: {selectedRuntime.DisplayName})");
+                Log($" -> Verified Java Safety: MC 26.2 mapped to Java {reqJava} (Selected: {selectedRuntime.DisplayName})");
 
                 // 2. Verify Universal Archive Import on test archive or 26.2.zip
                 string sampleZip = @"C:\Users\ANSH\Downloads\26.2.zip";
