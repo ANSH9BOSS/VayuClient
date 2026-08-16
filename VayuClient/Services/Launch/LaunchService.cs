@@ -151,27 +151,42 @@ namespace VayuClient.Services.Launch
                 Log($"Fetching Mojang version package for {instance.MinecraftVersion}...");
                 var pkg = await _minecraftInstaller.GetVersionPackageAsync(instance.MinecraftVersion, ct);
 
-                // 4. Resolve Java Runtime
+                // 4. Progress Reporter for Downloads & Installation
+                var progressReporter = new Progress<DownloadProgressInfo>(p =>
+                {
+                    CurrentProgress = p;
+                    DownloadProgressChanged?.Invoke(p);
+                });
+
+                // 5. Resolve Java Runtime (Auto-Install if missing)
                 int requiredJava = _javaService.GetRequiredJavaVersion(instance.MinecraftVersion, pkg.JavaVersion?.MajorVersion ?? 0);
                 Log($"Required Java Major Version: {requiredJava}");
 
                 var javaRuntime = _javaService.FindCompatibleRuntime(requiredJava);
                 if (javaRuntime == null)
                 {
-                    var msg = $"No compatible Java runtime found. Minecraft {instance.MinecraftVersion} requires 64-bit Java {requiredJava}+.";
+                    SetState(LaunchState.Downloading, $"Java {requiredJava} not found on this computer. Automatically installing standalone OpenJDK Java {requiredJava}...");
+                    Log($"Java {requiredJava} not found. Initiating automated Java runtime download and installation...");
+
+                    try
+                    {
+                        javaRuntime = await _javaService.EnsureJavaRuntimeAsync(requiredJava, progressReporter, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"ERROR during automatic Java installation: {ex.Message}");
+                    }
+                }
+
+                if (javaRuntime == null)
+                {
+                    var msg = $"No compatible Java runtime found and automated installation failed. Minecraft {instance.MinecraftVersion} requires 64-bit Java {requiredJava}+.";
                     SetState(LaunchState.Failed, msg);
                     Log($"ERROR: {msg}");
                     return false;
                 }
 
                 Log($"Selected Java Runtime: {javaRuntime.DisplayName} at {javaRuntime.Path}");
-
-                // 5. Progress Reporter for Downloads & Installation
-                var progressReporter = new Progress<DownloadProgressInfo>(p =>
-                {
-                    CurrentProgress = p;
-                    DownloadProgressChanged?.Invoke(p);
-                });
 
                 // 6. Install Minecraft Version (Client, Libraries, Natives, Assets)
                 SetState(LaunchState.Downloading, $"Installing Minecraft {instance.MinecraftVersion} files...");

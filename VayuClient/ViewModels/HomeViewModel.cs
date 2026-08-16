@@ -281,7 +281,7 @@ namespace VayuClient.ViewModels
 
                     var reqJava = _javaService.GetRequiredJavaVersion(activeInstance.MinecraftVersion);
                     var java = _javaService.FindCompatibleRuntime(reqJava);
-                    JavaStatusText = java != null ? $"Java {java.MajorVersion} Auto-Detected" : $"Java {reqJava} Recommended";
+                    JavaStatusText = java != null ? $"Java {java.MajorVersion} Auto-Detected" : $"Java {reqJava} (Auto-Installs on Play)";
                 }
                 else
                 {

@@ -27,3 +27,4 @@ qa_runtime_results.txt
 VayuClientSetup/Resources/*.zip
 upload_to_github.ps1
 *.secret
+scratch/

@@ -2,9 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Win32;
+using Newtonsoft.Json.Linq;
 using VayuClient.Models;
 using VayuClient.Services.Version;
 
@@ -83,17 +88,19 @@ namespace VayuClient.Services.Java
                     }
                 }
 
-                // 4. Mojang Launcher runtimes
+                // 4. Mojang & VayuClient Launcher runtimes
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-                var mojangRuntimeDirs = new[]
+                var managedRuntimeDirs = new[]
                 {
+                    Path.Combine(appData, "VayuClient", "runtimes"),
+                    Path.Combine(localAppData, "VayuClient", "runtimes"),
                     Path.Combine(appData, ".minecraft", "runtime"),
                     Path.Combine(localAppData, "Packages", "Microsoft.4297127D64C57_8wekyb3d8bbwe", "LocalCache", "Local", "runtime")
                 };
 
-                foreach (var mDir in mojangRuntimeDirs)
+                foreach (var mDir in managedRuntimeDirs)
                 {
                     if (Directory.Exists(mDir))
                     {
@@ -101,8 +108,14 @@ namespace VayuClient.Services.Java
                         {
                             foreach (var compDir in Directory.GetDirectories(mDir))
                             {
+                                AddJavaExeIfValid(candidatePaths, Path.Combine(compDir, "bin", "javaw.exe"));
+                                AddJavaExeIfValid(candidatePaths, Path.Combine(compDir, "bin", "java.exe"));
+
                                 foreach (var archDir in Directory.GetDirectories(compDir))
                                 {
+                                    AddJavaExeIfValid(candidatePaths, Path.Combine(archDir, "bin", "javaw.exe"));
+                                    AddJavaExeIfValid(candidatePaths, Path.Combine(archDir, "bin", "java.exe"));
+
                                     foreach (var sub in Directory.GetDirectories(archDir))
                                     {
                                         AddJavaExeIfValid(candidatePaths, Path.Combine(sub, "bin", "javaw.exe"));
@@ -325,6 +338,259 @@ namespace VayuClient.Services.Java
             catch
             {
                 return null;
+            }
+        }
+
+        public async Task<JavaRuntimeInfo?> EnsureJavaRuntimeAsync(
+            int requiredMajorVersion,
+            IProgress<DownloadProgressInfo>? progress = null,
+            CancellationToken ct = default)
+        {
+            // 1. Check if already compatible runtime installed on PC
+            var existing = FindCompatibleRuntime(requiredMajorVersion);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var runtimesRoot = Path.Combine(appData, "VayuClient", "runtimes");
+            Directory.CreateDirectory(runtimesRoot);
+
+            var targetDir = Path.Combine(runtimesRoot, $"java-{requiredMajorVersion}");
+
+            // 2. Check if target directory already has a valid runtime on disk
+            if (Directory.Exists(targetDir))
+            {
+                var existingExe = FindJavaExeInDirectory(targetDir);
+                if (!string.IsNullOrEmpty(existingExe))
+                {
+                    var probed = ProbeJavaRuntime(existingExe);
+                    if (probed != null && probed.MajorVersion >= requiredMajorVersion)
+                    {
+                        lock (_lock)
+                        {
+                            _cachedRuntimes?.Insert(0, probed);
+                        }
+                        return probed;
+                    }
+                }
+            }
+
+            Directory.CreateDirectory(targetDir);
+
+            // 3. Download standalone OpenJDK JRE / JDK archive
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("VayuClient/1.4.0 (Windows x64)");
+
+            string? tempZip = null;
+            try
+            {
+                // Try Adoptium Temurin official OpenJDK builds first
+                string downloadUrl;
+                if (requiredMajorVersion == 21)
+                {
+                    downloadUrl = "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse";
+                }
+                else if (requiredMajorVersion == 17)
+                {
+                    downloadUrl = "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse";
+                }
+                else if (requiredMajorVersion <= 8)
+                {
+                    downloadUrl = "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x64/jre/hotspot/normal/eclipse";
+                }
+                else if (requiredMajorVersion >= 25)
+                {
+                    // Check Mojang's official all.json runtime manifest for java-runtime-epsilon
+                    downloadUrl = await ResolveMojangRuntimeManifestUrlAsync("java-runtime-epsilon", httpClient, ct)
+                        ?? "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse";
+                }
+                else
+                {
+                    downloadUrl = $"https://api.adoptium.net/v3/binary/latest/{requiredMajorVersion}/ga/windows/x64/jre/hotspot/normal/eclipse";
+                }
+
+                // If downloadUrl is a Mojang package manifest JSON
+                if (downloadUrl.EndsWith(".json", StringComparison.OrdinalIgnoreCase) || downloadUrl.Contains("piston-meta"))
+                {
+                    await DownloadMojangRuntimeFilesAsync(downloadUrl, targetDir, httpClient, progress, ct);
+                }
+                else
+                {
+                    // Standard Zip download & extraction
+                    tempZip = Path.Combine(Path.GetTempPath(), $"vayu_java_{requiredMajorVersion}_{Guid.NewGuid():N}.zip");
+                    await DownloadFileWithProgressAsync(httpClient, downloadUrl, tempZip, $"OpenJDK {requiredMajorVersion}", progress, ct);
+
+                    // Extract zip to targetDir
+                    ZipFile.ExtractToDirectory(tempZip, targetDir, overwriteFiles: true);
+                }
+
+                // 4. Locate javaw.exe or java.exe in targetDir
+                var installedExe = FindJavaExeInDirectory(targetDir);
+                if (string.IsNullOrEmpty(installedExe))
+                {
+                    throw new FileNotFoundException($"Could not locate javaw.exe inside {targetDir} after extraction.");
+                }
+
+                var runtimeInfo = ProbeJavaRuntime(installedExe);
+                if (runtimeInfo == null)
+                {
+                    runtimeInfo = new JavaRuntimeInfo
+                    {
+                        Path = installedExe,
+                        Version = $"{requiredMajorVersion}.0.0",
+                        MajorVersion = requiredMajorVersion,
+                        Vendor = "VayuClient Managed OpenJDK",
+                        Is64Bit = true,
+                        Architecture = "x64"
+                    };
+                }
+
+                lock (_lock)
+                {
+                    _cachedRuntimes?.Insert(0, runtimeInfo);
+                }
+
+                return runtimeInfo;
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(tempZip) && File.Exists(tempZip))
+                {
+                    try { File.Delete(tempZip); } catch { }
+                }
+            }
+        }
+
+        private static string? FindJavaExeInDirectory(string rootDir)
+        {
+            if (!Directory.Exists(rootDir)) return null;
+
+            // Direct bin/javaw.exe
+            var direct = Path.Combine(rootDir, "bin", "javaw.exe");
+            if (File.Exists(direct)) return direct;
+            var directJava = Path.Combine(rootDir, "bin", "java.exe");
+            if (File.Exists(directJava)) return directJava;
+
+            // Recursive search
+            try
+            {
+                var files = Directory.GetFiles(rootDir, "javaw.exe", SearchOption.AllDirectories);
+                if (files.Length > 0) return files[0];
+
+                var javaFiles = Directory.GetFiles(rootDir, "java.exe", SearchOption.AllDirectories);
+                if (javaFiles.Length > 0) return javaFiles[0];
+            }
+            catch { }
+
+            return null;
+        }
+
+        private static async Task DownloadFileWithProgressAsync(
+            HttpClient httpClient,
+            string url,
+            string destinationPath,
+            string itemName,
+            IProgress<DownloadProgressInfo>? progress,
+            CancellationToken ct)
+        {
+            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
+
+            var totalBytes = response.Content.Headers.ContentLength ?? 0L;
+            await using var contentStream = await response.Content.ReadAsStreamAsync(ct);
+            await using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+
+            var buffer = new byte[81920];
+            long totalRead = 0;
+            int read;
+
+            while ((read = await contentStream.ReadAsync(buffer.AsMemory(0, buffer.Length), ct)) > 0)
+            {
+                await fileStream.WriteAsync(buffer.AsMemory(0, read), ct);
+                totalRead += read;
+
+                if (progress != null)
+                {
+                    progress.Report(new DownloadProgressInfo
+                    {
+                        TotalBytes = totalBytes,
+                        BytesReceived = totalRead,
+                        CurrentFileName = itemName,
+                        CurrentOperation = $"Downloading {itemName} ({(totalRead / (1024.0 * 1024.0)):F1} MB / {(totalBytes > 0 ? (totalBytes / (1024.0 * 1024.0)).ToString("F1") : "...")} MB)"
+                    });
+                }
+            }
+        }
+
+        private static async Task<string?> ResolveMojangRuntimeManifestUrlAsync(string runtimeName, HttpClient client, CancellationToken ct)
+        {
+            try
+            {
+                var allJson = await client.GetStringAsync("https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", ct);
+                var root = JObject.Parse(allJson);
+                var win64 = root["windows-x64"]?[runtimeName] as JArray;
+                if (win64 != null && win64.Count > 0)
+                {
+                    return win64[0]?["manifest"]?["url"]?.ToString();
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private static async Task DownloadMojangRuntimeFilesAsync(
+            string manifestUrl,
+            string targetDir,
+            HttpClient client,
+            IProgress<DownloadProgressInfo>? progress,
+            CancellationToken ct)
+        {
+            var manifestJson = await client.GetStringAsync(manifestUrl, ct);
+            var manifest = JObject.Parse(manifestJson);
+            var files = manifest["files"] as JObject;
+            if (files == null) return;
+
+            int totalCount = files.Count;
+            int currentCount = 0;
+
+            foreach (var prop in files.Properties())
+            {
+                ct.ThrowIfCancellationRequested();
+                var relPath = prop.Name.Replace('/', Path.DirectorySeparatorChar);
+                var fullPath = Path.Combine(targetDir, relPath);
+                var fileObj = prop.Value as JObject;
+                var type = fileObj?["type"]?.ToString();
+
+                if (type == "directory")
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
+                else if (type == "file")
+                {
+                    var rawUrl = fileObj?["downloads"]?["raw"]?["url"]?.ToString();
+                    if (!string.IsNullOrEmpty(rawUrl))
+                    {
+                        var dir = Path.GetDirectoryName(fullPath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+                        if (!File.Exists(fullPath))
+                        {
+                            var bytes = await client.GetByteArrayAsync(rawUrl, ct);
+                            await File.WriteAllBytesAsync(fullPath, bytes, ct);
+                        }
+                    }
+                }
+
+                currentCount++;
+                progress?.Report(new DownloadProgressInfo
+                {
+                    TotalFiles = totalCount,
+                    CompletedFiles = currentCount,
+                    CurrentFileName = Path.GetFileName(fullPath),
+                    CurrentOperation = $"Installing Java files ({currentCount}/{totalCount})..."
+                });
             }
         }
     }
