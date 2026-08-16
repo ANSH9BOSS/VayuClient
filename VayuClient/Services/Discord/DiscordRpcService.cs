@@ -13,8 +13,8 @@ namespace VayuClient.Services.Discord
 {
     public class DiscordRpcService : IDiscordRpcService
     {
-        // Verified registered Discord Application Client ID for Minecraft / VayuClient
-        private const string DefaultClientId = "356875570916753438";
+        // Verified registered Discord Application Client ID for VayuClient (Owner: ANSH9BOSS)
+        private const string DefaultClientId = "1538504622652661830";
         private const int HandshakeOpcode = 0;
         private const int FrameOpcode = 1;
         private const int CloseOpcode = 2;
@@ -30,9 +30,9 @@ namespace VayuClient.Services.Discord
         private string _clientId = DefaultClientId;
         private string _currentDetails = "In Launcher • Managing Instances & Mods";
         private string _currentState = "Owned & Developed by ANSH9BOSS";
-        private string? _currentLargeKey = "minecraft";
+        private string? _currentLargeKey = "vayu_logo";
         private string? _currentLargeText = $"VayuClient v{AppInfo.VersionString}";
-        private string? _currentSmallKey = "grass";
+        private string? _currentSmallKey = "vayu_logo";
         private string? _currentSmallText = "Developer: ANSH9BOSS";
         private DateTime? _currentStartTime;
 
@@ -43,13 +43,17 @@ namespace VayuClient.Services.Discord
             get => _clientId;
             set
             {
-                if (!string.IsNullOrWhiteSpace(value) && _clientId != value)
+                if (_clientId != value && !string.IsNullOrWhiteSpace(value))
                 {
                     _clientId = value.Trim();
                     if (_isInitialized)
                     {
-                        ClosePipe();
-                        TryConnect();
+                        Task.Run(async () =>
+                        {
+                            ClosePipe();
+                            await Task.Delay(200);
+                            TryConnect();
+                        });
                     }
                 }
             }
@@ -60,12 +64,42 @@ namespace VayuClient.Services.Discord
             get => _isEnabled;
             set
             {
-                _isEnabled = value;
-                if (!_isEnabled)
+                if (_isEnabled != value)
                 {
-                    ClearPresence();
+                    _isEnabled = value;
+                    if (_isEnabled)
+                    {
+                        if (!IsConnected)
+                        {
+                            Task.Run(TryConnect);
+                        }
+                        else
+                        {
+                            PushPresence();
+                        }
+                    }
+                    else
+                    {
+                        ClearPresence();
+                    }
                 }
-                else if (_isInitialized)
+            }
+        }
+
+        public void SetEnabled(bool enabled)
+        {
+            IsEnabled = enabled;
+            if (!enabled)
+            {
+                ClearPresence();
+            }
+            else
+            {
+                if (!IsConnected)
+                {
+                    Task.Run(TryConnect);
+                }
+                else
                 {
                     PushPresence();
                 }
@@ -94,9 +128,9 @@ namespace VayuClient.Services.Discord
             UpdatePresence(
                 details: "In Launcher • Managing Instances & Mods",
                 state: "Owned & Developed by ANSH9BOSS",
-                largeImageKey: "minecraft",
+                largeImageKey: "vayu_logo",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",
-                smallImageKey: "grass",
+                smallImageKey: "vayu_logo",
                 smallImageText: "Developer: ANSH9BOSS",
                 startTime: _sessionStartTime);
         }
@@ -107,9 +141,9 @@ namespace VayuClient.Services.Discord
             UpdatePresence(
                 details: $"Playing {instanceName}",
                 state: $"Minecraft {version}{loaderInfo} • Owned & Developed by ANSH9BOSS",
-                largeImageKey: "minecraft",
+                largeImageKey: "vayu_logo",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",
-                smallImageKey: "grass",
+                smallImageKey: "vayu_logo",
                 smallImageText: "Developer: ANSH9BOSS",
                 startTime: DateTime.UtcNow);
         }
@@ -117,9 +151,9 @@ namespace VayuClient.Services.Discord
         public void UpdatePresence(
             string details,
             string state = "Owned & Developed by ANSH9BOSS",
-            string? largeImageKey = "minecraft",
+            string? largeImageKey = "vayu_logo",
             string? largeImageText = "VayuClient — Modern Minecraft Launcher",
-            string? smallImageKey = "grass",
+            string? smallImageKey = "vayu_logo",
             string? smallImageText = "Developer: ANSH9BOSS",
             DateTime? startTime = null)
         {
