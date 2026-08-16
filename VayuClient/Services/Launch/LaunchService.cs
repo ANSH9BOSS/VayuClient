@@ -103,13 +103,14 @@ namespace VayuClient.Services.Launch
                 try { File.AppendAllText(logFile, line + Environment.NewLine); } catch { }
             }
 
+            MinecraftInstance? instance = null;
             try
             {
                 SetState(LaunchState.Preparing, "Validating instance and profile...");
                 Log("=== VAYUCLIENT MINECRAFT LAUNCH SESSION ===");
 
                 // 1. Resolve Target Instance
-                var instance = string.IsNullOrEmpty(instanceId)
+                instance = string.IsNullOrEmpty(instanceId)
                     ? _instanceService.GetActiveInstance()
                     : _instanceService.GetAllInstances().FirstOrDefault(i => i.InstanceId == instanceId);
 
@@ -423,7 +424,7 @@ namespace VayuClient.Services.Launch
                         Log($"Game process exited with ExitCode: {exitCode}");
                         _activeGameProcess = null;
                         try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
-                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(); } catch { }
+                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
 
                         if (exitCode == 0)
                         {
@@ -431,10 +432,23 @@ namespace VayuClient.Services.Launch
                         }
                         else
                         {
-                            SetState(LaunchState.Failed, $"Minecraft exited unexpectedly (Exit Code: {exitCode}). Check logs for details.");
+                            string crashMsg = $"Minecraft exited unexpectedly (Exit Code: {exitCode}).";
+                            SetState(LaunchState.Failed, crashMsg);
+
+                            // Instant Crash Log Shower
+                            try
+                            {
+                                var (details, logPath) = CrashLogger.GetCrashDetails(instance.GameDirectory, crashMsg);
+                                Views.ErrorDialog.ShowDialogSafe(
+                                    summary: $"Minecraft instance '{instance.Name}' ({instance.MinecraftVersion} {instance.Loader}) crashed with Exit Code {exitCode}.",
+                                    details: details,
+                                    logFilePath: logPath,
+                                    header: $"Minecraft Crashed (Exit Code: {exitCode})");
+                            }
+                            catch { }
                         }
 
-                        await Task.Delay(3000);
+                        await Task.Delay(2500);
                         if (CurrentState == LaunchState.GameClosed)
                         {
                             SetState(LaunchState.Idle, "Ready");
@@ -445,7 +459,7 @@ namespace VayuClient.Services.Launch
                         Log($"Error monitoring process: {ex.Message}");
                         _activeGameProcess = null;
                         try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
-                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(); } catch { }
+                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
                         SetState(LaunchState.Idle, "Ready");
                     }
                 });
@@ -455,7 +469,20 @@ namespace VayuClient.Services.Launch
             catch (Exception ex)
             {
                 Log($"FATAL LAUNCH EXCEPTION: {ex}");
-                SetState(LaunchState.Failed, $"Launch Failed: {ex.Message}");
+                string errorMsg = $"Launch Failed: {ex.Message}";
+                SetState(LaunchState.Failed, errorMsg);
+
+                try
+                {
+                    var (details, logPath) = CrashLogger.GetCrashDetails(instance?.GameDirectory, errorMsg);
+                    Views.ErrorDialog.ShowDialogSafe(
+                        summary: $"Failed to start instance '{instance?.Name ?? "Minecraft"}': {ex.Message}",
+                        details: $"{ex.GetType().FullName}: {ex.Message}\n\nStack Trace:\n{ex.StackTrace}\n\nRecent Logs:\n{details}",
+                        logFilePath: logPath,
+                        header: "Launch Execution Failed");
+                }
+                catch { }
+
                 return false;
             }
         }

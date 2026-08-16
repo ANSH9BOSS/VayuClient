@@ -17,7 +17,7 @@ namespace VayuClient.Services.Discord
             string? smallImageKey = "steve",
             string? smallImageText = "Developer: ANSH9BOSS",
             DateTime? startTime = null);
-        void SetInLauncherPresence();
+        void SetInLauncherPresence(string? instanceName = null, string? version = null, string? loader = null);
         void SetInGamePresence(string instanceName, string version, string loader);
         void ClearPresence();
         void Shutdown();

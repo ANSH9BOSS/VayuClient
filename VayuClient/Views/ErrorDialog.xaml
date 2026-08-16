@@ -1,88 +1,109 @@
 <Window x:Class="VayuClient.Views.ErrorDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="VayuClient — Runtime Diagnostics"
+        Title="VayuClient — Game Crash Diagnostics"
         FontFamily="{StaticResource VayuFontFamily}"
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType"
-        Width="640" Height="440"
+        Width="740" Height="520"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
+        MouseLeftButtonDown="Window_MouseDown"
         WindowStartupLocation="CenterScreen">
 
-    <Border CornerRadius="6" Background="#0B1220" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1">
-        <Grid Margin="20">
+    <Border CornerRadius="8" Background="#090E17" BorderBrush="#DC2626" BorderThickness="1.5">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="25" ShadowDepth="4" Opacity="0.8"/>
+        </Border.Effect>
+        <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>  <!-- Header -->
-                <RowDefinition Height="Auto"/>  <!-- Message -->
-                <RowDefinition Height="*"/>     <!-- Details -->
+                <RowDefinition Height="Auto"/>  <!-- Instance Info / Summary -->
+                <RowDefinition Height="*"/>     <!-- Log Box -->
                 <RowDefinition Height="Auto"/>  <!-- Actions -->
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid Grid.Row="0" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="4"
-                        Background="#25EF4444" BorderBrush="#EF4444" BorderThickness="1"
-                        Margin="0,0,10,0">
-                    <Path Data="{StaticResource VayuIconTrash}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="6"
+                        Background="#33EF4444" BorderBrush="#EF4444" BorderThickness="1.5"
+                        Margin="0,0,12,0">
+                    <TextBlock Text="⚠" FontSize="18" FontWeight="Bold" Foreground="#EF4444" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="VayuClient Diagnostics Notice" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
-                    <TextBlock Text="An exception occurred during execution." FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}"/>
+                    <TextBlock x:Name="TxtHeader" Text="Minecraft Crashed Unexpectedly" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    <TextBlock x:Name="TxtSubHeader" Text="Game process terminated with a non-zero exit code. Live crash analysis below:" FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
 
-                <Button Grid.Column="2" Style="{StaticResource TitleBarCloseButton}" Click="Close_Click">
-                    <TextBlock Text="✕" FontSize="11" Foreground="{StaticResource VayuTextDimBrush}"/>
+                <Button Grid.Column="2" Style="{StaticResource TitleBarCloseButton}" Click="Close_Click" Width="28" Height="28">
+                    <TextBlock Text="✕" FontSize="12" Foreground="{StaticResource VayuTextDimBrush}"/>
                 </Button>
             </Grid>
 
-            <!-- Crash log location info -->
-            <Border Grid.Row="1" CornerRadius="4" Background="#151F32" BorderBrush="#243247" BorderThickness="1"
-                    Padding="12,10" Margin="0,0,0,10">
+            <!-- Crash Analysis & Diagnostic Card -->
+            <Border Grid.Row="1" CornerRadius="6" Background="#111B2B" BorderBrush="#243247" BorderThickness="1"
+                    Padding="14,12" Margin="0,0,0,12">
                 <StackPanel>
-                    <TextBlock x:Name="TxtSummary" Text="VayuClient encountered an unexpected issue." 
-                               FontWeight="SemiBold" FontSize="12.5" Foreground="#FFFFFF" TextWrapping="Wrap"/>
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="#26DC2626" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                            <TextBlock Text="DIAGNOSTIC SUMMARY" FontSize="9.5" FontWeight="Bold" Foreground="#F87171"/>
+                        </Border>
+                        <TextBlock Grid.Column="1" x:Name="TxtSummary" Text="Minecraft exited unexpectedly." 
+                                   FontWeight="SemiBold" FontSize="12.5" Foreground="#FFFFFF" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </Grid>
+                    
                     <TextBlock x:Name="TxtLogLocation" Text="Log location: %APPDATA%\VayuClient\Logs\crash.log" 
-                               FontSize="11" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,3,0,0"/>
+                               FontSize="11" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Border>
 
-            <!-- Error Details Box -->
-            <Border Grid.Row="2" CornerRadius="4" Background="#0F172A" BorderBrush="#243247" BorderThickness="1"
-                    Padding="10" Margin="0,0,0,14">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+            <!-- Monospace Crash Log Details Box -->
+            <Border Grid.Row="2" CornerRadius="6" Background="#060A10" BorderBrush="#1E293B" BorderThickness="1"
+                    Padding="10" Margin="0,0,0,16">
+                <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                               Style="{StaticResource VayuScrollViewer}">
                     <TextBox x:Name="TxtDetails" IsReadOnly="True" TextWrapping="Wrap"
                              Background="Transparent" BorderThickness="0"
-                             Foreground="#E2E8F0" FontFamily="{StaticResource VayuFontMono}" FontSize="11.5"/>
+                             Foreground="#94A3B8" FontFamily="{StaticResource VayuFontMono}" FontSize="11.5"/>
                 </ScrollViewer>
             </Border>
 
-            <!-- Actions -->
+            <!-- Actions Bar -->
             <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="TxtCopyStatus" Text="VayuClient will continue running safely." 
-                           FontSize="11.5" Foreground="{StaticResource VayuSuccessBrush}"
+                <TextBlock x:Name="TxtCopyStatus" Text="VayuClient recovered safely. Review the logs above to resolve mod/Java issues." 
+                           FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}"
                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Style="{StaticResource VayuDarkButton}" Padding="14,6" Margin="0,0,8,0" Click="CopyDetails_Click">
-                        <TextBlock Text="Copy Details" FontSize="11.5"/>
+                    <Button Style="{StaticResource VayuDarkButton}" Padding="12,7" Margin="0,0,8,0" Click="OpenFolder_Click">
+                        <TextBlock Text="📂 Open Folder" FontSize="11.5"/>
                     </Button>
-                    <Button Style="{StaticResource VayuAccentButton}" Padding="16,6" Click="Close_Click">
-                        <TextBlock Text="Dismiss" FontSize="11.5" FontWeight="Bold" Foreground="White"/>
+                    <Button Style="{StaticResource VayuDarkButton}" Padding="12,7" Margin="0,0,8,0" Click="OpenLog_Click">
+                        <TextBlock Text="📄 Open Log" FontSize="11.5"/>
+                    </Button>
+                    <Button Style="{StaticResource VayuDarkButton}" Padding="12,7" Margin="0,0,8,0" Click="CopyDetails_Click">
+                        <TextBlock Text="📋 Copy Log" FontSize="11.5"/>
+                    </Button>
+                    <Button Style="{StaticResource VayuAccentButton}" Padding="18,7" Click="Close_Click">
+                        <TextBlock Text="Close" FontSize="11.5" FontWeight="Bold" Foreground="White"/>
                     </Button>
                 </StackPanel>
             </Grid>

@@ -299,6 +299,23 @@ namespace VayuClient.ViewModels
                 OnPropertyChanged(nameof(ActiveLoaderDisplay));
                 OnPropertyChanged(nameof(ActiveVersionDisplay));
                 OnPropertyChanged(nameof(ActiveRamDisplay));
+
+                if (!IsPlaying)
+                {
+                    try
+                    {
+                        var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                        if (activeInstance != null)
+                        {
+                            discordRpc?.SetInLauncherPresence(activeInstance.Name, activeInstance.MinecraftVersion, activeInstance.Loader);
+                        }
+                        else
+                        {
+                            discordRpc?.SetInLauncherPresence();
+                        }
+                    }
+                    catch { }
+                }
             }
             catch
             {

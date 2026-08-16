@@ -22,6 +22,7 @@
             <converters:SkinHeadImageConverter x:Key="SkinHeadImage"/>
             <converters:WebImageConverter x:Key="WebImage"/>
             <converters:BoolToOnlineStatusBrushConverter x:Key="BoolToOnlineStatusBrush"/>
+            <converters:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter"/>
 
             <!-- Implicit View-to-ViewModel Navigation DataTemplates -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">

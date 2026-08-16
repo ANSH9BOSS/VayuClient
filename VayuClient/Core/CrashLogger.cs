@@ -159,6 +159,58 @@ Inner Stack Trace:
             catch { }
         }
 
+        public static string GetRecentLogLines(int count = 60)
+        {
+            lock (_lock)
+            {
+                var items = _liveLogQueue.ToArray();
+                if (items.Length == 0) return GetLiveLogsText();
+                int skip = Math.Max(0, items.Length - count);
+                return string.Join(Environment.NewLine, items.Skip(skip));
+            }
+        }
+
+        public static (string details, string logPath) GetCrashDetails(string? instanceDir, string fallbackMessage)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(instanceDir) && Directory.Exists(instanceDir))
+                {
+                    // 1. Check crash-reports directory for latest crash report
+                    var crashReportsDir = Path.Combine(instanceDir, "crash-reports");
+                    if (Directory.Exists(crashReportsDir))
+                    {
+                        var latestReport = new DirectoryInfo(crashReportsDir)
+                            .GetFiles("*.txt")
+                            .OrderByDescending(f => f.LastWriteTimeUtc)
+                            .FirstOrDefault();
+
+                        if (latestReport != null && (DateTime.UtcNow - latestReport.LastWriteTimeUtc).TotalMinutes < 10)
+                        {
+                            return (File.ReadAllText(latestReport.FullName), latestReport.FullName);
+                        }
+                    }
+
+                    // 2. Check logs/latest.log
+                    var latestLog = Path.Combine(instanceDir, "logs", "latest.log");
+                    if (File.Exists(latestLog))
+                    {
+                        var lines = File.ReadAllLines(latestLog);
+                        int take = Math.Min(100, lines.Length);
+                        string text = string.Join(Environment.NewLine, lines.Skip(lines.Length - take));
+                        return (text, latestLog);
+                    }
+                }
+            }
+            catch { }
+
+            string fallbackText = !string.IsNullOrEmpty(fallbackMessage) 
+                ? $"{fallbackMessage}\n\nRecent Process Output:\n{GetRecentLogLines(60)}"
+                : GetRecentLogLines(60);
+
+            return (fallbackText, _launcherLogPath ?? "launcher.log");
+        }
+
         public static string Sanitize(string input)
         {
             if (string.IsNullOrEmpty(input)) return string.Empty;

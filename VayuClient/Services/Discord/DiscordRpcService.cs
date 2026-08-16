@@ -123,10 +123,21 @@ namespace VayuClient.Services.Discord
             }
         }
 
-        public void SetInLauncherPresence()
+        public void SetInLauncherPresence(string? instanceName = null, string? version = null, string? loader = null)
         {
+            string details;
+            if (!string.IsNullOrWhiteSpace(instanceName))
+            {
+                string extra = !string.IsNullOrWhiteSpace(version) ? $" • {version}{(string.IsNullOrWhiteSpace(loader) ? "" : " (" + loader + ")")}" : "";
+                details = $"Selected: {instanceName}{extra}";
+            }
+            else
+            {
+                details = "In Launcher • Ready to Play";
+            }
+
             UpdatePresence(
-                details: "In Launcher • Managing Instances & Mods",
+                details: details,
                 state: "Owned & Developed by ANSH9BOSS",
                 largeImageKey: "vayu_logo",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",

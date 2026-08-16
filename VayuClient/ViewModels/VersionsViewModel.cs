@@ -44,7 +44,28 @@ namespace VayuClient.ViewModels
         private bool _isWizardOpen;
 
         [ObservableProperty]
-        private int _wizardStep = 1; // 1: Version, 2: Loader, 3: RAM, 4: Modpack, 5: Instance Details
+        private int _wizardStep = 1; // 1: Version & Name, 2: Loader, 3: RAM, 4: Modpack, 5: Summary
+
+        public bool IsStep1 => WizardStep == 1;
+        public bool IsStep2 => WizardStep == 2;
+        public bool IsStep3 => WizardStep == 3;
+        public bool IsStep4 => WizardStep == 4;
+        public bool IsStep5 => WizardStep == 5;
+        public bool IsPreviousVisible => WizardStep > 1;
+        public string StepNumberDisplay => $"Step {WizardStep} of 5";
+        public string NextButtonText => WizardStep == 5 ? "Create & Save Instance" : "Next Step →";
+
+        partial void OnWizardStepChanged(int value)
+        {
+            OnPropertyChanged(nameof(IsStep1));
+            OnPropertyChanged(nameof(IsStep2));
+            OnPropertyChanged(nameof(IsStep3));
+            OnPropertyChanged(nameof(IsStep4));
+            OnPropertyChanged(nameof(IsStep5));
+            OnPropertyChanged(nameof(IsPreviousVisible));
+            OnPropertyChanged(nameof(StepNumberDisplay));
+            OnPropertyChanged(nameof(NextButtonText));
+        }
 
         // Step 1
         [ObservableProperty]
@@ -269,11 +290,32 @@ namespace VayuClient.ViewModels
         {
             var versionId = versionIdObj?.ToString() ?? "1.21.4";
             SelectedMinecraftVersion = versionId;
+            InstanceName = $"Minecraft {versionId}";
             WizardStep = 1;
             IsWizardOpen = true;
+            await LoadLoadersForVersionAsync();
+        }
 
-            // Step 2: Loader selection
-            await GoToStep(2);
+        [RelayCommand]
+        public async Task NextStep()
+        {
+            if (WizardStep < 5)
+            {
+                await GoToStep(WizardStep + 1);
+            }
+            else
+            {
+                await ConfirmCreateInstance();
+            }
+        }
+
+        [RelayCommand]
+        public async Task PreviousStep()
+        {
+            if (WizardStep > 1)
+            {
+                await GoToStep(WizardStep - 1);
+            }
         }
 
         [RelayCommand]
@@ -289,13 +331,16 @@ namespace VayuClient.ViewModels
                 step = parsed;
             }
 
-            WizardStep = step;
+            WizardStep = Math.Clamp(step, 1, 5);
 
-            if (step == 2) // Loader Selection
+            if (WizardStep == 2) // Loader Selection
             {
-                await LoadLoadersForVersionAsync();
+                if (AvailableLoaders.Count == 0)
+                {
+                    await LoadLoadersForVersionAsync();
+                }
             }
-            else if (step == 3) // RAM
+            else if (WizardStep == 3) // RAM
             {
                 // Set intelligent recommended RAM based on loader
                 bool isModded = SelectedLoader != null && !SelectedLoader.Name.Equals("Vanilla", StringComparison.OrdinalIgnoreCase);
@@ -307,14 +352,20 @@ namespace VayuClient.ViewModels
                     SelectedRamMB = RecommendedRamMB;
                 }
             }
-            else if (step == 4) // Modpack Search
+            else if (WizardStep == 4) // Modpack Search
             {
-                await LoadModpacksAsync();
+                if (ModrinthModpacks.Count == 0)
+                {
+                    await LoadModpacksAsync();
+                }
             }
-            else if (step == 5) // Instance Details
+            else if (WizardStep == 5) // Instance Summary
             {
-                var loaderName = SelectedLoader?.Name ?? "Vanilla";
-                InstanceName = $"Minecraft {SelectedMinecraftVersion} ({loaderName})";
+                if (string.IsNullOrWhiteSpace(InstanceName) || InstanceName == "My Minecraft Instance")
+                {
+                    var loaderName = SelectedLoader?.Name ?? "Vanilla";
+                    InstanceName = $"Minecraft {SelectedMinecraftVersion} ({loaderName})";
+                }
                 UpdateGameDirPreview();
             }
         }

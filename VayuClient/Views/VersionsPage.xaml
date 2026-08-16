@@ -153,31 +153,39 @@
         <!-- ═══ 5-STEP INSTANCE CREATION WIZARD MODAL ═════════════════════ -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <Grid Visibility="{Binding IsWizardOpen, Converter={StaticResource BoolToVis}}"
-              Background="#E00B1220">
-            <Border Width="640" CornerRadius="6" 
-                    Background="#151F32" BorderBrush="#243247" BorderThickness="1"
+              Background="#E6050B14">
+            <Border Width="680" CornerRadius="8" 
+                    Background="#111B2B" BorderBrush="#243247" BorderThickness="1.5"
                     Padding="28,24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="6" Opacity="0.8"/>
+                </Border.Effect>
 
                 <StackPanel>
                     <!-- Header -->
-                    <Grid Margin="0,0,0,20">
+                    <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Create Minecraft Instance" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="Configure version, mod loader, RAM allocation, and modpacks" FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,2,0,0"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Create Minecraft Instance" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                <Border Background="#1E3A8A" CornerRadius="4" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding StepNumberDisplay}" FontSize="10.5" FontWeight="Bold" Foreground="#60A5FA"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Configure version, mod loader, RAM allocation, and instance details" FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" Command="{Binding CloseWizardCommand}"
                                 Content="✕" FontSize="14" Foreground="{StaticResource VayuTextDimBrush}"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4"/>
+                                Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="6"/>
                     </Grid>
 
                     <!-- Horizontal 5-Step Progress Indicator -->
-                    <Border Background="#0F172A" BorderBrush="#243247" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,20">
+                    <Border Background="#090E17" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,20">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -191,57 +199,174 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Column="0" Text="1. VERSION" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" HorizontalAlignment="Center"/>
+                            <Button Grid.Column="0" Command="{Binding GoToStepCommand}" CommandParameter="1" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <TextBlock Text="1. VERSION" FontSize="10" FontWeight="Bold" 
+                                           Foreground="{Binding IsStep1, Converter={StaticResource BoolToAccentBrushConverter}}" HorizontalAlignment="Center"/>
+                            </Button>
                             <TextBlock Grid.Column="1" Text="─" Foreground="#243247" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="2. LOADER" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" HorizontalAlignment="Center"/>
+                            <Button Grid.Column="2" Command="{Binding GoToStepCommand}" CommandParameter="2" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <TextBlock Text="2. LOADER" FontSize="10" FontWeight="Bold" 
+                                           Foreground="{Binding IsStep2, Converter={StaticResource BoolToAccentBrushConverter}}" HorizontalAlignment="Center"/>
+                            </Button>
                             <TextBlock Grid.Column="3" Text="─" Foreground="#243247" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="4" Text="3. RAM" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" HorizontalAlignment="Center"/>
+                            <Button Grid.Column="4" Command="{Binding GoToStepCommand}" CommandParameter="3" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <TextBlock Text="3. RAM" FontSize="10" FontWeight="Bold" 
+                                           Foreground="{Binding IsStep3, Converter={StaticResource BoolToAccentBrushConverter}}" HorizontalAlignment="Center"/>
+                            </Button>
                             <TextBlock Grid.Column="5" Text="─" Foreground="#243247" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="6" Text="4. MODPACK" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" HorizontalAlignment="Center"/>
+                            <Button Grid.Column="6" Command="{Binding GoToStepCommand}" CommandParameter="4" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <TextBlock Text="4. MODPACK" FontSize="10" FontWeight="Bold" 
+                                           Foreground="{Binding IsStep4, Converter={StaticResource BoolToAccentBrushConverter}}" HorizontalAlignment="Center"/>
+                            </Button>
                             <TextBlock Grid.Column="7" Text="─" Foreground="#243247" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="8" Text="5. DETAILS" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" HorizontalAlignment="Center"/>
+                            <Button Grid.Column="8" Command="{Binding GoToStepCommand}" CommandParameter="5" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <TextBlock Text="5. SUMMARY" FontSize="10" FontWeight="Bold" 
+                                           Foreground="{Binding IsStep5, Converter={StaticResource BoolToAccentBrushConverter}}" HorizontalAlignment="Center"/>
+                            </Button>
                         </Grid>
                     </Border>
 
-                    <!-- Step Content: Instance Name, Version, Loader, RAM -->
-                    <TextBlock Text="INSTANCE NAME" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
-                    <TextBox Text="{Binding InstanceName, UpdateSourceTrigger=PropertyChanged}" 
-                             Style="{StaticResource VayuGlassTextBox}" Height="36" Margin="0,0,0,14"/>
+                    <!-- STEP 1: VERSION & NAME -->
+                    <StackPanel Visibility="{Binding IsStep1, Converter={StaticResource BoolToVis}}" Margin="0,0,0,16">
+                        <TextBlock Text="SELECTED MINECRAFT VERSION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
+                        <Border Background="#151F32" BorderBrush="#243247" BorderThickness="1" CornerRadius="4" Padding="14,10" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Minecraft Version:" FontSize="12.5" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding SelectedMinecraftVersion}" FontSize="13" FontWeight="Bold" Foreground="#3B82F6"/>
+                            </StackPanel>
+                        </Border>
 
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="INSTANCE NAME" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding InstanceName, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource VayuGlassTextBox}" Height="38" Margin="0,0,0,14"/>
 
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="SELECTED VERSION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
-                            <TextBox Text="{Binding SelectedMinecraftVersion, Mode=OneWay}" IsReadOnly="True" 
+                        <TextBlock Text="CHOOSE INSTANCE ICON" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding AvailableIcons}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.SelectIconCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource VayuDarkButton}"
+                                            Width="42" Height="42" Margin="0,0,8,8" Cursor="Hand" Padding="0">
+                                        <TextBlock Text="{Binding}" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- STEP 2: MOD LOADER -->
+                    <StackPanel Visibility="{Binding IsStep2, Converter={StaticResource BoolToVis}}" Margin="0,0,0,16">
+                        <TextBlock Text="SELECT MOD LOADER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,8"/>
+                        <ComboBox ItemsSource="{Binding AvailableLoaders}" 
+                                  SelectedItem="{Binding SelectedLoader}"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource VayuComboBox}" Height="38" Margin="0,0,0,14"/>
+
+                        <TextBlock Text="LOADER VERSION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,8"/>
+                        <ComboBox ItemsSource="{Binding AvailableLoaderVersions}" 
+                                  SelectedItem="{Binding SelectedLoaderVersion}"
+                                  Style="{StaticResource VayuComboBox}" Height="38" Margin="0,0,0,14"/>
+
+                        <Border Background="#151F32" BorderBrush="#243247" BorderThickness="1" CornerRadius="4" Padding="14,10">
+                            <TextBlock Text="Fabric and NeoForge are recommended for high performance and modern mods." 
+                                       FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- STEP 3: RAM ALLOCATION -->
+                    <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}" Margin="0,0,0,16">
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="MEMORY (RAM) ALLOCATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                            <TextBlock Text="{Binding SelectedRamDisplay}" FontSize="12.5" FontWeight="Bold" Foreground="#3B82F6" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Slider Value="{Binding SelectedRamMB}" Minimum="1024" Maximum="{Binding SystemRamMB}" SmallChange="512" LargeChange="1024"
+                                Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,14"/>
+
+                        <TextBlock Text="QUICK ALLOCATION PRESETS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Button Content="2 GB" Command="{Binding SetRamPresetCommand}" CommandParameter="2048" Style="{StaticResource VayuDarkButton}" Padding="14,6" Margin="0,0,8,0"/>
+                            <Button Content="4 GB (Default)" Command="{Binding SetRamPresetCommand}" CommandParameter="4096" Style="{StaticResource VayuDarkButton}" Padding="14,6" Margin="0,0,8,0"/>
+                            <Button Content="6 GB (Modded)" Command="{Binding SetRamPresetCommand}" CommandParameter="6144" Style="{StaticResource VayuDarkButton}" Padding="14,6" Margin="0,0,8,0"/>
+                            <Button Content="8 GB" Command="{Binding SetRamPresetCommand}" CommandParameter="8192" Style="{StaticResource VayuDarkButton}" Padding="14,6" Margin="0,0,8,0"/>
+                            <Button Content="12 GB" Command="{Binding SetRamPresetCommand}" CommandParameter="12288" Style="{StaticResource VayuDarkButton}" Padding="14,6"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- STEP 4: MODPACK SELECTION -->
+                    <StackPanel Visibility="{Binding IsStep4, Converter={StaticResource BoolToVis}}" Margin="0,0,0,16">
+                        <TextBlock Text="OPTIONAL MODPACK (MODRINTH)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding ModpackSearchQuery, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource VayuGlassTextBox}" Height="36"/>
-                        </StackPanel>
+                            <Button Grid.Column="1" Command="{Binding SearchModpacksCommand}" Content="Search" 
+                                    Style="{StaticResource VayuAccentButton}" Padding="16,6" Margin="8,0,0,0"/>
+                        </Grid>
 
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="MOD LOADER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
-                            <ComboBox ItemsSource="{Binding AvailableLoaders}" 
-                                      SelectedItem="{Binding SelectedLoader}"
-                                      DisplayMemberPath="Name"
-                                      Style="{StaticResource VayuComboBox}" Height="36"/>
-                        </StackPanel>
-                    </Grid>
+                        <ListBox ItemsSource="{Binding ModrinthModpacks}" SelectedItem="{Binding SelectedModpack}"
+                                 MaxHeight="140" Background="#0F172A" BorderBrush="#243247" BorderThickness="1">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4,2">
+                                        <TextBlock Text="{Binding Title}" FontSize="12" Foreground="#FFFFFF"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
 
-                    <TextBlock Text="{Binding SelectedRamDisplay, StringFormat='ALLOCATED RAM: {0}'}" 
-                               FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,6"/>
-                    <Slider Value="{Binding SelectedRamMB}" Minimum="1024" Maximum="{Binding SystemRamMB}" SmallChange="512" LargeChange="1024"
-                            Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,20"/>
+                    <!-- STEP 5: SUMMARY & CONFIRMATION -->
+                    <StackPanel Visibility="{Binding IsStep5, Converter={StaticResource BoolToVis}}" Margin="0,0,0,16">
+                        <TextBlock Text="INSTANCE OVERVIEW &amp; CONFIRMATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,0,0,10"/>
+                        <Border Background="#151F32" BorderBrush="#243247" BorderThickness="1" CornerRadius="6" Padding="16,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Name:" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding InstanceName}" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Minecraft Version:" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SelectedMinecraftVersion}" FontWeight="Bold" Foreground="#60A5FA" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Mod Loader:" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SelectedLoader.Name}" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Allocated RAM:" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="{Binding SelectedRamDisplay}" FontWeight="Bold" Foreground="#34D399" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="Location:" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                    <TextBlock Text="%APPDATA%\VayuClient\Instances" Foreground="{StaticResource VayuTextDimBrush}" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
 
                     <!-- Action Buttons -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Grid Margin="0,10,0,0">
                         <Button Content="Cancel" Command="{Binding CloseWizardCommand}"
-                                Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,10,0"/>
-                        <Button Content="Create &amp; Save Instance" Command="{Binding ConfirmCreateInstanceCommand}"
-                                Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
-                    </StackPanel>
+                                Style="{StaticResource VayuDarkButton}" Padding="16,8" HorizontalAlignment="Left"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="← Back" Command="{Binding PreviousStepCommand}"
+                                    Visibility="{Binding IsPreviousVisible, Converter={StaticResource BoolToVis}}"
+                                    Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,10,0"/>
+                            <Button Content="{Binding NextButtonText}" Command="{Binding NextStepCommand}"
+                                    Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
         </Grid>

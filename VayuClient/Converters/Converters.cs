@@ -22,6 +22,24 @@ namespace VayuClient.Converters
             => value is Visibility.Visible;
     }
 
+    public class BoolToAccentBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush ActiveBrush = new(Color.FromRgb(0x3B, 0x82, 0xF6));
+        private static readonly SolidColorBrush InactiveBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
+
+        static BoolToAccentBrushConverter()
+        {
+            ActiveBrush.Freeze();
+            InactiveBrush.Freeze();
+        }
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is true ? ActiveBrush : InactiveBrush;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
     public class InverseBoolConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
