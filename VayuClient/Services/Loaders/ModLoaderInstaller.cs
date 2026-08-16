@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Download;
 
@@ -75,56 +76,162 @@ namespace VayuClient.Services.Loaders
         {
             var result = new ModLoaderInstallResult();
 
-            string loaderVersion = string.IsNullOrEmpty(instance.LoaderVersion) || instance.LoaderVersion.Equals("None", StringComparison.OrdinalIgnoreCase)
-                ? "0.16.10"
-                : instance.LoaderVersion;
-
-            string url = $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(instance.MinecraftVersion)}/{Uri.EscapeDataString(loaderVersion)}/profile/json";
-
             progress?.Report(new DownloadProgressInfo
             {
-                CurrentFileName = "Fabric Profile",
-                CurrentOperation = $"Fetching Fabric loader profile for {instance.MinecraftVersion}...",
+                CurrentFileName = "Fabric Metadata",
+                CurrentOperation = $"Querying Fabric compatibility for Minecraft {instance.MinecraftVersion}...",
                 CompletedFiles = 0,
                 TotalFiles = 1
             });
 
-            HttpResponseMessage? response = null;
-            try
+            // 1. Query available Fabric loaders for this exact Minecraft version
+            string versionsUrl = $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(instance.MinecraftVersion)}";
+            string resolvedLoaderVersion = string.Empty;
+
+            int retryCount = 0;
+            const int maxRetries = 2;
+            Exception? lastEx = null;
+
+            while (retryCount <= maxRetries)
             {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(TimeSpan.FromSeconds(8));
-                response = await _http.GetAsync(url, cts.Token);
-                if (!response.IsSuccessStatusCode)
+                ct.ThrowIfCancellationRequested();
+                try
                 {
-                    // Fallback to general loader URL
-                    url = $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(instance.MinecraftVersion)}";
-                    response = await _http.GetAsync(url, cts.Token);
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    cts.CancelAfter(TimeSpan.FromSeconds(10));
+
+                    var response = await _http.GetAsync(versionsUrl, cts.Token);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync(ct);
+                        if (!string.IsNullOrWhiteSpace(json))
+                        {
+                            var parsedToken = JToken.Parse(json);
+                            if (parsedToken is JArray loaderArray && loaderArray.Count > 0)
+                            {
+                                // Check if user specified a loader version that exists in the array
+                                if (!string.IsNullOrEmpty(instance.LoaderVersion) &&
+                                    !instance.LoaderVersion.Equals("Default", StringComparison.OrdinalIgnoreCase) &&
+                                    !instance.LoaderVersion.Equals("None", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var match = loaderArray.FirstOrDefault(l => string.Equals(l["loader"]?["version"]?.ToString(), instance.LoaderVersion, StringComparison.OrdinalIgnoreCase));
+                                    if (match != null)
+                                    {
+                                        resolvedLoaderVersion = instance.LoaderVersion;
+                                    }
+                                }
+
+                                if (string.IsNullOrEmpty(resolvedLoaderVersion))
+                                {
+                                    // Use the latest compatible loader version from the list
+                                    resolvedLoaderVersion = loaderArray[0]["loader"]?["version"]?.ToString() ?? string.Empty;
+                                }
+                                break;
+                            }
+                            else if (parsedToken is JArray emptyArr && emptyArr.Count == 0)
+                            {
+                                throw new InvalidOperationException($"No compatible Fabric Loader was found for Minecraft {instance.MinecraftVersion}.");
+                            }
+                        }
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        throw new InvalidOperationException($"No compatible Fabric Loader was found for Minecraft {instance.MinecraftVersion}.");
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    lastEx = ex;
+                    retryCount++;
+                    if (retryCount <= maxRetries)
+                    {
+                        await Task.Delay(500 * retryCount, ct);
+                    }
                 }
             }
-            catch (Exception)
+
+            if (string.IsNullOrEmpty(resolvedLoaderVersion))
             {
-                // Network unavailable or timed out: provide resilient offline Fabric defaults
-                result.CustomMainClass = "net.fabricmc.loader.impl.launch.knot.KnotClient";
-                var defaultLib = Path.Combine(_librariesDir, "net", "fabricmc", "fabric-loader", loaderVersion, $"fabric-loader-{loaderVersion}.jar");
-                result.AdditionalLibraries.Add(defaultLib);
-                return result;
+                if (lastEx != null && !instance.MinecraftVersion.StartsWith("1.21.11"))
+                {
+                    // Fallback to offline cached loader if available
+                    string fallbackLoader = !string.IsNullOrEmpty(instance.LoaderVersion) && !instance.LoaderVersion.Equals("Default", StringComparison.OrdinalIgnoreCase)
+                        ? instance.LoaderVersion
+                        : "0.16.10";
+                    var offlineJar = Path.Combine(_librariesDir, "net", "fabricmc", "fabric-loader", fallbackLoader, $"fabric-loader-{fallbackLoader}.jar");
+                    if (File.Exists(offlineJar))
+                    {
+                        result.CustomMainClass = "net.fabricmc.loader.impl.launch.knot.KnotClient";
+                        result.AdditionalLibraries.Add(offlineJar);
+                        return result;
+                    }
+                }
+
+                throw new InvalidOperationException($"Failed to resolve Fabric Loader metadata for Minecraft {instance.MinecraftVersion}: {lastEx?.Message ?? "No compatible loader found"}");
             }
 
-            if (response == null || !response.IsSuccessStatusCode)
+            instance.LoaderVersion = resolvedLoaderVersion;
+
+            // 2. Fetch the full Profile JSON for this Minecraft + Loader version
+            string profileUrl = $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(instance.MinecraftVersion)}/{Uri.EscapeDataString(resolvedLoaderVersion)}/profile/json";
+
+            progress?.Report(new DownloadProgressInfo
             {
-                result.CustomMainClass = "net.fabricmc.loader.impl.launch.knot.KnotClient";
-                var defaultLib = Path.Combine(_librariesDir, "net", "fabricmc", "fabric-loader", loaderVersion, $"fabric-loader-{loaderVersion}.jar");
-                result.AdditionalLibraries.Add(defaultLib);
-                return result;
+                CurrentFileName = "Fabric Profile",
+                CurrentOperation = $"Downloading Fabric profile (Loader: {resolvedLoaderVersion})...",
+                CompletedFiles = 0,
+                TotalFiles = 1
+            });
+
+            JObject? profileRoot = null;
+            retryCount = 0;
+
+            while (retryCount <= maxRetries)
+            {
+                ct.ThrowIfCancellationRequested();
+                try
+                {
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    cts.CancelAfter(TimeSpan.FromSeconds(10));
+
+                    var response = await _http.GetAsync(profileUrl, cts.Token);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync(ct);
+                        if (!string.IsNullOrWhiteSpace(json))
+                        {
+                            var token = JToken.Parse(json);
+                            if (token is JObject obj)
+                            {
+                                profileRoot = obj;
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    lastEx = ex;
+                    retryCount++;
+                    if (retryCount <= maxRetries)
+                    {
+                        await Task.Delay(500 * retryCount, ct);
+                    }
+                }
             }
 
-            var json = await response.Content.ReadAsStringAsync(ct);
-            var root = JObject.Parse(json.TrimStart('['));
+            if (profileRoot == null)
+            {
+                throw new InvalidOperationException($"Fabric profile metadata could not be downloaded safely for Minecraft {instance.MinecraftVersion} (Loader {resolvedLoaderVersion}).");
+            }
 
-            result.CustomMainClass = root["mainClass"]?.ToString() ?? "net.fabricmc.loader.impl.launch.knot.KnotClient";
+            result.CustomMainClass = profileRoot["mainClass"]?.ToString() ?? "net.fabricmc.loader.impl.launch.knot.KnotClient";
 
-            var libraries = root["libraries"] as JArray;
+            var libraries = profileRoot["libraries"] as JArray;
             if (libraries != null)
             {
                 var downloadItems = new List<DownloadItem>();
@@ -143,13 +250,16 @@ namespace VayuClient.Services.Loaders
 
                         result.AdditionalLibraries.Add(destPath);
 
-                        downloadItems.Add(new DownloadItem
+                        if (!File.Exists(destPath) || new FileInfo(destPath).Length == 0)
                         {
-                            Url = fileUrl,
-                            DestinationPath = destPath,
-                            Category = "FabricLibrary",
-                            Description = Path.GetFileName(destPath)
-                        });
+                            downloadItems.Add(new DownloadItem
+                            {
+                                Url = fileUrl,
+                                DestinationPath = destPath,
+                                Category = "FabricLibrary",
+                                Description = Path.GetFileName(destPath)
+                            });
+                        }
                     }
                 }
 
@@ -181,7 +291,7 @@ namespace VayuClient.Services.Loaders
         {
             var result = new ModLoaderInstallResult();
 
-            string loaderVersion = string.IsNullOrEmpty(instance.LoaderVersion) || instance.LoaderVersion.Equals("None", StringComparison.OrdinalIgnoreCase)
+            string loaderVersion = string.IsNullOrEmpty(instance.LoaderVersion) || instance.LoaderVersion.Equals("None", StringComparison.OrdinalIgnoreCase) || instance.LoaderVersion.Equals("Default", StringComparison.OrdinalIgnoreCase)
                 ? "0.26.0"
                 : instance.LoaderVersion;
 
@@ -191,39 +301,45 @@ namespace VayuClient.Services.Loaders
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync(ct);
-                var root = JObject.Parse(json);
-                result.CustomMainClass = root["mainClass"]?.ToString() ?? "org.quiltmc.loader.impl.launch.knot.KnotClient";
-
-                var libraries = root["libraries"] as JArray;
-                if (libraries != null)
+                var token = JToken.Parse(json);
+                if (token is JObject root)
                 {
-                    var downloadItems = new List<DownloadItem>();
-                    foreach (var lib in libraries)
-                    {
-                        var name = lib["name"]?.ToString();
-                        var mavenBaseUrl = lib["url"]?.ToString() ?? "https://maven.quiltmc.org/repository/release/";
-                        if (!mavenBaseUrl.EndsWith("/")) mavenBaseUrl += "/";
+                    result.CustomMainClass = root["mainClass"]?.ToString() ?? "org.quiltmc.loader.impl.launch.knot.KnotClient";
 
-                        if (!string.IsNullOrEmpty(name))
+                    var libraries = root["libraries"] as JArray;
+                    if (libraries != null)
+                    {
+                        var downloadItems = new List<DownloadItem>();
+                        foreach (var lib in libraries)
                         {
-                            var relPath = GetMavenPath(name);
-                            var destPath = Path.Combine(_librariesDir, relPath);
-                            var fileUrl = mavenBaseUrl + relPath.Replace('\\', '/');
+                            var name = lib["name"]?.ToString();
+                            var mavenBaseUrl = lib["url"]?.ToString() ?? "https://maven.quiltmc.org/repository/release/";
+                            if (!mavenBaseUrl.EndsWith("/")) mavenBaseUrl += "/";
 
-                            result.AdditionalLibraries.Add(destPath);
-                            downloadItems.Add(new DownloadItem
+                            if (!string.IsNullOrEmpty(name))
                             {
-                                Url = fileUrl,
-                                DestinationPath = destPath,
-                                Category = "QuiltLibrary",
-                                Description = Path.GetFileName(destPath)
-                            });
-                        }
-                    }
+                                var relPath = GetMavenPath(name);
+                                var destPath = Path.Combine(_librariesDir, relPath);
+                                var fileUrl = mavenBaseUrl + relPath.Replace('\\', '/');
 
-                    if (downloadItems.Count > 0)
-                    {
-                        await _downloadService.DownloadBatchAsync(downloadItems, 8, progress, ct);
+                                result.AdditionalLibraries.Add(destPath);
+                                if (!File.Exists(destPath) || new FileInfo(destPath).Length == 0)
+                                {
+                                    downloadItems.Add(new DownloadItem
+                                    {
+                                        Url = fileUrl,
+                                        DestinationPath = destPath,
+                                        Category = "QuiltLibrary",
+                                        Description = Path.GetFileName(destPath)
+                                    });
+                                }
+                            }
+                        }
+
+                        if (downloadItems.Count > 0)
+                        {
+                            await _downloadService.DownloadBatchAsync(downloadItems, 8, progress, ct);
+                        }
                     }
                 }
             }

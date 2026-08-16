@@ -41,6 +41,11 @@ namespace VayuClient.Services.Minecraft
 
         public async Task<MojangVersionPackage> GetVersionPackageAsync(string versionId, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(versionId))
+            {
+                throw new ArgumentException("Minecraft version ID cannot be null or empty.", nameof(versionId));
+            }
+
             var versionDir = Path.Combine(_versionsDir, versionId);
             var versionJsonPath = Path.Combine(versionDir, $"{versionId}.json");
 
@@ -50,12 +55,20 @@ namespace VayuClient.Services.Minecraft
                 {
                     var cachedJson = await File.ReadAllTextAsync(versionJsonPath, ct);
                     var pkg = JsonConvert.DeserializeObject<MojangVersionPackage>(cachedJson);
-                    if (pkg != null && !string.IsNullOrEmpty(pkg.Id))
+                    if (pkg != null && string.Equals(pkg.Id, versionId, StringComparison.OrdinalIgnoreCase))
                     {
                         return pkg;
                     }
+                    else
+                    {
+                        // Stale or corrupted cache: delete corrupted file
+                        try { File.Delete(versionJsonPath); } catch { }
+                    }
                 }
-                catch { }
+                catch
+                {
+                    try { File.Delete(versionJsonPath); } catch { }
+                }
             }
 
             // Fetch from Mojang Manifest
@@ -68,27 +81,32 @@ namespace VayuClient.Services.Minecraft
             }
 
             Directory.CreateDirectory(versionDir);
+            var tempJsonPath = Path.Combine(versionDir, $"{versionId}.tmp.json");
+
             var downloadItem = new DownloadItem
             {
                 Url = versionEntry.Url,
-                DestinationPath = versionJsonPath,
+                DestinationPath = tempJsonPath,
                 Category = "Metadata",
                 Description = $"Version Metadata for {versionId}"
             };
 
             bool ok = await _downloadService.DownloadFileAsync(downloadItem, null, ct);
-            if (!ok || !File.Exists(versionJsonPath))
+            if (!ok || !File.Exists(tempJsonPath))
             {
                 throw new InvalidOperationException($"Failed to download metadata for Minecraft {versionId} from {versionEntry.Url}");
             }
 
-            var json = await File.ReadAllTextAsync(versionJsonPath, ct);
+            var json = await File.ReadAllTextAsync(tempJsonPath, ct);
             var resultPkg = JsonConvert.DeserializeObject<MojangVersionPackage>(json);
-            if (resultPkg == null || string.IsNullOrEmpty(resultPkg.Id))
+            if (resultPkg == null || !string.Equals(resultPkg.Id, versionId, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException($"Invalid version metadata format for Minecraft {versionId}");
+                try { File.Delete(tempJsonPath); } catch { }
+                throw new InvalidOperationException($"Version integrity check failed: requested Minecraft '{versionId}' but Mojang metadata returned '{resultPkg?.Id}'.");
             }
 
+            // Atomic move to final cache location
+            File.Move(tempJsonPath, versionJsonPath, overwrite: true);
             return resultPkg;
         }
 

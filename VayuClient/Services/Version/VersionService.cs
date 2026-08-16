@@ -112,9 +112,9 @@ namespace VayuClient.Services.Version
                 if (root.TryGetProperty("latest", out var latest))
                 {
                     if (latest.TryGetProperty("release", out var rel))
-                        LatestRelease = rel.GetString() ?? "1.21.4";
+                        LatestRelease = rel.GetString() ?? "1.21.11";
                     if (latest.TryGetProperty("snapshot", out var snap))
-                        LatestSnapshot = snap.GetString() ?? "1.21.5-pre1";
+                        LatestSnapshot = snap.GetString() ?? "26.2";
                 }
 
                 if (root.TryGetProperty("versions", out var verArray))
@@ -148,7 +148,14 @@ namespace VayuClient.Services.Version
         {
             return new List<MinecraftVersion>
             {
-                new() { Id = "1.21.5", Type = "release", ReleaseDate = new DateTime(2025, 3, 1) },
+                new() { Id = "26.2", Type = "release", ReleaseDate = new DateTime(2026, 4, 1) },
+                new() { Id = "1.21.11", Type = "release", ReleaseDate = new DateTime(2025, 12, 9) },
+                new() { Id = "1.21.10", Type = "release", ReleaseDate = new DateTime(2025, 10, 7) },
+                new() { Id = "1.21.9", Type = "release", ReleaseDate = new DateTime(2025, 9, 30) },
+                new() { Id = "1.21.8", Type = "release", ReleaseDate = new DateTime(2025, 7, 17) },
+                new() { Id = "1.21.7", Type = "release", ReleaseDate = new DateTime(2025, 6, 30) },
+                new() { Id = "1.21.6", Type = "release", ReleaseDate = new DateTime(2025, 6, 17) },
+                new() { Id = "1.21.5", Type = "release", ReleaseDate = new DateTime(2025, 3, 25) },
                 new() { Id = "1.21.4", Type = "release", ReleaseDate = new DateTime(2024, 12, 3) },
                 new() { Id = "1.21.3", Type = "release", ReleaseDate = new DateTime(2024, 10, 23) },
                 new() { Id = "1.21.1", Type = "release", ReleaseDate = new DateTime(2024, 8, 8) },

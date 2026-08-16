@@ -66,6 +66,16 @@ namespace VayuClient.Core
             var instanceService = new InstanceService();
             Register<IInstanceService>(instanceService);
 
+            var integrityService = new Services.Integrity.InstanceIntegrityService(
+                minecraftInstaller,
+                modLoaderInstaller,
+                javaRuntimeService,
+                versionService);
+            Register<Services.Integrity.IInstanceIntegrityService>(integrityService);
+
+            var performanceService = new Services.Performance.PerformanceService(hardwareInfoService);
+            Register<Services.Performance.IPerformanceService>(performanceService);
+
             var launchService = new LaunchService(
                 instanceService,
                 accountService,
@@ -74,7 +84,9 @@ namespace VayuClient.Core
                 javaRuntimeService,
                 launchArgumentBuilder,
                 modLoaderInstaller,
-                modpackInstaller);
+                modpackInstaller,
+                integrityService,
+                performanceService);
             Register<ILaunchService>(launchService);
 
             Register<IMinecraftService>(new MinecraftService());

@@ -24,7 +24,7 @@ namespace VayuClient.Models
 
         [ObservableProperty]
         [JsonProperty("minecraftVersion")]
-        private string _minecraftVersion = "1.21.4";
+        private string _minecraftVersion = "1.21.11";
 
         [ObservableProperty]
         [JsonProperty("loader")]

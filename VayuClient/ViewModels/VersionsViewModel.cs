@@ -69,7 +69,7 @@ namespace VayuClient.ViewModels
 
         // Step 1
         [ObservableProperty]
-        private string _selectedMinecraftVersion = "1.21.4";
+        private string _selectedMinecraftVersion = "1.21.11";
 
         // Step 2
         public ObservableCollection<LoaderInfo> AvailableLoaders { get; } = new();
@@ -288,7 +288,11 @@ namespace VayuClient.ViewModels
         [RelayCommand]
         public async Task StartCreateInstance(object? versionIdObj)
         {
-            var versionId = versionIdObj?.ToString() ?? "1.21.4";
+            var versionId = versionIdObj?.ToString();
+            if (string.IsNullOrWhiteSpace(versionId))
+            {
+                versionId = !string.IsNullOrWhiteSpace(SelectedMinecraftVersion) ? SelectedMinecraftVersion : "1.21.11";
+            }
             SelectedMinecraftVersion = versionId;
             InstanceName = $"Minecraft {versionId}";
             WizardStep = 1;

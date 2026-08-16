@@ -128,8 +128,11 @@ namespace VayuClient.Services.Discord
             string details;
             if (!string.IsNullOrWhiteSpace(instanceName))
             {
-                string extra = !string.IsNullOrWhiteSpace(version) ? $" • {version}{(string.IsNullOrWhiteSpace(loader) ? "" : " (" + loader + ")")}" : "";
-                details = $"Selected: {instanceName}{extra}";
+                string loaderStr = !string.IsNullOrWhiteSpace(loader) && !loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase)
+                    ? $" • {loader}"
+                    : "";
+                string verStr = !string.IsNullOrWhiteSpace(version) ? $"Minecraft {version}" : instanceName;
+                details = $"Selected: {verStr}{loaderStr}";
             }
             else
             {
@@ -148,7 +151,9 @@ namespace VayuClient.Services.Discord
 
         public void SetInGamePresence(string instanceName, string version, string loader)
         {
-            string loaderInfo = !string.IsNullOrEmpty(loader) ? $" ({loader})" : "";
+            string loaderInfo = !string.IsNullOrWhiteSpace(loader) && !loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase)
+                ? $" ({loader})"
+                : "";
             UpdatePresence(
                 details: $"Playing {instanceName}",
                 state: $"Minecraft {version}{loaderInfo} • Owned & Developed by ANSH9BOSS",

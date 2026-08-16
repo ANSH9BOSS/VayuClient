@@ -13,10 +13,12 @@ using VayuClient.Models;
 using VayuClient.Services.Account;
 using VayuClient.Services.Authentication;
 using VayuClient.Services.Instance;
+using VayuClient.Services.Integrity;
 using VayuClient.Services.Java;
 using VayuClient.Services.Loaders;
 using VayuClient.Services.Minecraft;
 using VayuClient.Services.Modpack;
+using VayuClient.Services.Performance;
 
 namespace VayuClient.Services.Launch
 {
@@ -30,6 +32,8 @@ namespace VayuClient.Services.Launch
         private readonly ILaunchArgumentBuilder _argBuilder;
         private readonly IModLoaderInstaller _loaderInstaller;
         private readonly IModpackInstaller _modpackInstaller;
+        private readonly IInstanceIntegrityService _integrityService;
+        private readonly IPerformanceService _performanceService;
 
         private Process? _activeGameProcess;
         private readonly string _logsDir;
@@ -50,7 +54,9 @@ namespace VayuClient.Services.Launch
             IJavaRuntimeService javaService,
             ILaunchArgumentBuilder argBuilder,
             IModLoaderInstaller loaderInstaller,
-            IModpackInstaller modpackInstaller)
+            IModpackInstaller modpackInstaller,
+            IInstanceIntegrityService integrityService,
+            IPerformanceService performanceService)
         {
             _instanceService = instanceService;
             _accountService = accountService;
@@ -60,6 +66,8 @@ namespace VayuClient.Services.Launch
             _argBuilder = argBuilder;
             _loaderInstaller = loaderInstaller;
             _modpackInstaller = modpackInstaller;
+            _integrityService = integrityService;
+            _performanceService = performanceService;
 
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             _logsDir = Path.Combine(appData, "VayuClient", "logs");
@@ -233,6 +241,31 @@ namespace VayuClient.Services.Launch
 
                 // 8.5 Sanitize Mods Directory (Purge duplicate mod IDs and loader caches)
                 SanitizeInstanceMods(instance.GameDirectory, instance.MinecraftVersion, Log);
+
+                // 8.6 Pre-Launch Version & Artifact Integrity Check
+                SetState(LaunchState.Preparing, "Validating installation integrity...");
+                var integrity = await _integrityService.ValidateIntegrityAsync(instance, ct);
+
+                Log("[LaunchIntegrity]");
+                Log($"RequestedMinecraft={instance.MinecraftVersion}");
+                Log($"InstanceMinecraft={integrity.DetectedMinecraftVersion ?? instance.MinecraftVersion}");
+                Log($"MojangMetadata={pkg.Id}");
+                Log($"InstalledMinecraft={instance.MinecraftVersion}");
+                Log($"Loader={instance.Loader}");
+                Log($"LoaderVersion={instance.LoaderVersion ?? "Default"}");
+                Log($"LoaderMinecraft={instance.MinecraftVersion}");
+                Log($"Integrity={(integrity.IsValid ? "PASS" : "FAIL")}");
+
+                if (!integrity.IsValid)
+                {
+                    var errors = string.Join("; ", integrity.Errors);
+                    Log($"ERROR: Pre-launch integrity check failed: {errors}");
+                    SetState(LaunchState.Failed, $"Version integrity check failed: {errors}. Please use 'Repair Instance' to fix.");
+                    return false;
+                }
+
+                // 8.7 Apply Instance Performance Settings (options.txt and mod configs)
+                await _performanceService.ApplyInstanceOptionsAsync(instance, _performanceService.CurrentSettings);
 
                 // 9. Build Classpath (Deduplicating loader vs vanilla conflicting libraries)
                 SetState(LaunchState.Preparing, "Building classpath and launch arguments...");

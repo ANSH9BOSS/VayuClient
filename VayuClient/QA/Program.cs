@@ -1144,6 +1144,97 @@ namespace VayuClient.QA
                 failedTests++;
             }
 
+            // -----------------------------------------------------------
+            // TEST 19: MINECRAFT 1.21.11 VERSION INTEGRITY, FABRIC JSON PARSING & PERFORMANCE ENGINE
+            // -----------------------------------------------------------
+            Log();
+            Log("[TEST 19] Testing Minecraft 1.21.11 Version Integrity, Fabric JSON Parsing & Performance Engine...");
+            try
+            {
+                var instService = ServiceLocator.Resolve<IInstanceService>();
+                var mcInstaller = ServiceLocator.Resolve<IMinecraftInstaller>();
+                var loaderInst = ServiceLocator.Resolve<IModLoaderInstaller>();
+                var integrityService = ServiceLocator.Resolve<Services.Integrity.IInstanceIntegrityService>();
+                var perfService = ServiceLocator.Resolve<Services.Performance.IPerformanceService>();
+
+                // 1. Single Source of Truth: Create instance for 1.21.11 + Fabric
+                var testInst12111 = new MinecraftInstance
+                {
+                    InstanceId = "test-12111-uuid",
+                    Name = "Minecraft 1.21.11 Integrity Test",
+                    MinecraftVersion = "1.21.11",
+                    Loader = "Fabric",
+                    LoaderVersion = "Default",
+                    RamMB = 6144
+                };
+
+                await instService.CreateInstanceAsync(testInst12111);
+                var loaded = instService.GetAllInstances().FirstOrDefault(i => i.InstanceId == testInst12111.InstanceId);
+                if (loaded == null || loaded.MinecraftVersion != "1.21.11" || loaded.Loader != "Fabric")
+                {
+                    throw new Exception($"Instance metadata corruption: Expected MC 1.21.11 (Fabric), but got {loaded?.MinecraftVersion} ({loaded?.Loader})");
+                }
+                Log($"    - Instance Metadata: Verified single source of truth (MC={loaded.MinecraftVersion}, Loader={loaded.Loader}, RAM={loaded.RamMB}MB)");
+
+                // 2. Mojang Version Package Validation for 1.21.11
+                var pkg12111 = await mcInstaller.GetVersionPackageAsync("1.21.11");
+                if (pkg12111 == null || pkg12111.Id != "1.21.11")
+                {
+                    throw new Exception($"Mojang package mismatch: requested 1.21.11 but resolved to {pkg12111?.Id}");
+                }
+                Log($"    - Mojang Package: Verified exact package ID '{pkg12111.Id}' (MainClass: {pkg12111.MainClass}, Libraries: {pkg12111.Libraries.Count})");
+
+                // 3. Fabric Loader Profile Resolution & JSON Parsing for 1.21.11 (Zero JsonReaderException)
+                var fabricResult = await loaderInst.InstallLoaderAsync(testInst12111, pkg12111);
+                if (string.IsNullOrEmpty(fabricResult.CustomMainClass) || !fabricResult.CustomMainClass.Contains("knot.KnotClient"))
+                {
+                    throw new Exception($"Fabric installation failed to resolve knot client main class for 1.21.11!");
+                }
+                Log($"    - Fabric Loader for 1.21.11: Resolved loader version '{testInst12111.LoaderVersion}', MainClass='{fabricResult.CustomMainClass}', AdditionalLibs={fabricResult.AdditionalLibraries.Count}");
+
+                // 4. Instance Integrity Service Validation
+                var report = await integrityService.ValidateIntegrityAsync(testInst12111);
+                Log($"    - Instance Integrity Report: IsValid={report.IsValid}, RequestedMC={report.RequestedMinecraftVersion}, Loader={report.RequestedLoader} (Report: {report.GetSummary()})");
+
+                // 5. Performance Engine: Apply instance options and verify options.txt & entityculling.json
+                var perfSettings = new Services.Performance.PerformanceSettings
+                {
+                    RenderDistanceChunks = 14,
+                    MobRenderDistanceScale = 1.25,
+                    ParticleQuality = 1,
+                    EnableEntityCulling = true,
+                    EnableVsync = false
+                };
+                await perfService.ApplyInstanceOptionsAsync(testInst12111, perfSettings);
+                var optionsTxtPath = Path.Combine(testInst12111.GameDirectory, "options.txt");
+                if (!File.Exists(optionsTxtPath))
+                {
+                    throw new Exception("Performance options.txt was not written to instance game directory!");
+                }
+                var optionsContent = await File.ReadAllTextAsync(optionsTxtPath);
+                if (!optionsContent.Contains("entityDistanceScaling:1.25") || !optionsContent.Contains("renderDistance:14"))
+                {
+                    throw new Exception($"options.txt content missing expected settings! Content:\n{optionsContent}");
+                }
+                Log($"    - Performance Engine: Verified options.txt written with entityDistanceScaling=1.25, renderDistance=14");
+
+                // 6. AI Optimization Recommendation & Real Metrics
+                var aiRec = perfService.GetAiOptimizationRecommendation(testInst12111);
+                var metrics = perfService.GetCurrentResourceMetrics();
+                Log($"    - AI Recommendation: '{aiRec.Title}' -> RecommendedRAM={aiRec.RecommendedRamMB}MB, Chunks={aiRec.RecommendedRenderDistance}");
+                Log($"    - Resource Monitor: WorkingSet={metrics.WorkingSetMB}MB, TotalRAM={metrics.TotalRamGB:F1}GB, AvailRAM={metrics.AvailableRamGB:F1}GB");
+
+                // Cleanup test instance
+                instService.DeleteInstance(testInst12111.InstanceId);
+
+                Log(" -> [PASS] Test 19 (Minecraft 1.21.11 Version Integrity, Fabric JSON & Performance Engine)");
+            }
+            catch (Exception ex)
+            {
+                Log($" -> [FAIL] Test 19 Error: {ex.Message}");
+                failedTests++;
+            }
+
             Log();
             Log("==========================================================");
             Log($" QA SUITE COMPLETE: {(failedTests == 0 ? "ALL RUNTIME TESTS PASSED WITH 0 ERRORS!" : $"{failedTests} TESTS FAILED!")}");
