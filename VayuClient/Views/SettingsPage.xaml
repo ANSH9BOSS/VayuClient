@@ -501,10 +501,20 @@
                                     </Grid>
 
                                     <!-- Action Buttons -->
-                                    <Button Content="🔄 Check for GitHub Updates"
-                                            Command="{Binding CheckForUpdatesCommand}"
+                                    <Button Command="{Binding CheckForUpdatesCommand}"
                                             Style="{StaticResource VayuPrimaryButton}"
-                                            Height="36" Margin="0,0,0,10" Cursor="Hand"/>
+                                            Height="38" Margin="0,0,0,6" Cursor="Hand">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="🔄" Margin="0,0,6,0" FontSize="12"/>
+                                            <TextBlock Text="{Binding CheckForUpdatesButtonText}" 
+                                                       FontSize="12" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Real-time Update Status Indicator -->
+                                    <TextBlock Text="{Binding UpdateStatusText}" 
+                                               FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" 
+                                               HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
                                     <Button Content="📂 Open AppData Directory"
                                             Command="{Binding OpenAppDataFolderCommand}"

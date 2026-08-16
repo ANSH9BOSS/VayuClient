@@ -13,12 +13,13 @@ namespace VayuClient.Services.Authentication
 {
     public class MicrosoftAuthService : IMicrosoftAuthService
     {
-        // Standard Multi-Tenant Microsoft OAuth Client ID for Minecraft Java Edition Launchers
-        private const string PrimaryClientId = "c6031aa2-9442-430a-b44a-a4340d859e9e";
-        private const string FallbackClientId = "80293627-849a-4c22-9f6a-4c546e8c751a";
+        // Standard Multi-Tenant Microsoft OAuth Client IDs for Minecraft Java Edition Launchers
+        private const string PrismClientId = "c6031aa2-9442-430a-b44a-a4340d859e9e";
+        private const string MojangClientId = "00000000402b5328";
+        private const string XboxClientId = "00000000441cc9e4";
         private const string Scope = "XboxLive.signin offline_access";
 
-        private string _activeClientId = PrimaryClientId;
+        private string _activeClientId = PrismClientId;
 
         private static readonly HttpClient _http = new()
         {
@@ -35,10 +36,16 @@ namespace VayuClient.Services.Authentication
 
         public async Task<DeviceCodeResponse> RequestDeviceCodeAsync(CancellationToken ct = default)
         {
-            string[] clientIdsToTry = { PrimaryClientId, FallbackClientId };
+            var endpointsAndClients = new (string Endpoint, string ClientId)[]
+            {
+                ("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", PrismClientId),
+                ("https://login.microsoftonline.com/common/oauth2/v2.0/devicecode", PrismClientId),
+                ("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", MojangClientId),
+                ("https://login.microsoftonline.com/common/oauth2/v2.0/devicecode", XboxClientId)
+            };
             string lastError = string.Empty;
 
-            foreach (var clientId in clientIdsToTry)
+            foreach (var (endpoint, clientId) in endpointsAndClients)
             {
                 try
                 {
@@ -48,7 +55,7 @@ namespace VayuClient.Services.Authentication
                         new KeyValuePair<string, string>("scope", Scope)
                     });
 
-                    var response = await _http.PostAsync("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", content, ct);
+                    var response = await _http.PostAsync(endpoint, content, ct);
                     var json = await response.Content.ReadAsStringAsync(ct);
 
                     if (response.IsSuccessStatusCode)

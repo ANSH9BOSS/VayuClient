@@ -157,6 +157,13 @@ namespace VayuClient.ViewModels
                 }
                 CrashLogger.LogMessage("[Launcher]: Ready for game execution.");
 
+                try
+                {
+                    var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                    discordRpc?.SetInLauncherPresence();
+                }
+                catch { }
+
                 // Background GitHub Auto-Update Check
                 _ = Task.Run(async () =>
                 {

@@ -144,6 +144,29 @@ namespace VayuClient.ViewModels
         private bool _discordRichPresence = true;
 
         [ObservableProperty]
+        private bool _isCheckingUpdates = false;
+
+        [ObservableProperty]
+        private string _updateStatusText = "Up to date with GitHub Releases";
+
+        public string CheckForUpdatesButtonText => IsCheckingUpdates ? "Checking Releases..." : "Check for GitHub Updates";
+
+        partial void OnIsCheckingUpdatesChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CheckForUpdatesButtonText));
+        }
+
+        partial void OnDiscordRichPresenceChanged(bool value)
+        {
+            try
+            {
+                var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                if (discordRpc != null) discordRpc.IsEnabled = value;
+            }
+            catch { }
+        }
+
+        [ObservableProperty]
         private bool _showLauncherConsole = false;
 
         [ObservableProperty]
@@ -417,18 +440,35 @@ namespace VayuClient.ViewModels
             var updateService = ServiceLocator.Resolve<IUpdateService>();
             if (updateService == null) return;
 
+            IsCheckingUpdates = true;
+            UpdateStatusText = "Connecting to GitHub Releases...";
             _main.ShowNotification("Checking Updates", "Connecting to GitHub Releases...", NotificationType.Info);
-            var res = await updateService.CheckForUpdatesAsync(force: true);
-            if (res.IsUpdateAvailable)
+
+            try
             {
-                _main.IsUpdateAvailable = true;
-                _main.LatestUpdateVersion = res.LatestVersion;
-                _main.UpdateNotes = res.ReleaseNotes;
-                _main.ShowNotification("Update Found", $"New version v{res.LatestVersion} is available! Click 'Update Directly Now' in the top banner.", NotificationType.Success);
+                var res = await updateService.CheckForUpdatesAsync(force: true);
+                if (res.IsUpdateAvailable)
+                {
+                    _main.IsUpdateAvailable = true;
+                    _main.LatestUpdateVersion = res.LatestVersion;
+                    _main.UpdateNotes = res.ReleaseNotes;
+                    UpdateStatusText = $"✨ New version v{res.LatestVersion} available!";
+                    _main.ShowNotification("Update Found", $"New version v{res.LatestVersion} is available! Click 'Update Directly Now' in the top banner.", NotificationType.Success);
+                }
+                else
+                {
+                    UpdateStatusText = $"✓ Up to date (v{AppInfo.VersionString})";
+                    _main.ShowNotification("Up to Date", $"You are running the latest version of VayuClient (v{AppInfo.VersionString}).", NotificationType.Success);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                _main.ShowNotification("Up to Date", $"You are running the latest version of VayuClient (v{AppInfo.VersionString}).", NotificationType.Success);
+                UpdateStatusText = "Could not reach GitHub Releases";
+                _main.ShowNotification("Update Check Error", ex.Message, NotificationType.Error);
+            }
+            finally
+            {
+                IsCheckingUpdates = false;
             }
         }
     }

@@ -349,6 +349,13 @@ namespace VayuClient.Services.Launch
                 }
                 catch { }
 
+                try
+                {
+                    var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                    discordRpc?.SetInGamePresence(instance.Name, instance.MinecraftVersion, instance.Loader);
+                }
+                catch { }
+
                 SetState(LaunchState.Playing, $"Playing Minecraft {instance.MinecraftVersion} ({instance.Name})");
                 Log($"Minecraft process running with PID: {process.Id}");
 
@@ -362,6 +369,7 @@ namespace VayuClient.Services.Launch
                         Log($"Game process exited with ExitCode: {exitCode}");
                         _activeGameProcess = null;
                         try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
+                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(); } catch { }
 
                         if (exitCode == 0)
                         {
@@ -383,6 +391,7 @@ namespace VayuClient.Services.Launch
                         Log($"Error monitoring process: {ex.Message}");
                         _activeGameProcess = null;
                         try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
+                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(); } catch { }
                         SetState(LaunchState.Idle, "Ready");
                     }
                 });

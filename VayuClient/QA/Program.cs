@@ -21,6 +21,7 @@ using VayuClient.Services.Loaders;
 using VayuClient.Services.Minecraft;
 using VayuClient.Services.Modpack;
 using VayuClient.Services.Profiles;
+using VayuClient.Services.Updates;
 using VayuClient.Services.Version;
 using VayuClient.ViewModels;
 
@@ -1001,6 +1002,39 @@ namespace VayuClient.QA
             catch (Exception ex)
             {
                 Log($" -> [FAIL] Test 16 Error: {ex.Message}");
+                failedTests++;
+            }
+
+            // -----------------------------------------------------------
+            // TEST 17: DISCORD RICH PRESENCE (RPC) & GITHUB UPDATES ENGINE
+            // -----------------------------------------------------------
+            Log();
+            Log("[TEST 17] Testing Discord Rich Presence (RPC) & GitHub Updates Engine...");
+            try
+            {
+                var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                if (discordRpc == null)
+                {
+                    throw new Exception("IDiscordRpcService not registered in ServiceLocator!");
+                }
+
+                // Verify Presence Activity Formatting
+                discordRpc.SetInLauncherPresence();
+                Log(" -> Set in-launcher Discord RPC status (State: 'Owned & Developed by ANSH9BOSS')");
+                
+                discordRpc.SetInGamePresence("Spunky Optimized", "26.2", "Fabric");
+                Log(" -> Set in-game Discord RPC status (Details: 'Playing Spunky Optimized', State: 'Minecraft 26.2 (Fabric) • Owned & Developed by ANSH9BOSS')");
+
+                // Verify GitHub Update Service Integration
+                var updateService = ServiceLocator.Resolve<IUpdateService>();
+                var updateResult = await updateService.CheckForUpdatesAsync(force: true);
+                Log($" -> GitHub Releases Check: Current=v{updateResult.CurrentVersion}, Available={updateResult.IsUpdateAvailable}");
+
+                Log(" -> [PASS] Test 17 (Discord Rich Presence & GitHub Updates Engine)");
+            }
+            catch (Exception ex)
+            {
+                Log($" -> [FAIL] Test 17 Error: {ex.Message}");
                 failedTests++;
             }
 

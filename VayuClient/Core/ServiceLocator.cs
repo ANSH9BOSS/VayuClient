@@ -79,6 +79,10 @@ namespace VayuClient.Core
 
             Register<IMinecraftService>(new MinecraftService());
             Register<IUpdateService>(new UpdateService());
+
+            var discordRpc = new Services.Discord.DiscordRpcService();
+            discordRpc.Initialize();
+            Register<Services.Discord.IDiscordRpcService>(discordRpc);
         }
 
         public static void Register<T>(object instance) where T : class

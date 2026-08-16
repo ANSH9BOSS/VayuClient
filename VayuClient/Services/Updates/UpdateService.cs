@@ -79,17 +79,39 @@ namespace VayuClient.Services.Updates
                 string apiUrl = $"https://api.github.com/repos/{GitHubRepo}/releases/latest";
                 using var response = await _http.GetAsync(apiUrl);
 
-                if (!response.IsSuccessStatusCode)
+                JsonDocument? doc = null;
+                JsonElement root = default;
+
+                if (response.IsSuccessStatusCode)
                 {
-                    CrashLogger.LogMessage($"[Auto-Update]: GitHub releases API returned status {response.StatusCode}");
+                    var json = await response.Content.ReadAsStringAsync();
+                    doc = JsonDocument.Parse(json);
+                    root = doc.RootElement;
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // Fallback to releases list
+                    string listUrl = $"https://api.github.com/repos/{GitHubRepo}/releases";
+                    using var listRes = await _http.GetAsync(listUrl);
+                    if (listRes.IsSuccessStatusCode)
+                    {
+                        var listJson = await listRes.Content.ReadAsStringAsync();
+                        doc = JsonDocument.Parse(listJson);
+                        if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
+                        {
+                            root = doc.RootElement.EnumerateArray().First();
+                        }
+                    }
+                }
+
+                if (doc == null || root.ValueKind != JsonValueKind.Object)
+                {
+                    CrashLogger.LogMessage($"[Auto-Update]: GitHub releases checked (Status: {response.StatusCode}). You are up to date.");
                     result.IsUpdateAvailable = false;
+                    result.LatestVersion = AppInfo.VersionString;
                     _latestUpdateInfo = result;
                     return result;
                 }
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
 
                 string tagName = root.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? "" : "";
                 string releaseName = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? "" : tagName;
@@ -103,6 +125,8 @@ namespace VayuClient.Services.Updates
                 }
 
                 string cleanLatestTag = tagName.TrimStart('v', 'V').Trim();
+                if (string.IsNullOrEmpty(cleanLatestTag)) cleanLatestTag = AppInfo.VersionString;
+
                 result.LatestVersion = cleanLatestTag;
                 result.ReleaseTitle = releaseName;
                 result.ReleaseNotes = body;
