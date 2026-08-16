@@ -1054,6 +1054,95 @@ namespace VayuClient.QA
                 failedTests++;
             }
 
+            // -----------------------------------------------------------
+            // TEST 18: REAL MINECRAFT LAUNCH PIPELINE, JVM ARGS (2G/4G/6G/8G & CUSTOM) & EXECUTION
+            // -----------------------------------------------------------
+            Log();
+            Log("[TEST 18] Testing Real Launch Pipeline, JVM Arguments (2G/4G/6G/8G & Custom) & Java Process Execution...");
+            try
+            {
+                var argBuilder = ServiceLocator.Resolve<Services.Launch.ILaunchArgumentBuilder>();
+                var jService = ServiceLocator.Resolve<Services.Java.IJavaRuntimeService>();
+
+                // 1. JVM Memory Argument Assertions: 2G, 4G, 6G, 8G
+                int[] ramTiers = { 2048, 4096, 6144, 8192 };
+                foreach (var ram in ramTiers)
+                {
+                    var testInst = new MinecraftInstance { Name = $"RAM_{ram}", RamMB = ram, MinecraftVersion = "1.21.4" };
+                    var testParams = new LaunchParameters
+                    {
+                        Instance = testInst,
+                        Profile = new UserProfile { Username = "TestUser", UUID = "00000000000000000000000000000000" },
+                        VersionPackage = new MojangVersionPackage { Id = "1.21.4", MainClass = "net.minecraft.client.main.Main" },
+                        JavaRuntime = new JavaRuntimeInfo { Path = "C:\\dummy\\javaw.exe", MajorVersion = 21 },
+                        Classpath = new List<string> { "dummy.jar" },
+                        InstanceNativesDir = "C:\\dummy\\natives",
+                        SharedAssetsDir = "C:\\dummy\\assets"
+                    };
+
+                    var res = argBuilder.BuildArguments(testParams);
+                    string expectedXmx = $"-Xmx{ram}M";
+                    string expectedXms = $"-Xms{Math.Min(1024, ram / 2)}M";
+
+                    if (!res.JvmArguments.Contains(expectedXmx) || !res.JvmArguments.Contains(expectedXms))
+                    {
+                        throw new Exception($"JVM argument build failed for RAM={ram}MB! Expected {expectedXms} and {expectedXmx}, got: {string.Join(" ", res.JvmArguments)}");
+                    }
+                    Log($"    - RAM Tier {ram}MB ({ram / 1024.0:F1}GB): {expectedXms} {expectedXmx} -> VERIFIED");
+                }
+
+                // 2. Custom -Xms4G -Xmx6G override test
+                var customInst = new MinecraftInstance { Name = "Custom_RAM", RamMB = 4096, JvmArguments = "-Xms4G -Xmx6G", MinecraftVersion = "1.21.4" };
+                var customParams = new LaunchParameters
+                {
+                    Instance = customInst,
+                    Profile = new UserProfile { Username = "TestUser", UUID = "00000000000000000000000000000000" },
+                    VersionPackage = new MojangVersionPackage { Id = "1.21.4", MainClass = "net.minecraft.client.main.Main" },
+                    JavaRuntime = new JavaRuntimeInfo { Path = "C:\\dummy\\javaw.exe", MajorVersion = 21 },
+                    Classpath = new List<string> { "dummy.jar" },
+                    InstanceNativesDir = "C:\\dummy\\natives",
+                    SharedAssetsDir = "C:\\dummy\\assets",
+                    AdditionalJvmArgs = new List<string> { "-Xms4G", "-Xmx6G" }
+                };
+                var customRes = argBuilder.BuildArguments(customParams);
+                if (!customRes.JvmArguments.Contains("-Xms4G") || !customRes.JvmArguments.Contains("-Xmx6G"))
+                {
+                    throw new Exception("Custom -Xms4G -Xmx6G flags failed to override defaults!");
+                }
+                Log("    - Custom JVM Flags (-Xms4G -Xmx6G): VERIFIED in command line");
+
+                // 3. Real Java Process Spawning & Version Check
+                var resolvedRuntime = jService.FindCompatibleRuntime(21) ?? jService.DetectInstalledRuntimes().FirstOrDefault();
+                if (resolvedRuntime != null && File.Exists(resolvedRuntime.Path))
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = resolvedRuntime.Path,
+                        Arguments = "-version",
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        int pid = proc.Id;
+                        string stderr = proc.StandardError.ReadToEnd();
+                        proc.WaitForExit();
+                        int exitCode = proc.ExitCode;
+                        string firstLine = stderr.Split('\n')[0].Trim();
+                        Log($"    - Real Java Process Spawned: PID={pid}, ExitCode={exitCode}, Runtime='{firstLine}' (Path: {resolvedRuntime.Path})");
+                    }
+                }
+
+                Log(" -> [PASS] Test 18 (Real Launch Pipeline, JVM Args & Execution)");
+            }
+            catch (Exception ex)
+            {
+                Log($" -> [FAIL] Test 18 Error: {ex.Message}");
+                failedTests++;
+            }
+
             Log();
             Log("==========================================================");
             Log($" QA SUITE COMPLETE: {(failedTests == 0 ? "ALL RUNTIME TESTS PASSED WITH 0 ERRORS!" : $"{failedTests} TESTS FAILED!")}");

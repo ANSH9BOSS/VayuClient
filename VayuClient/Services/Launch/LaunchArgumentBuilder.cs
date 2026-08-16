@@ -56,8 +56,18 @@ namespace VayuClient.Services.Launch
             // Memory
             int ramMB = Math.Max(1024, parameters.Instance.RamMB);
             int minRamMB = Math.Min(1024, ramMB / 2);
-            jvmArgs.Add($"-Xms{minRamMB}M");
-            jvmArgs.Add($"-Xmx{ramMB}M");
+
+            bool hasCustomXms = parameters.AdditionalJvmArgs?.Any(a => a.StartsWith("-Xms", StringComparison.OrdinalIgnoreCase)) == true;
+            bool hasCustomXmx = parameters.AdditionalJvmArgs?.Any(a => a.StartsWith("-Xmx", StringComparison.OrdinalIgnoreCase)) == true;
+
+            if (!hasCustomXms)
+            {
+                jvmArgs.Add($"-Xms{minRamMB}M");
+            }
+            if (!hasCustomXmx)
+            {
+                jvmArgs.Add($"-Xmx{ramMB}M");
+            }
 
             // Standard JVM properties
             if (parameters.VersionPackage.Arguments?.Jvm == null || parameters.VersionPackage.Arguments.Jvm.Count == 0)

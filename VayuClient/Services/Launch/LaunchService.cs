@@ -240,6 +240,14 @@ namespace VayuClient.Services.Launch
                 var baseClasspath = _minecraftInstaller.ResolveClasspath(pkg, nativesDir);
                 var fullClasspath = MergeClasspath(loaderResult.AdditionalLibraries, baseClasspath);
 
+                var combinedJvmArgs = new List<string>();
+                if (loaderResult.AdditionalJvmArgs != null) combinedJvmArgs.AddRange(loaderResult.AdditionalJvmArgs);
+                if (!string.IsNullOrWhiteSpace(instance.JvmArguments))
+                {
+                    var splitArgs = instance.JvmArguments.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    combinedJvmArgs.AddRange(splitArgs);
+                }
+
                 // 10. Build Launch Arguments
                 var launchParams = new LaunchParameters
                 {
@@ -251,7 +259,7 @@ namespace VayuClient.Services.Launch
                     InstanceNativesDir = nativesDir,
                     SharedAssetsDir = sharedAssetsDir,
                     CustomMainClass = loaderResult.CustomMainClass,
-                    AdditionalJvmArgs = loaderResult.AdditionalJvmArgs,
+                    AdditionalJvmArgs = combinedJvmArgs,
                     AdditionalGameArgs = loaderResult.AdditionalGameArgs
                 };
 
