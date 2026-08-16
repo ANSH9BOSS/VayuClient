@@ -1,0 +1,29 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+temp-publish/
+dist/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+.vs/
+.idea/
+.vscode/
+
+# Build outputs
+*.baml
+*_wpftmp.csproj
+*.assets.cache
+*.AssemblyInfoInputs.cache
+
+# Artifact & Test Caches
+qa_runtime_results.txt
+*.log
+*.zip
+VayuClientSetup/Resources/*.zip
+upload_to_github.ps1
+*.secret

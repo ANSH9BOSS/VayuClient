@@ -1,0 +1,419 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 0. GLOBAL DEFAULT CONTROL STYLES (Universal Font Inheritance)   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <Style TargetType="Window">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style TargetType="UserControl">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style TargetType="Page">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style TargetType="TextBox">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <Style TargetType="CheckBox">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <Style TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <Style TargetType="ContextMenu">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <Style TargetType="MenuItem">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <Style TargetType="ProgressBar">
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VayuClient Glass Button Style                   -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuGlassButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource VayuGlassBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource VayuGlassBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="24,12"/>
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <!-- Shadow -->
+                        <Border x:Name="Shadow" CornerRadius="12" Margin="0,2,0,-2"
+                                Background="#20000000"/>
+                        <!-- Main glass surface -->
+                        <Border x:Name="MainBorder" CornerRadius="12"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <!-- Glass reflection at top -->
+                            <Border.OpacityMask>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="White" Offset="0"/>
+                                    <GradientStop Color="White" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.OpacityMask>
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <!-- Top reflection line -->
+                        <Border CornerRadius="12,12,0,0" Height="1" 
+                                VerticalAlignment="Top" Margin="1,1,1,0"
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                    <GradientStop Color="#20FFFFFF" Offset="0.5"/>
+                                    <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="MainBorder" Property="Background" 
+                                    Value="{StaticResource VayuGlassHoverBrush}"/>
+                            <Setter TargetName="MainBorder" Property="BorderBrush">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#30FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="MainBorder" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#08FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="MainBorder" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="MainBorder" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Accent Glass Button (primary action) -->
+    <Style x:Key="VayuAccentButton" TargetType="Button" BasedOn="{StaticResource VayuGlassButton}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#2196F3" Offset="0"/>
+                    <GradientStop Color="#1976D2" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <SolidColorBrush Color="#4064B5F6"/>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- Glass TextBox                                   -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuGlassTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource VayuGlassBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource VayuAccentBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource VayuGlassBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource VayuAccentBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <Border x:Name="Border" CornerRadius="12"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                                <TextBlock x:Name="Placeholder"
+                                          Text="{TemplateBinding Tag}"
+                                          Foreground="{StaticResource VayuTextMutedBrush}"
+                                          FontFamily="{TemplateBinding FontFamily}"
+                                          FontSize="{TemplateBinding FontSize}"
+                                          Visibility="Collapsed"
+                                          IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+                        <!-- Bottom accent line when focused -->
+                        <Border x:Name="FocusLine" CornerRadius="0,0,12,12" 
+                                Height="2" VerticalAlignment="Bottom"
+                                Opacity="0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#2196F3" Offset="0"/>
+                                    <GradientStop Color="#00D2FF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" 
+                                    Value="{StaticResource VayuAccentBrush}"/>
+                            <Setter TargetName="FocusLine" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" 
+                                    Value="{StaticResource VayuGlassHoverBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- Glass Toggle Switch                             -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuGlassToggle" TargetType="CheckBox">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Grid Width="44" Height="24">
+                            <Border x:Name="Track" CornerRadius="12" 
+                                    Background="{StaticResource VayuGlassBrush}"
+                                    BorderBrush="{StaticResource VayuGlassBorderBrush}"
+                                    BorderThickness="1"/>
+                            <Border x:Name="Thumb" Width="18" Height="18" CornerRadius="9"
+                                    HorizontalAlignment="Left" Margin="3,0,0,0"
+                                    Background="{StaticResource VayuTextDimBrush}">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="ThumbTranslate" X="0"/>
+                                </Border.RenderTransform>
+                            </Border>
+                        </Grid>
+                        <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Track" Property="Background" 
+                                    Value="{StaticResource VayuAccentBrush}"/>
+                            <Setter TargetName="Track" Property="BorderBrush"
+                                    Value="{StaticResource VayuAccentBrush}"/>
+                            <Setter TargetName="Thumb" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="White"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbTranslate"
+                                                       Storyboard.TargetProperty="X"
+                                                       To="20" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbTranslate"
+                                                       Storyboard.TargetProperty="X"
+                                                       To="0" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- Glass Slider                                    -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuGlassSlider" TargetType="Slider">
+        <Setter Property="Minimum" Value="0"/>
+        <Setter Property="Maximum" Value="100"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center">
+                        <Border Height="4" CornerRadius="2" 
+                                Background="{StaticResource VayuGlassBrush}"/>
+                        <Track x:Name="PART_Track">
+                            <Track.Thumb>
+                                <Thumb Width="20" Height="20" Cursor="Hand">
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Grid>
+                                                <Ellipse Fill="{StaticResource VayuAccentBrush}"
+                                                        Width="20" Height="20"/>
+                                                <Ellipse Fill="White" Width="8" Height="8"/>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- Glass ScrollBar                                 -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuScrollBar" TargetType="ScrollBar">
+        <Setter Property="Width" Value="6"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.Thumb>
+                            <Thumb>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border CornerRadius="3" 
+                                                Background="#30FFFFFF" 
+                                                MinHeight="30"/>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Track.Thumb>
+                    </Track>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="VayuScrollViewer" TargetType="ScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+        <Style.Resources>
+            <Style TargetType="ScrollBar" BasedOn="{StaticResource VayuScrollBar}"/>
+        </Style.Resources>
+    </Style>
+
+    <!-- Title bar button -->
+    <Style x:Key="TitleBarButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width" Value="46"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                        VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#20FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TitleBarCloseButton" TargetType="Button" BasedOn="{StaticResource TitleBarButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Background="Transparent" CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#E81123"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
