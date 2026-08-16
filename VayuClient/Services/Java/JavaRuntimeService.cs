@@ -381,7 +381,7 @@ namespace VayuClient.Services.Java
 
             // 3. Download standalone OpenJDK JRE / JDK archive
             using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("VayuClient/1.4.0 (Windows x64)");
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"VayuClient/{Core.AppInfo.VersionString} (Windows x64)");
 
             string? tempZip = null;
             try
