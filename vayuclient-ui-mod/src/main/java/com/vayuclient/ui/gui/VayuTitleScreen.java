@@ -20,6 +20,11 @@ public class VayuTitleScreen extends VayuScreen {
     protected void init() {
         super.init();
 
+        if (!com.vayuclient.ui.platform.VayuPlatformConfig.isFirstLaunchCompleted() && this.minecraft != null) {
+            this.minecraft.setScreenAndShow(new VayuWelcomeScreen());
+            return;
+        }
+
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         int btnWidth = 190;
