@@ -114,7 +114,7 @@
                                     <Setter Property="Foreground" Value="#FFFFFF"/>
                                 </Style>
                             </TextBlock.Style>
-                            <Run Text="{Binding VayuPresenceSummary}">
+                            <Run Text="{Binding VayuPresenceSummary, Mode=OneWay}">
                                 <Run.Style>
                                     <Style TargetType="Run">
                                         <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -233,7 +233,7 @@
                                 </Style>
                             </TextBlock.Style>
                             <Run Text="Last updated: "/>
-                            <Run Text="{Binding PresenceLastUpdated, FallbackValue='—'}"/>
+                            <Run Text="{Binding PresenceLastUpdated, Mode=OneWay, FallbackValue='—'}"/>
                         </TextBlock>
                     </StackPanel>
 

@@ -20,6 +20,9 @@ namespace VayuClient.Views
             if (!string.IsNullOrEmpty(header))
             {
                 TxtHeader.Text = header;
+                TxtSubHeader.Text = header.Contains("UI", StringComparison.OrdinalIgnoreCase) || header.Contains("Launcher", StringComparison.OrdinalIgnoreCase)
+                    ? "The launcher encountered an internal interface issue. Diagnostic report below:"
+                    : "Process reported an issue. Live diagnostics below:";
             }
 
             // Smart Diagnostic Analysis

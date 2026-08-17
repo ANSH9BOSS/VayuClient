@@ -60,9 +60,10 @@ namespace VayuClient.Core
 
                         try
                         {
-                            var summary = $"An unexpected error occurred on page '{CurrentPage}': {e.Exception.Message}";
-                            var details = $"Page: {CurrentPage}\nException: {e.Exception.GetType().FullName}\nMessage: {e.Exception.Message}\n\nStack Trace:\n{e.Exception.StackTrace}";
-                            Views.ErrorDialog.ShowDialogSafe(summary, Sanitize(details), _crashLogPath ?? "crash.log");
+                            var header = "VayuClient Encountered an Unexpected UI Error";
+                            var summary = $"An unexpected UI exception occurred on page '{CurrentPage}': {e.Exception.Message}";
+                            var details = $"Category: LAUNCHER ERROR\nPage: {CurrentPage}\nException: {e.Exception.GetType().FullName}\nMessage: {e.Exception.Message}\n\nStack Trace:\n{e.Exception.StackTrace}";
+                            Views.ErrorDialog.ShowDialogSafe(summary, Sanitize(details), _crashLogPath ?? "crash.log", header);
                         }
                         catch { }
                     };

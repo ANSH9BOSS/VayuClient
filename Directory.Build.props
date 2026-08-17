@@ -1,9 +1,9 @@
-﻿<Project>
+<Project>
   <PropertyGroup>
-    <Version>1.5.3</Version>
-    <FileVersion>1.5.3.0</FileVersion>
-    <AssemblyVersion>1.5.3.0</AssemblyVersion>
-    <InformationalVersion>1.5.3</InformationalVersion>
+    <Version>1.5.6</Version>
+    <FileVersion>1.5.6.0</FileVersion>
+    <AssemblyVersion>1.5.6.0</AssemblyVersion>
+    <InformationalVersion>1.5.6</InformationalVersion>
     <Authors>ANSH9BOSS</Authors>
     <Company>ANSH9BOSS</Company>
     <Product>VayuClient</Product>
