@@ -593,22 +593,38 @@ namespace VayuClient.ViewModels
             IsSplashVisible = false;
             try
             {
-                var settings = ServiceLocator.Resolve<Services.Settings.ISettingsService>()?.Settings;
-                var profiles = ServiceLocator.Resolve<Services.Profiles.IProfileService>()?.GetAllProfiles();
+                var settingsService = ServiceLocator.Resolve<Services.Settings.ISettingsService>();
+                var profileService = ServiceLocator.Resolve<Services.Profiles.IProfileService>();
+                var accountService = ServiceLocator.Resolve<Services.Account.IAccountService>();
 
-                bool needsOnboarding = (settings != null && !settings.HasCompletedOnboarding && (profiles == null || profiles.Count == 0));
+                var settings = settingsService?.Settings;
+                var profiles = profileService?.GetAllProfiles();
+                var activeProfile = accountService?.ActiveProfile;
+
+                bool hasCompletedOnboarding = settings?.HasCompletedOnboarding ?? false;
+                bool hasProfiles = profiles != null && profiles.Count > 0;
+                bool hasValidActiveProfile = activeProfile != null && !string.IsNullOrWhiteSpace(activeProfile.Username);
+
+                // Show onboarding if setup has not been completed, or if there are no stored profiles / active profile
+                bool needsOnboarding = !hasCompletedOnboarding || !hasProfiles || !hasValidActiveProfile;
+
                 if (needsOnboarding)
                 {
+                    CrashLogger.LogMessage("[FIRST_LAUNCH] Displaying Welcome / Onboarding view (needs setup).");
+                    OnboardingVM.LoadExistingProfiles();
                     IsOnboardingVisible = true;
                 }
                 else
                 {
+                    CrashLogger.LogMessage($"[FIRST_LAUNCH] Setup previously completed. Active profile: {activeProfile?.Username}. Navigating to Home.");
                     IsOnboardingVisible = false;
                     NavigateTo("Home");
+                    HomeVM.RefreshProfile();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                CrashLogger.LogException("MainViewModel.SplashCompleted", ex);
                 IsOnboardingVisible = false;
                 NavigateTo("Home");
             }
@@ -619,6 +635,7 @@ namespace VayuClient.ViewModels
             IsOnboardingVisible = false;
             NavigateTo("Home");
             HomeVM.RefreshProfile();
+            AccountsVM.LoadProfiles();
         }
 
         public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info, string? tag = null, double autoDismissSeconds = 4.5)
