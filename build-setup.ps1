@@ -65,6 +65,10 @@ Write-Host "`n[1/3] Publishing VayuClient application payload (v$activeVersion).
     -p:EnableCompressionInSingleFile=true `
     -p:DebugType=None `
     -p:DebugSymbols=false `
+    -p:Version=$activeVersion `
+    -p:AssemblyVersion=$activeVersion.0 `
+    -p:FileVersion=$activeVersion.0 `
+    -p:InformationalVersion=$activeVersion `
     -o $tempPublish
 
 # Explicitly ensure official branding assets exist in the payload
@@ -120,6 +124,10 @@ Write-Host "`n[3/3] Building standalone VayuClientSetup.exe installer (v$activeV
     -p:EnableCompressionInSingleFile=true `
     -p:DebugType=None `
     -p:DebugSymbols=false `
+    -p:Version=$activeVersion `
+    -p:AssemblyVersion=$activeVersion.0 `
+    -p:FileVersion=$activeVersion.0 `
+    -p:InformationalVersion=$activeVersion `
     -o $distDir
 
 # Copy full application payload to dist folder

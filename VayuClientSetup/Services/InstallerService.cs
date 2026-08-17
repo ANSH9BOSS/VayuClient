@@ -40,6 +40,26 @@ namespace VayuClientSetup.Services
             return Path.Combine(programFiles, "VayuClient");
         }
 
+        public static Version ParseSemanticVersion(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return new Version(1, 0, 0);
+
+            var clean = raw.Trim().TrimStart('v', 'V').Trim();
+            var plusIdx = clean.IndexOf('+');
+            if (plusIdx > 0) clean = clean.Substring(0, plusIdx);
+            var dashIdx = clean.IndexOf('-');
+            if (dashIdx > 0) clean = clean.Substring(0, dashIdx);
+
+            if (Version.TryParse(clean, out var parsed)) return parsed;
+
+            var parts = clean.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            int major = parts.Length > 0 && int.TryParse(parts[0], out var ma) ? ma : 1;
+            int minor = parts.Length > 1 && int.TryParse(parts[1], out var mi) ? mi : 0;
+            int build = parts.Length > 2 && int.TryParse(parts[2], out var bu) ? bu : 0;
+
+            return new Version(major, minor, build);
+        }
+
         public static ExistingInstallInfo DetectExistingInstallation()
         {
             var info = new ExistingInstallInfo();
@@ -56,7 +76,7 @@ namespace VayuClientSetup.Services
                     {
                         info.Exists = true;
                         info.InstallPath = installLoc;
-                        info.Version = !string.IsNullOrEmpty(version) ? version : "1.0.0";
+                        info.Version = !string.IsNullOrEmpty(version) ? version.Trim() : "1.0.0";
                     }
                 }
             }
@@ -73,7 +93,7 @@ namespace VayuClientSetup.Services
                     try
                     {
                         var vi = FileVersionInfo.GetVersionInfo(defaultExe);
-                        info.Version = !string.IsNullOrEmpty(vi.FileVersion) ? vi.FileVersion : "1.0.0";
+                        info.Version = !string.IsNullOrEmpty(vi.FileVersion) ? vi.FileVersion.Trim() : "1.0.0";
                     }
                     catch
                     {
@@ -86,7 +106,7 @@ namespace VayuClientSetup.Services
             return info;
         }
 
-        public static async Task<bool> CloseRunningProcessesAsync(int timeoutMs = 3000)
+        public static async Task<bool> CloseRunningProcessesAsync(int timeoutMs = 5000)
         {
             var processes = Process.GetProcessesByName("VayuClient");
             if (processes.Length == 0) return true;
@@ -107,7 +127,7 @@ namespace VayuClientSetup.Services
                 {
                     return true;
                 }
-                await Task.Delay(100);
+                await Task.Delay(150);
             }
 
             // Force kill remaining VayuClient processes

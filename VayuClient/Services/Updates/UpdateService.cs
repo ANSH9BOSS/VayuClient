@@ -359,11 +359,12 @@ namespace VayuClient.Services.Updates
 
             // Installation phase
             SetState(UpdateState.Installing, "Starting installer...");
-            CrashLogger.LogMessage($"[AutoUpdate] Starting installer: {installerPath}");
+            CrashLogger.LogMessage($"[AutoUpdate] Starting installer: {installerPath} with /update flag");
 
             var psi = new ProcessStartInfo
             {
                 FileName = installerPath,
+                Arguments = "/update",
                 UseShellExecute = true
             };
 
@@ -381,26 +382,33 @@ namespace VayuClient.Services.Updates
             return true;
         }
 
+        private static System.Version ParseSemanticVersion(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return new System.Version(1, 0, 0);
+
+            var clean = raw.Trim().TrimStart('v', 'V').Trim();
+            var plusIdx = clean.IndexOf('+');
+            if (plusIdx > 0) clean = clean.Substring(0, plusIdx);
+            var dashIdx = clean.IndexOf('-');
+            if (dashIdx > 0) clean = clean.Substring(0, dashIdx);
+
+            if (System.Version.TryParse(clean, out var parsed)) return parsed;
+
+            var parts = clean.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            int major = parts.Length > 0 && int.TryParse(parts[0], out var ma) ? ma : 1;
+            int minor = parts.Length > 1 && int.TryParse(parts[1], out var mi) ? mi : 0;
+            int build = parts.Length > 2 && int.TryParse(parts[2], out var bu) ? bu : 0;
+
+            return new System.Version(major, minor, build);
+        }
+
         private static bool IsNewerVersion(string latestStr, string currentStr)
         {
             try
             {
-                if (System.Version.TryParse(latestStr, out var latest) && System.Version.TryParse(currentStr, out var current))
-                {
-                    return latest > current;
-                }
-
-                var latestParts = latestStr.Split('.').Select(p => int.TryParse(p, out var n) ? n : 0).ToArray();
-                var currentParts = currentStr.Split('.').Select(p => int.TryParse(p, out var n) ? n : 0).ToArray();
-
-                int len = Math.Max(latestParts.Length, currentParts.Length);
-                for (int i = 0; i < len; i++)
-                {
-                    int l = i < latestParts.Length ? latestParts[i] : 0;
-                    int c = i < currentParts.Length ? currentParts[i] : 0;
-                    if (l > c) return true;
-                    if (l < c) return false;
-                }
+                var latest = ParseSemanticVersion(latestStr);
+                var current = ParseSemanticVersion(currentStr);
+                return latest > current;
             }
             catch { }
             return false;

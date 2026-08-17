@@ -9,6 +9,7 @@ namespace VayuClientSetup
     public partial class App : System.Windows.Application
     {
         public static bool IsUninstallMode { get; private set; }
+        public static bool IsAutoUpdateMode { get; private set; }
 
         public App()
         {
@@ -24,9 +25,22 @@ namespace VayuClientSetup
                 base.OnStartup(e);
                 Services.SetupProfiler.Record("App initialized");
 
-                if (e.Args.Length > 0 && e.Args.Any(a => a.Equals("/uninstall", StringComparison.OrdinalIgnoreCase) || a.Equals("-uninstall", StringComparison.OrdinalIgnoreCase)))
+                if (e.Args.Length > 0)
                 {
-                    IsUninstallMode = true;
+                    if (e.Args.Any(a => a.Equals("/uninstall", StringComparison.OrdinalIgnoreCase) || a.Equals("-uninstall", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        IsUninstallMode = true;
+                    }
+                    else if (e.Args.Any(a => 
+                        a.Equals("/update", StringComparison.OrdinalIgnoreCase) || 
+                        a.Equals("-update", StringComparison.OrdinalIgnoreCase) ||
+                        a.Equals("/auto-update", StringComparison.OrdinalIgnoreCase) || 
+                        a.Equals("-auto-update", StringComparison.OrdinalIgnoreCase) ||
+                        a.Equals("/silent", StringComparison.OrdinalIgnoreCase) || 
+                        a.Equals("-silent", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        IsAutoUpdateMode = true;
+                    }
                 }
 
                 ShutdownMode = ShutdownMode.OnMainWindowClose;

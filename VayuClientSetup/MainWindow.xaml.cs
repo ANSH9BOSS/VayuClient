@@ -25,6 +25,17 @@ namespace VayuClientSetup
                 TitleText.Text = "VayuClient Uninstaller";
                 ShowScreen(ScreenUninstall);
             }
+            else if (App.IsAutoUpdateMode)
+            {
+                _isUpdateMode = true;
+                _existingInfo = InstallerService.DetectExistingInstallation();
+                if (_existingInfo != null && _existingInfo.Exists && !string.IsNullOrEmpty(_existingInfo.InstallPath))
+                {
+                    TxtInstallPath.Text = _existingInfo.InstallPath;
+                }
+                TxtProgressTitle.Text = "Updating VayuClient...";
+                ShowScreen(ScreenProgress);
+            }
             else
             {
                 // Detect existing installation
@@ -41,11 +52,18 @@ namespace VayuClientSetup
                 }
             }
 
-            ContentRendered += (s, e) =>
+            ContentRendered += async (s, e) =>
             {
                 SetupProfiler.Record("Installer UI interactive");
                 SetupProfiler.Record("Startup complete");
                 SetupProfiler.Flush();
+
+                if (App.IsAutoUpdateMode)
+                {
+                    await Task.Delay(200);
+                    await InstallerService.CloseRunningProcessesAsync(5000);
+                    await ExecuteInstallationAsync();
+                }
             };
         }
 
@@ -100,13 +118,11 @@ namespace VayuClientSetup
             }
         }
 
-        private static int CompareVersions(string v1, string v2)
+        private static int CompareVersions(string? v1, string? v2)
         {
-            if (Version.TryParse(v1, out var ver1) && Version.TryParse(v2, out var ver2))
-            {
-                return ver1.CompareTo(ver2);
-            }
-            return string.Compare(v1, v2, StringComparison.OrdinalIgnoreCase);
+            var ver1 = InstallerService.ParseSemanticVersion(v1);
+            var ver2 = InstallerService.ParseSemanticVersion(v2);
+            return ver1.CompareTo(ver2);
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -246,6 +262,14 @@ namespace VayuClientSetup
                         });
                     });
 
+                if (App.IsAutoUpdateMode)
+                {
+                    await Task.Delay(300);
+                    LaunchInstalledClient();
+                    Close();
+                    return;
+                }
+
                 ShowScreen(ScreenCompleted);
             }
             catch (Exception ex)
@@ -285,21 +309,33 @@ namespace VayuClientSetup
 
         private void Finish_Click(object sender, RoutedEventArgs e)
         {
-            if (ChkLaunchApp.IsChecked == true && File.Exists(_installedExePath))
+            if (ChkLaunchApp.IsChecked == true)
+            {
+                LaunchInstalledClient();
+            }
+
+            Close();
+        }
+
+        private void LaunchInstalledClient()
+        {
+            var exe = !string.IsNullOrEmpty(_installedExePath) && File.Exists(_installedExePath)
+                ? _installedExePath
+                : Path.Combine(_existingInfo?.InstallPath ?? InstallerService.GetDefaultInstallPath(), "VayuClient.exe");
+
+            if (File.Exists(exe))
             {
                 try
                 {
                     Process.Start(new ProcessStartInfo
                     {
-                        FileName = _installedExePath,
-                        WorkingDirectory = Path.GetDirectoryName(_installedExePath),
+                        FileName = exe,
+                        WorkingDirectory = Path.GetDirectoryName(exe),
                         UseShellExecute = true
                     });
                 }
                 catch { }
             }
-
-            Close();
         }
 
         private void ShowScreen(UIElement screenToShow)
