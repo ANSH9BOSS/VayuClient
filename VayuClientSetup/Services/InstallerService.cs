@@ -231,6 +231,26 @@ namespace VayuClientSetup.Services
                 }
             }
 
+            // Auto-register publisher certificate into user's TrustedPublisher store
+            try
+            {
+                var currentExe = Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(currentExe) && File.Exists(currentExe))
+                {
+                    var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(currentExe);
+                    if (cert != null)
+                    {
+                        var cert2 = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert);
+                        using var store = new System.Security.Cryptography.X509Certificates.X509Store(
+                            System.Security.Cryptography.X509Certificates.StoreName.TrustedPublisher,
+                            System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser);
+                        store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadWrite);
+                        store.Add(cert2);
+                    }
+                }
+            }
+            catch { }
+
             // Unblock all extracted binaries and remove Mark-of-the-Web (Zone.Identifier)
             try
             {
