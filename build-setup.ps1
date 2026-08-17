@@ -122,12 +122,9 @@ Write-Host "`n[3/3] Building standalone VayuClientSetup.exe installer (v$activeV
     -p:DebugSymbols=false `
     -o $distDir
 
-# Preserve standalone VayuClient.exe in dist folder
-$standaloneExe = Join-Path $tempPublish "VayuClient.exe"
-if (Test-Path $standaloneExe) {
-    Copy-Item $standaloneExe -Destination (Join-Path $distDir "VayuClient.exe") -Force
-    Write-Host "-> Preserved standalone executable: $(Join-Path $distDir 'VayuClient.exe')" -ForegroundColor Green
-}
+# Copy full application payload to dist folder
+Copy-Item (Join-Path $tempPublish "*") -Destination $distDir -Recurse -Force
+Write-Host "-> Preserved full application distribution in: $distDir" -ForegroundColor Green
 
 # Clean up temp publish
 if (Test-Path $tempPublish) { Remove-Item $tempPublish -Recurse -Force }
