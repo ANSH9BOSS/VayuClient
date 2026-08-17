@@ -107,6 +107,9 @@ namespace VayuClient.Core
             // Server Manager (Feature 21)
             Register<IServerService>(new ServerService());
 
+            // Visual Asset & Wallpaper Catalog
+            Register<Services.Assets.IAssetCatalogService>(new Services.Assets.AssetCatalogService());
+
             // ─── BACKGROUND PATH (non-blocking) ─────────────────────────────────
             // Discord RPC pipe connection and WMI hardware detection are slow.
             // Initialize them asynchronously after the UI is visible.

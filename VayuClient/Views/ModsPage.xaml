@@ -11,273 +11,277 @@
                HorizontalAlignment="Center" 
                VerticalAlignment="Center"
                RenderOptions.BitmapScalingMode="HighQuality"
-               Opacity="0.38"/>
+               Opacity="0.25"/>
 
         <!-- Dark Gradient Overlay for Maximum Readability -->
         <Rectangle>
             <Rectangle.Fill>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#CC070B14" Offset="0.0"/>
-                    <GradientStop Color="#E6070B14" Offset="0.6"/>
-                    <GradientStop Color="#F8070B14" Offset="1.0"/>
+                    <GradientStop Color="#D0070B14" Offset="0.0"/>
+                    <GradientStop Color="#E6070B14" Offset="0.5"/>
+                    <GradientStop Color="#FA070B14" Offset="1.0"/>
                 </LinearGradientBrush>
             </Rectangle.Fill>
         </Rectangle>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource VayuScrollViewer}">
-            <StackPanel Margin="28,20,28,32">
-                <!-- ═══ HEADER WITH INSTANCE SELECTOR & ACTIONS ═══ -->
-                <Grid Margin="0,0,0,20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+        <Grid Margin="28,18,28,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header + Instance Selector Toolbar -->
+                <RowDefinition Height="Auto"/> <!-- Categories & Filter Toolbar -->
+                <RowDefinition Height="*"/>    <!-- Mods Grid / Empty State -->
+            </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <Path Data="{StaticResource VayuIconMods}" Fill="#22C55E" Width="20" Height="20" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Mods Manager" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 1. TOP HEADER & INSTANCE PICKER TOOLBAR                         -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                        <Path Data="{StaticResource VayuIconMods}" Fill="#38BDF8" Width="20" Height="20" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="MODS LIBRARY" FontSize="20" FontWeight="Black" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                        <Border Background="#1E3A8A" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding EnabledModCount, StringFormat='{}{0} ACTIVE'}" FontSize="10.5" FontWeight="Black" Foreground="#38BDF8"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="Manage, toggle, and install optimizations, HUD widgets, and game expansions."
+                               FontSize="12" Foreground="{StaticResource VayuTextDimBrush}"/>
+                </StackPanel>
+
+                <!-- Actions: Instance Picker, Open Folder, Browse, Add Mod -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Instance Dropdown Picker -->
+                    <Border CornerRadius="8" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" Padding="8,4" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="INSTANCE:" FontSize="10.5" FontWeight="Black" Foreground="#64748B" VerticalAlignment="Center" Margin="4,0,8,0"/>
+                            <ComboBox ItemsSource="{Binding AvailableInstances}"
+                                      SelectedItem="{Binding SelectedInstance}"
+                                      Style="{StaticResource VayuComboBox}"
+                                      Width="210" Height="30">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                            <TextBlock Text="{Binding Loader, StringFormat=' ({0})'}" Foreground="#38BDF8" Margin="4,0,0,0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
-                        <TextBlock Text="Manage, toggle, and install Fabric, Forge, and NeoForge mods"
-                                   FontSize="12" Foreground="{StaticResource VayuTextDimBrush}"/>
-                    </StackPanel>
+                    </Border>
 
-                    <!-- Instance Selector & Actions Toolbar -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Prominent Target Instance Dropdown -->
-                        <Border CornerRadius="4" Background="#111A2C" BorderBrush="#1E293B" BorderThickness="1" Padding="8,4" Margin="0,0,10,0">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="INSTANCE:" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" VerticalAlignment="Center" Margin="4,0,8,0"/>
-                                <ComboBox ItemsSource="{Binding AvailableInstances}"
-                                          SelectedItem="{Binding SelectedInstance}"
-                                          Style="{StaticResource VayuComboBox}"
-                                          Width="200" Height="32">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                                <TextBlock Text="{Binding Loader, StringFormat=' ({0})'}" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="4,0,0,0"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-                        </Border>
+                    <Button Style="{StaticResource VayuDarkButton}" Padding="13,8" Margin="0,0,8,0"
+                            Command="{Binding OpenModsFolderCommand}"
+                            IsEnabled="{Binding HasSelectedInstance}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource VayuIconFolder}" Fill="#94A3B8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Open Folder" FontSize="12" Foreground="#CBD5E1"/>
+                        </StackPanel>
+                    </Button>
 
-                        <Button Style="{StaticResource VayuDarkButton}" Padding="14,8" Margin="0,0,8,0"
-                                Command="{Binding OpenModsFolderCommand}"
-                                IsEnabled="{Binding HasSelectedInstance}">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource VayuIconFolder}" Fill="#94A3B8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Open Mods Folder" FontSize="12"/>
-                            </StackPanel>
-                        </Button>
+                    <Button Style="{StaticResource VayuDarkButton}" Padding="13,8" Margin="0,0,8,0"
+                            Command="{Binding BrowseModrinthCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource VayuIconSearch}" Fill="#38BDF8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Get Mods" FontSize="12" Foreground="#38BDF8" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
 
-                        <Button Style="{StaticResource VayuDarkButton}" Padding="14,8" Margin="0,0,8,0"
-                                Command="{Binding BrowseModrinthCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource VayuIconSearch}" Fill="{StaticResource VayuBrightBlueBrush}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Browse Modrinth" FontSize="12" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                            </StackPanel>
-                        </Button>
+                    <Button Style="{StaticResource VayuAccentButton}" Padding="16,8"
+                            Command="{Binding AddModCommand}"
+                            IsEnabled="{Binding HasSelectedInstance}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource VayuIconPlus}" Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Add .jar" FontSize="12" FontWeight="Black" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
 
-                        <Button Style="{StaticResource VayuAccentButton}" Padding="16,8"
-                                Command="{Binding AddModCommand}"
-                                IsEnabled="{Binding HasSelectedInstance}">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource VayuIconPlus}" Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Add Mod (.jar)" FontSize="12" FontWeight="Bold" Foreground="White"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 2. CATEGORY PILLS & SEARCH TOOLBAR                              -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="1" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- ═══ COMPULSORY INSTANCE CHOOSER (When No Instance Is Selected Or No Instances Exist) ═══ -->
-                <Border Visibility="{Binding HasSelectedInstance, Converter={StaticResource InverseBoolToVis}}"
-                        CornerRadius="6" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1"
-                        Padding="36,32" Margin="0,10,0,0">
+                <!-- Search Box -->
+                <Border Grid.Column="0" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,14,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Path Grid.Column="0" Data="{StaticResource VayuIconSearch}" Fill="#64748B" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontFamily="{StaticResource VayuFontFamily}" FontSize="12.5"
+                                 VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Category Filter Chips -->
+                <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Style="{StaticResource VayuScrollViewer}" Margin="0,0,10,0">
+                    <ItemsControl ItemsSource="{Binding Categories}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <RadioButton Content="{Binding}" 
+                                             GroupName="ModCategoryFilters"
+                                             FontSize="11" FontWeight="Bold" Margin="0,0,6,0"
+                                             Cursor="Hand">
+                                    <RadioButton.Style>
+                                        <Style TargetType="RadioButton">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="RadioButton">
+                                                        <Border x:Name="ChipBorder" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="10,4">
+                                                            <TextBlock Text="{TemplateBinding Content}" FontSize="11" FontWeight="Bold" Foreground="#94A3B8"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsChecked" Value="True">
+                                                                <Setter TargetName="ChipBorder" Property="Background" Value="#1E3A8A"/>
+                                                                <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#2563EB"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </RadioButton.Style>
+                                </RadioButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Status Filter Dropdown -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="STATUS:" FontSize="10.5" FontWeight="Black" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}"
+                              Style="{StaticResource VayuComboBox}" Width="110" Height="30"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 3. MODS CARDS GRID                                              -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="2">
+                <!-- Empty State (No Mods Installed) -->
+                <Border Visibility="{Binding HasMods, Converter={StaticResource InverseBoolToVis}}"
+                        CornerRadius="12" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1"
+                        Padding="40,40" Margin="0,10,0,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <Border Width="56" Height="56" CornerRadius="28" Background="#152033" BorderBrush="#2563EB" BorderThickness="1.5" HorizontalAlignment="Center" Margin="0,0,0,16">
-                            <Path Data="{StaticResource VayuIconInstances}" Fill="{StaticResource VayuBrightBlueBrush}" Width="26" Height="26" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Text="SELECT AN INSTANCE TO MANAGE MODS" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Mods are isolated per Minecraft instance. Choose an instance below or create a new one to manage its mods." 
-                                   FontSize="12" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,6,0,24" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="520"/>
-
-                        <!-- Instance Cards Grid -->
-                        <ItemsControl ItemsSource="{Binding AvailableInstances}" Margin="0,0,0,20">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel HorizontalAlignment="Center"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="240" CornerRadius="6" Background="#111A2C" BorderBrush="#1E293B" BorderThickness="1" Padding="14,12" Margin="6">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-
-                                            <TextBlock Grid.Row="0" Text="{Binding Name}" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
-                                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,12">
-                                                <Border CornerRadius="3" Padding="6,1" Background="#1B2638" Margin="0,0,6,0">
-                                                    <TextBlock Text="{Binding Loader}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                                </Border>
-                                                <Border CornerRadius="3" Padding="6,1" Background="#1B2638">
-                                                    <TextBlock Text="{Binding MinecraftVersion}" FontSize="10.5" Foreground="{StaticResource VayuTextDimBrush}"/>
-                                                </Border>
-                                            </StackPanel>
-
-                                            <Button Grid.Row="2" Content="Manage Mods"
-                                                    Command="{Binding DataContext.SelectInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource VayuAccentButton}" Padding="12,6" HorizontalAlignment="Stretch"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Action Buttons -->
+                        <Path Data="{StaticResource VayuIconMods}" Fill="#38BDF8" Width="44" Height="44" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <TextBlock Text="No Mods Found in Active Instance" FontSize="18" FontWeight="Black" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Enhance your gameplay with Sodium, Iris Shaders, AppleSkin, and performance mods." FontSize="13" Foreground="#94A3B8" Margin="0,6,0,24" HorizontalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Style="{StaticResource VayuDarkButton}" Padding="16,8" Command="{Binding CreateNewInstanceCommand}" Margin="0,0,10,0">
+                            <Button Style="{StaticResource VayuAccentButton}" Padding="18,9" Command="{Binding BrowseModrinthCommand}" Margin="0,0,10,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconPlus}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Create New Instance" FontSize="12" FontWeight="SemiBold"/>
+                                    <Path Data="{StaticResource VayuIconSearch}" Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Browse Modrinth Mods" FontSize="12.5" FontWeight="Bold" Foreground="White"/>
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource VayuDarkButton}" Padding="16,8" Command="{Binding BrowseModrinthCommand}">
-                                <TextBlock Text="Explore Modpacks" FontSize="12" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                            <Button Style="{StaticResource VayuDarkButton}" Padding="18,9" Command="{Binding AddModCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource VayuIconPlus}" Fill="#94A3B8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Drop .jar File" FontSize="12.5" Foreground="#CBD5E1"/>
+                                </StackPanel>
                             </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- ═══ MODS BROWSER & MANAGEMENT (When Instance Is Selected) ═══ -->
-                <StackPanel Visibility="{Binding HasSelectedInstance, Converter={StaticResource BoolToVis}}">
-                    <!-- Search Toolbar -->
-                    <Border CornerRadius="6" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="14,10" Margin="0,0,0,16">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0" Text="SEARCH" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}" VerticalAlignment="Center" Margin="0,0,14,0"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource VayuGlassTextBox}"
-                                     Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="34"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Empty State -->
-                    <Border Visibility="{Binding HasMods, Converter={StaticResource InverseBoolToVis}}"
-                            CornerRadius="6" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1"
-                            Padding="36,32">
-                        <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="NO MODS FOUND IN THIS INSTANCE" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
-                            <TextBlock Text="This instance currently has no installed mods. Add a .jar mod file or browse Modrinth to install mods." 
-                                       FontSize="12" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,6,0,20" HorizontalAlignment="Center"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Style="{StaticResource VayuAccentButton}" Padding="16,8" Command="{Binding AddModCommand}" Margin="0,0,10,0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource VayuIconPlus}" Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Add Mod (.jar)" FontSize="12" FontWeight="Bold" Foreground="White"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Style="{StaticResource VayuDarkButton}" Padding="16,8" Command="{Binding BrowseModrinthCommand}">
-                                    <TextBlock Text="Explore Modrinth Marketplace" FontSize="12" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                </Button>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Mods List -->
-                    <ItemsControl ItemsSource="{Binding Mods}" Visibility="{Binding HasMods, Converter={StaticResource BoolToVis}}">
+                <!-- Responsive Mod Cards Grid -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Style="{StaticResource VayuScrollViewer}"
+                              Visibility="{Binding HasMods, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl ItemsSource="{Binding Mods}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="6" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1"
-                                        Padding="16,12" Margin="0,0,0,8">
+                                <Border Width="315" Height="140" Margin="0,0,14,14" CornerRadius="10" 
+                                        Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1.5"
+                                        Padding="14,12">
                                     <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="42"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Mod Icon / Avatar (Real Image with Initials Fallback) -->
-                                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="6"
-                                                Background="#152033" BorderBrush="#243247" BorderThickness="1" 
-                                                Margin="0,0,14,0" ClipToBounds="True">
-                                            <Grid>
-                                                <!-- Initial letter fallback -->
-                                                <TextBlock Text="{Binding Name, Converter={StaticResource StringToInitial}}" FontSize="18" FontWeight="Black"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                           Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                                <!-- Real Mod Image / Icon (from jar or Modrinth) -->
-                                                <Image Source="{Binding IconPath, Converter={StaticResource WebImage}}" 
-                                                       Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            </Grid>
+                                        <!-- Mod Icon -->
+                                        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="36" Height="36" CornerRadius="6" Background="#162238" VerticalAlignment="Top" ClipToBounds="True">
+                                            <Image Source="{Binding IconPath}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Border>
 
-                                        <!-- Details -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource VayuTextBrush}" Margin="0,0,10,0"/>
-                                                <Border CornerRadius="3" Padding="6,1" VerticalAlignment="Center" Margin="0,0,6,0" Background="#1B2638" BorderBrush="#243247" BorderThickness="1">
-                                                    <TextBlock Text="{Binding Version}" FontSize="10" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                        <!-- Mod Header & Category -->
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Black" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <Border Background="#152238" CornerRadius="4" Padding="5,1.5" Margin="0,0,6,0">
+                                                    <TextBlock Text="{Binding Category}" FontSize="9.5" FontWeight="Black" Foreground="{Binding CategoryBadgeColor}"/>
                                                 </Border>
-                                                <Border CornerRadius="3" Padding="6,1" VerticalAlignment="Center" Background="#1B2638" BorderBrush="#243247" BorderThickness="1">
-                                                    <TextBlock Text="{Binding ModLoader}" FontSize="10" FontWeight="SemiBold"
-                                                               Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                                </Border>
+                                                <TextBlock Text="{Binding Version, StringFormat='v{0}'}" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock Text="{Binding Description}" FontSize="11.5" Foreground="{StaticResource VayuTextDimBrush}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock FontSize="10.5" Margin="0,2,0,0" Foreground="{StaticResource VayuTextMutedBrush}">
-                                                <Run Text="By "/>
-                                                <Run Text="{Binding Author, Mode=OneWay}"/>
-                                            </TextBlock>
                                         </StackPanel>
 
-                                        <!-- Actions: Toggle & Delete -->
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Style="{StaticResource VayuDarkButton}" Padding="14,6" Margin="0,0,8,0"
-                                                    Command="{Binding DataContext.ToggleModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Name}">
-                                                <TextBlock FontSize="11.5" FontWeight="Bold">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="ENABLE"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource VayuSuccessBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsEnabled}" Value="True">
-                                                                    <Setter Property="Text" Value="DISABLE"/>
-                                                                    <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Button>
+                                        <!-- Enable/Disable Switch -->
+                                        <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding IsEnabled}"
+                                                  Command="{Binding DataContext.ToggleModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  CommandParameter="{Binding}"
+                                                  Cursor="Hand" VerticalAlignment="Top" Style="{StaticResource VayuToggleSwitch}"/>
 
-                                            <!-- Delete Mod Button -->
-                                            <Button Style="{StaticResource VayuDarkButton}" Padding="10,6"
-                                                    Command="{Binding DataContext.DeleteModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Name}"
-                                                    ToolTip="Delete Mod">
-                                                <TextBlock Text="✕" FontSize="12" FontWeight="Bold" Foreground="#EF4444"/>
-                                            </Button>
-                                        </StackPanel>
+                                        <!-- Short Description -->
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Description}" 
+                                                   FontSize="11" Foreground="#94A3B8" TextTrimming="CharacterEllipsis" Margin="10,4,0,0" VerticalAlignment="Top"/>
+
+                                        <!-- Footer: File Size & Delete Button -->
+                                        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BorderBrush="#162238" BorderThickness="0,1,0,0" Padding="0,6,0,0" Margin="0,4,0,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- File Size / Author Info -->
+                                                <TextBlock Grid.Column="0" Text="{Binding FileSizeFormatted, StringFormat='Size: {0}'}" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center"/>
+
+                                                <!-- Actions: Remove Mod -->
+                                                <Button Grid.Column="1" Content="Remove" 
+                                                        Command="{Binding DataContext.DeleteModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource VayuDarkButton}" Padding="10,3" FontSize="10.5" Foreground="#EF4444"/>
+                                            </Grid>
+                                        </Border>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
-            </StackPanel>
-    </ScrollViewer>
-</Grid>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
 </UserControl>

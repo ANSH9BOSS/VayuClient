@@ -156,6 +156,7 @@ namespace VayuClient.ViewModels
         private static readonly string[] _availableWallpapers = new[]
         {
             "/Assets/Images/vayu_minecraft_hero.jpg",
+            "/Assets/Images/bg_pvp_arena.jpg",
             "/Assets/Images/bg_lush_caves.jpg",
             "/Assets/Images/bg_mountain_aurora.jpg",
             "/Assets/Images/bg_ocean_monument.jpg",

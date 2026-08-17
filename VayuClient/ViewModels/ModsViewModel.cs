@@ -26,10 +26,29 @@ namespace VayuClient.ViewModels
         private string _searchQuery = string.Empty;
 
         [ObservableProperty]
+        private string _selectedCategory = "ALL";
+
+        [ObservableProperty]
+        private string _statusFilter = "All"; // All, Enabled, Disabled
+
+        public ObservableCollection<string> Categories { get; } = new() 
+        { 
+            "ALL", "PERFORMANCE", "PVP", "HUD", "UTILITY", "VISUAL", "WORLD", "LIBRARY" 
+        };
+
+        public ObservableCollection<string> StatusFilters { get; } = new() { "All", "Enabled", "Disabled" };
+
+        [ObservableProperty]
         private string _activeInstanceName = "No Instance Selected";
 
         [ObservableProperty]
         private bool _hasMods = false;
+
+        [ObservableProperty]
+        private int _totalModCount = 0;
+
+        [ObservableProperty]
+        private int _enabledModCount = 0;
 
         [ObservableProperty]
         private MinecraftInstance? _selectedInstance;
@@ -145,24 +164,47 @@ namespace VayuClient.ViewModels
             }
         }
 
-        partial void OnSearchQueryChanged(string value)
-        {
-            ApplyFilter();
-        }
+        partial void OnSearchQueryChanged(string value) => ApplyFilter();
+        partial void OnSelectedCategoryChanged(string value) => ApplyFilter();
+        partial void OnStatusFilterChanged(string value) => ApplyFilter();
 
         private void ApplyFilter()
         {
             Dispatch(() =>
             {
                 Mods.Clear();
-                var filtered = string.IsNullOrWhiteSpace(SearchQuery)
-                    ? _allMods
-                    : _allMods.Where(m => m.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
-                                          m.Description.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
-                                          m.Author.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase));
+                IEnumerable<ModInfo> query = _allMods;
 
-                foreach (var m in filtered) Mods.Add(m);
+                // 1. Filter Category
+                if (!string.IsNullOrEmpty(SelectedCategory) && SelectedCategory != "ALL")
+                {
+                    query = query.Where(m => string.Equals(m.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // 2. Filter Status
+                if (StatusFilter == "Enabled")
+                {
+                    query = query.Where(m => m.IsEnabled);
+                }
+                else if (StatusFilter == "Disabled")
+                {
+                    query = query.Where(m => !m.IsEnabled);
+                }
+
+                // 3. Filter Search Query
+                if (!string.IsNullOrWhiteSpace(SearchQuery))
+                {
+                    var q = SearchQuery.Trim().ToLowerInvariant();
+                    query = query.Where(m => (m.Name ?? "").ToLowerInvariant().Contains(q) ||
+                                             (m.Description ?? "").ToLowerInvariant().Contains(q) ||
+                                             (m.Author ?? "").ToLowerInvariant().Contains(q) ||
+                                             (m.Id ?? "").ToLowerInvariant().Contains(q));
+                }
+
+                foreach (var m in query) Mods.Add(m);
                 HasMods = Mods.Count > 0;
+                TotalModCount = _allMods.Count;
+                EnabledModCount = _allMods.Count(m => m.IsEnabled);
             });
         }
 
@@ -194,7 +236,7 @@ namespace VayuClient.ViewModels
                 foreach (var filePath in jarFiles)
                 {
                     bool isEnabled = !filePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase);
-                    var mod = ParseModJar(filePath, isEnabled);
+                    var mod = ParseModJar(filePath, isEnabled, instance.MinecraftVersion);
                     list.Add(mod);
                 }
 
@@ -238,7 +280,25 @@ namespace VayuClient.ViewModels
             try { Directory.CreateDirectory(_iconsCacheDir); } catch { }
         }
 
-        private ModInfo ParseModJar(string filePath, bool isEnabled)
+        public static string DetectCategory(string name, string id, string desc)
+        {
+            var text = $"{name} {id} {desc}".ToLowerInvariant();
+            if (text.Contains("sodium") || text.Contains("lithium") || text.Contains("ferritecore") || text.Contains("fps") || text.Contains("optifine") || text.Contains("performance") || text.Contains("krypton") || text.Contains("memory") || text.Contains("c2me") || text.Contains("fast") || text.Contains("smooth") || text.Contains("immediatelyfast"))
+                return "PERFORMANCE";
+            if (text.Contains("pvp") || text.Contains("combat") || text.Contains("crosshair") || text.Contains("reach") || text.Contains("hitbox") || text.Contains("armor") || text.Contains("keystroke") || text.Contains("freelook"))
+                return "PVP";
+            if (text.Contains("hud") || text.Contains("gui") || text.Contains("appleskin") || text.Contains("map") || text.Contains("minimap") || text.Contains("xaero") || text.Contains("journeymap") || text.Contains("waila") || text.Contains("jade") || text.Contains("health"))
+                return "HUD";
+            if (text.Contains("iris") || text.Contains("shader") || text.Contains("visual") || text.Contains("dynamic light") || text.Contains("lambdynamic") || text.Contains("continuity") || text.Contains("connected") || text.Contains("particle") || text.Contains("ambient"))
+                return "VISUAL";
+            if (text.Contains("world") || text.Contains("biome") || text.Contains("structure") || text.Contains("dungeon") || text.Contains("terralith") || text.Contains("generation"))
+                return "WORLD";
+            if (text.Contains("fabric-api") || text.Contains("cloth") || text.Contains("architectury") || text.Contains("library") || text.Contains("api") || text.Contains("lib") || text.Contains("kotlin") || text.Contains("yacl"))
+                return "LIBRARY";
+            return "UTILITY";
+        }
+
+        private ModInfo ParseModJar(string filePath, bool isEnabled, string mcVersion)
         {
             string fileName = Path.GetFileName(filePath);
             string cleanName = isEnabled ? fileName.Replace(".jar", "") : fileName.Replace(".jar.disabled", "");
@@ -248,6 +308,19 @@ namespace VayuClient.ViewModels
             string loader = "Universal";
             string? iconPath = null;
             string? modId = null;
+            string fileSize = "0 KB";
+
+            try
+            {
+                var fi = new FileInfo(filePath);
+                if (fi.Exists)
+                {
+                    fileSize = fi.Length > 1024 * 1024
+                        ? $"{(fi.Length / (1024.0 * 1024.0)):F1} MB"
+                        : $"{(fi.Length / 1024.0):F0} KB";
+                }
+            }
+            catch { }
 
             try
             {
@@ -340,13 +413,20 @@ namespace VayuClient.ViewModels
             }
             catch { }
 
+            var category = DetectCategory(cleanName, modId ?? "", description);
+
             var modInfo = new ModInfo
             {
                 Id = filePath,
                 Name = cleanName,
                 Version = version,
+                MinecraftVersion = mcVersion,
                 Author = author,
                 Description = description,
+                Category = category,
+                FileName = fileName,
+                FilePath = filePath,
+                FileSizeFormatted = fileSize,
                 ModLoader = loader,
                 IsEnabled = isEnabled,
                 IconPath = iconPath

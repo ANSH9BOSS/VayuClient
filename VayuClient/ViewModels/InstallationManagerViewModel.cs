@@ -69,6 +69,7 @@ namespace VayuClient.ViewModels
         public const int PageSize = 10;
 
         public ObservableCollection<MinecraftInstance> Installations { get; } = new();
+        public ObservableCollection<MinecraftInstance> FilteredInstallations { get; } = new();
         public ObservableCollection<ModpackInfo> ModrinthProjects { get; } = new();
 
         [ObservableProperty]
@@ -76,6 +77,26 @@ namespace VayuClient.ViewModels
 
         [ObservableProperty]
         private MinecraftInstance? _selectedInstallation;
+
+        // ─── GAME LIBRARY FILTER & SORT ───
+        [ObservableProperty]
+        private string _libraryFilterLoader = "All"; // All, Fabric, Forge, NeoForge, Vanilla, Favorites
+
+        [ObservableProperty]
+        private string _librarySortBy = "Last Played"; // Last Played, Name, Version, RAM
+
+        [ObservableProperty]
+        private string _librarySearchQuery = string.Empty;
+
+        public ObservableCollection<string> LibraryLoaders { get; } = new() { "All", "Fabric", "Forge", "NeoForge", "Vanilla", "Favorites" };
+        public ObservableCollection<string> LibrarySortOptions { get; } = new() { "Last Played", "Name", "Version", "RAM" };
+
+        // ─── INSTANCE INSPECTION DRAWER ───
+        [ObservableProperty]
+        private bool _isInspectOpen;
+
+        [ObservableProperty]
+        private MinecraftInstance? _inspectingInstance;
 
         // ─── 1. MODPACK CONFIGURATION MODAL STATE ───
         [ObservableProperty]
@@ -204,6 +225,10 @@ namespace VayuClient.ViewModels
             }
         }
 
+        partial void OnLibraryFilterLoaderChanged(string value) => ApplyLibraryFilterAndSort();
+        partial void OnLibrarySortByChanged(string value) => ApplyLibraryFilterAndSort();
+        partial void OnLibrarySearchQueryChanged(string value) => ApplyLibraryFilterAndSort();
+
         public void LoadInstallations()
         {
             Installations.Clear();
@@ -217,6 +242,52 @@ namespace VayuClient.ViewModels
             if (SelectedTargetInstance == null && Installations.Count > 0)
             {
                 SelectedTargetInstance = Installations.FirstOrDefault(i => i.IsActive) ?? Installations.FirstOrDefault();
+            }
+            ApplyLibraryFilterAndSort();
+        }
+
+        public void ApplyLibraryFilterAndSort()
+        {
+            FilteredInstallations.Clear();
+            IEnumerable<MinecraftInstance> query = Installations;
+
+            // 1. Filter by Loader / Favorites
+            if (!string.IsNullOrEmpty(LibraryFilterLoader) && LibraryFilterLoader != "All")
+            {
+                if (LibraryFilterLoader == "Favorites")
+                {
+                    query = query.Where(i => i.IsFavorite);
+                }
+                else
+                {
+                    query = query.Where(i => string.Equals(i.Loader, LibraryFilterLoader, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+
+            // 2. Filter by Search Query
+            if (!string.IsNullOrWhiteSpace(LibrarySearchQuery))
+            {
+                var q = LibrarySearchQuery.Trim().ToLowerInvariant();
+                query = query.Where(i => (i.Name ?? "").ToLowerInvariant().Contains(q) 
+                                      || (i.MinecraftVersion ?? "").ToLowerInvariant().Contains(q)
+                                      || (i.Loader ?? "").ToLowerInvariant().Contains(q));
+            }
+
+            // 3. Sort
+            query = LibrarySortBy switch
+            {
+                "Name" => query.OrderBy(i => i.Name),
+                "Version" => query.OrderByDescending(i => i.MinecraftVersion),
+                "RAM" => query.OrderByDescending(i => i.RamMB),
+                _ => query.OrderByDescending(i => i.IsActive)
+                          .ThenByDescending(i => i.IsFavorite)
+                          .ThenByDescending(i => i.LastPlayedAt ?? DateTime.MinValue)
+                          .ThenBy(i => i.Name)
+            };
+
+            foreach (var inst in query)
+            {
+                FilteredInstallations.Add(inst);
             }
         }
 
@@ -236,7 +307,45 @@ namespace VayuClient.ViewModels
             _instanceService.SetActiveInstance(instance.InstanceId);
             SelectedInstallation = instance;
             SelectedTargetInstance = instance;
+            LoadInstallations();
             _main.ShowNotification("Active Instance Updated", $"Switched to {instance.Name}", NotificationType.Success);
+        }
+
+        [RelayCommand]
+        private void ToggleFavorite(MinecraftInstance? instance)
+        {
+            if (instance == null || _instanceService == null) return;
+            instance.IsFavorite = !instance.IsFavorite;
+            _ = _instanceService.SaveInstanceAsync(instance);
+            ApplyLibraryFilterAndSort();
+        }
+
+        [RelayCommand]
+        private void InspectInstance(MinecraftInstance? instance)
+        {
+            if (instance == null) return;
+            InspectingInstance = instance;
+            IsInspectOpen = true;
+        }
+
+        [RelayCommand]
+        private void CloseInspect()
+        {
+            IsInspectOpen = false;
+            InspectingInstance = null;
+        }
+
+        [RelayCommand]
+        private void PlayInstanceDirectly(MinecraftInstance? instance)
+        {
+            if (instance == null || _instanceService == null) return;
+            _instanceService.SetActiveInstance(instance.InstanceId);
+            SelectedInstallation = instance;
+            _main.NavigateTo("Home");
+            if (_main.CurrentPageViewModel is HomeViewModel homeVm)
+            {
+                homeVm.PlayCommand.Execute(null);
+            }
         }
 
         [RelayCommand]
