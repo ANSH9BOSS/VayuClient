@@ -415,4 +415,72 @@ namespace VayuClient.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
+
+    public class ZeroToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int i && i == 0) return Visibility.Visible;
+            if (value == null) return Visibility.Visible;
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class NonZeroToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int i && i > 0) return Visibility.Visible;
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class PingToColorBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0x4A, 0xDE, 0x80));
+        private static readonly SolidColorBrush YellowBrush = new(Color.FromRgb(0xFA, 0xCC, 0x15));
+        private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
+        private static readonly SolidColorBrush GrayBrush = new(Color.FromRgb(0x94, 0xA3, 0xB8));
+
+        static PingToColorBrushConverter()
+        {
+            GreenBrush.Freeze();
+            YellowBrush.Freeze();
+            RedBrush.Freeze();
+            GrayBrush.Freeze();
+        }
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int ms)
+            {
+                if (ms < 0) return GrayBrush;
+                if (ms < 80) return GreenBrush;
+                if (ms < 160) return YellowBrush;
+                return RedBrush;
+            }
+            return GrayBrush;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class BoolToStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string param = parameter?.ToString() ?? "True|False";
+            var parts = param.Split('|');
+            string trueStr = parts.Length > 0 ? parts[0] : "True";
+            string falseStr = parts.Length > 1 ? parts[1] : "False";
+            return value is true ? trueStr : falseStr;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
 }
+

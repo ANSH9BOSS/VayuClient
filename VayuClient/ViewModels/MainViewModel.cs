@@ -102,6 +102,9 @@ namespace VayuClient.ViewModels
         private InstallationManagerViewModel? _installationManagerVM;
         public InstallationManagerViewModel InstallationManagerVM => _installationManagerVM ??= new InstallationManagerViewModel(this);
 
+        private ServerViewModel? _serverVM;
+        public ServerViewModel ServerVM => _serverVM ??= new ServerViewModel();
+
         private readonly IInstanceService? _instanceService;
         private readonly IAccountService? _accountService;
 
@@ -228,7 +231,7 @@ namespace VayuClient.ViewModels
             var updateInfo = updateService?.LatestUpdateInfo;
             if (updateService == null || updateInfo == null || !updateInfo.IsUpdateAvailable)
             {
-                ShowNotification("Updates", "No pending update found.", NotificationType.Info);
+                ShowNotification("Updates", "No pending update found.", NotificationType.Info, tag: "Update");
                 return;
             }
 
@@ -250,7 +253,7 @@ namespace VayuClient.ViewModels
             catch (Exception ex)
             {
                 IsUpdating = false;
-                ShowNotification("Update Error", $"Could not complete update: {ex.Message}", NotificationType.Error);
+                ShowNotification("Update Error", $"Could not complete update: {ex.Message}", NotificationType.Error, tag: "Update");
             }
         }
 
@@ -259,8 +262,10 @@ namespace VayuClient.ViewModels
         public string DeveloperName => AppInfo.DeveloperName;
         public string WindowTitle => $"{AppInfo.AppName} {AppInfo.VersionString}";
 
-        public string ActiveProfileUsernameDisplay => ActiveProfile != null ? ActiveProfile.Username : "No Profile";
-        public string ActiveProfileAccountTypeDisplay => ActiveProfile != null ? ActiveProfile.AccountTypeDisplay : "Not Logged In";
+        public string ActiveProfileUsernameDisplay => ActiveProfile != null 
+            ? (!string.IsNullOrEmpty(ActiveProfile.Username) ? ActiveProfile.Username : "Microsoft account authenticated — Minecraft profile unavailable") 
+            : "Not signed in";
+        public string ActiveProfileAccountTypeDisplay => ActiveProfile != null ? ActiveProfile.AccountTypeDisplay : "Not signed in";
         public bool HasActiveProfile => ActiveProfile != null;
 
         public string ActiveInstanceHeaderStatus => ActiveInstance != null
@@ -355,6 +360,8 @@ namespace VayuClient.ViewModels
                 else if (page == "Accounts") AccountsVM.LoadProfiles();
                 else if (page == "Home") HomeVM.RefreshProfile();
                 else if (page == "InstallationManager") InstallationManagerVM.LoadInstallations();
+                else if (page == "Settings") SettingsVM.RefreshInstanceRam();
+                else if (page == "Servers") ServerVM.LoadServersCommand.Execute(null);
 
                 CurrentPageViewModel = page switch
                 {
@@ -364,6 +371,7 @@ namespace VayuClient.ViewModels
                     "Mods" => ModsVM,
                     "Settings" => SettingsVM,
                     "InstallationManager" => InstallationManagerVM,
+                    "Servers" => ServerVM,
                     _ => HomeVM
                 };
             }
@@ -571,28 +579,59 @@ namespace VayuClient.ViewModels
             IsSplashVisible = false;
         }
 
-        public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info)
+        public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info, string? tag = null, double autoDismissSeconds = 4.5)
         {
             Dispatch(() =>
             {
+                // In-place notification update for matching tag or update-related alerts
+                NotificationInfo? existing = null;
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    existing = Notifications.FirstOrDefault(n => n.Tag == tag);
+                }
+                else if (title.Contains("Update", StringComparison.OrdinalIgnoreCase))
+                {
+                    existing = Notifications.FirstOrDefault(n => n.Tag == "Update" || n.Title.Contains("Update", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (existing != null)
+                {
+                    existing.Title = title;
+                    existing.Message = message;
+                    existing.Type = type;
+                    existing.CreatedAt = DateTime.Now;
+                    return;
+                }
+
+                // Bound active notifications to maximum 3
+                while (Notifications.Count >= 3)
+                {
+                    Notifications.RemoveAt(0);
+                }
+
                 var notification = new NotificationInfo
                 {
+                    Tag = tag ?? (title.Contains("Update", StringComparison.OrdinalIgnoreCase) ? "Update" : ""),
                     Title = title,
                     Message = message,
-                    Type = type
+                    Type = type,
+                    AutoDismissSeconds = autoDismissSeconds
                 };
                 Notifications.Add(notification);
 
-                var timer = new System.Windows.Threading.DispatcherTimer
+                if (autoDismissSeconds > 0)
                 {
-                    Interval = TimeSpan.FromSeconds(notification.AutoDismissSeconds)
-                };
-                timer.Tick += (s, e) =>
-                {
-                    timer.Stop();
-                    DismissNotification(notification);
-                };
-                timer.Start();
+                    var timer = new System.Windows.Threading.DispatcherTimer
+                    {
+                        Interval = TimeSpan.FromSeconds(autoDismissSeconds)
+                    };
+                    timer.Tick += (s, e) =>
+                    {
+                        timer.Stop();
+                        DismissNotification(notification);
+                    };
+                    timer.Start();
+                }
             });
         }
 

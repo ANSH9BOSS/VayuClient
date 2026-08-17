@@ -102,13 +102,34 @@ namespace VayuClient.Services.Launch
             }
 
             var logFile = Path.Combine(_logsDir, $"launch_{DateTime.Now:yyyyMMdd_HHmmss}.log");
-            var logWriter = new StringBuilder();
+            var logChannel = System.Threading.Channels.Channel.CreateUnbounded<string>(
+                new System.Threading.Channels.UnboundedChannelOptions { SingleReader = true, SingleWriter = false });
+
+            // Asynchronous background writer to eliminate stdout pipe stalls
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var sw = new StreamWriter(
+                        new FileStream(logFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 8192, useAsync: true),
+                        Encoding.UTF8);
+                    while (await logChannel.Reader.WaitToReadAsync())
+                    {
+                        while (logChannel.Reader.TryRead(out var item))
+                        {
+                            await sw.WriteLineAsync(item);
+                        }
+                        await sw.FlushAsync();
+                    }
+                }
+                catch { }
+            });
 
             void Log(string msg)
             {
                 var line = $"[{DateTime.Now:HH:mm:ss.fff}] {msg}";
-                logWriter.AppendLine(line);
-                try { File.AppendAllText(logFile, line + Environment.NewLine); } catch { }
+                logChannel.Writer.TryWrite(line);
+                CrashLogger.LogMessage(msg);
             }
 
             MinecraftInstance? instance = null;
@@ -134,6 +155,12 @@ namespace VayuClient.Services.Launch
                 Log($"Mod Loader: {instance.Loader} ({instance.LoaderVersion ?? "Default"})");
                 Log($"Allocated RAM: {instance.RamMB} MB");
                 Log($"Game Directory: {instance.GameDirectory}");
+
+                try
+                {
+                    ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetLaunchingPresence(instance.Name, instance.MinecraftVersion, instance.Loader);
+                }
+                catch { }
 
                 // 2. Resolve Active Profile
                 var profile = _accountService.ActiveProfile;
@@ -244,23 +271,18 @@ namespace VayuClient.Services.Launch
 
                 // 8.6 Pre-Launch Version & Artifact Integrity Check
                 SetState(LaunchState.Preparing, "Validating installation integrity...");
+                Log($"[InstanceValidation] Validating {instance.Name} (Minecraft: {instance.MinecraftVersion}, Loader: {instance.Loader})...");
                 var integrity = await _integrityService.ValidateIntegrityAsync(instance, ct);
 
-                Log("[LaunchIntegrity]");
-                Log($"RequestedMinecraft={instance.MinecraftVersion}");
-                Log($"InstanceMinecraft={integrity.DetectedMinecraftVersion ?? instance.MinecraftVersion}");
-                Log($"MojangMetadata={pkg.Id}");
-                Log($"InstalledMinecraft={instance.MinecraftVersion}");
-                Log($"Loader={instance.Loader}");
-                Log($"LoaderVersion={instance.LoaderVersion ?? "Default"}");
-                Log($"LoaderMinecraft={instance.MinecraftVersion}");
-                Log($"Integrity={(integrity.IsValid ? "PASS" : "FAIL")}");
+                Log("[InstanceValidation] Result: " + (integrity.IsValid ? "PASS" : "FAIL"));
+                Log($"[Launch] Minecraft version: {instance.MinecraftVersion}");
+                Log($"[Launch] Loader: {instance.Loader} {instance.LoaderVersion ?? "Default"}");
 
                 if (!integrity.IsValid)
                 {
                     var errors = string.Join("; ", integrity.Errors);
-                    Log($"ERROR: Pre-launch integrity check failed: {errors}");
-                    SetState(LaunchState.Failed, $"Version integrity check failed: {errors}. Please use 'Repair Instance' to fix.");
+                    Log($"[InstanceValidation] ERROR: Pre-launch integrity check failed: {errors}");
+                    SetState(LaunchState.Failed, $"Launch blocked: instance configuration mismatch - {errors}.");
                     return false;
                 }
 
@@ -443,6 +465,7 @@ namespace VayuClient.Services.Launch
                     string errorMsg = lastLaunchEx != null ? lastLaunchEx.Message : "Process failed to start.";
                     SetState(LaunchState.Failed, $"Launch Failed: {errorMsg}");
                     Log($"ERROR: All Java candidates failed to launch. Last error: {errorMsg}");
+                    try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
                     return false;
                 }
 
@@ -527,6 +550,7 @@ namespace VayuClient.Services.Launch
                 Log($"FATAL LAUNCH EXCEPTION: {ex}");
                 string errorMsg = $"Launch Failed: {ex.Message}";
                 SetState(LaunchState.Failed, errorMsg);
+                try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance?.Name, instance?.MinecraftVersion, instance?.Loader); } catch { }
 
                 try
                 {

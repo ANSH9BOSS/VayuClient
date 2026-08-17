@@ -157,8 +157,11 @@
             <Border Width="680" CornerRadius="8" 
                     Background="#111B2B" BorderBrush="#243247" BorderThickness="1.5"
                     Padding="28,24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.CacheMode>
+                    <BitmapCache/>
+                </Border.CacheMode>
                 <Border.Effect>
-                    <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="6" Opacity="0.8"/>
+                    <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="4" Opacity="0.75" RenderingBias="Performance"/>
                 </Border.Effect>
 
                 <StackPanel>

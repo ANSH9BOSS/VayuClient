@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -7,19 +8,29 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using VayuClient.Core;
 using VayuClient.Models;
 
 namespace VayuClient.Services.Authentication
 {
     public class MicrosoftAuthService : IMicrosoftAuthService
     {
-        // Standard Multi-Tenant Microsoft OAuth Client IDs for Minecraft Java Edition Launchers
+        // Standard Multi-Tenant Microsoft OAuth Public Client ID for Minecraft Java Edition Launchers (Prism Launcher public client)
         private const string PrismClientId = "c6031aa2-9442-430a-b44a-a4340d859e9e";
-        private const string MojangClientId = "00000000402b5328";
-        private const string XboxClientId = "00000000441cc9e4";
         private const string Scope = "XboxLive.signin offline_access";
+        private const string DeviceCodeEndpointConsumers = "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode";
+        private const string DeviceCodeEndpointCommon = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode";
+        private const string TokenEndpointConsumers = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
+        private const string TokenEndpointCommon = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
-        private string _activeClientId = PrismClientId;
+        private const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
+        private const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";
+        private const string MinecraftLoginEndpoint = "https://api.minecraftservices.com/authentication/login_with_xbox";
+        private const string MinecraftStoreEndpoint = "https://api.minecraftservices.com/entitlements/mcstore";
+        private const string MinecraftProfileEndpoint = "https://api.minecraftservices.com/minecraft/profile";
+
+        private readonly string _activeClientId = PrismClientId;
+        private string _activeTokenEndpoint = TokenEndpointConsumers;
 
         private static readonly HttpClient _http = new()
         {
@@ -30,28 +41,48 @@ namespace VayuClient.Services.Authentication
         {
             if (!_http.DefaultRequestHeaders.Contains("User-Agent"))
             {
-                _http.DefaultRequestHeaders.Add("User-Agent", Core.AppInfo.UserAgent);
+                _http.DefaultRequestHeaders.Add("User-Agent", AppInfo.UserAgent);
             }
+        }
+
+        public (bool IsValid, string Message) ValidateConfiguration()
+        {
+            if (string.IsNullOrWhiteSpace(_activeClientId))
+            {
+                return (false, "Missing Microsoft Client ID configuration.");
+            }
+            if (string.IsNullOrWhiteSpace(Scope))
+            {
+                return (false, "Missing Microsoft OAuth Scope configuration.");
+            }
+            return (true, "Valid");
         }
 
         public async Task<DeviceCodeResponse> RequestDeviceCodeAsync(CancellationToken ct = default)
         {
-            var endpointsAndClients = new (string Endpoint, string ClientId)[]
+            var validation = ValidateConfiguration();
+            if (!validation.IsValid)
             {
-                ("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", PrismClientId),
-                ("https://login.microsoftonline.com/common/oauth2/v2.0/devicecode", PrismClientId),
-                ("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", MojangClientId),
-                ("https://login.microsoftonline.com/common/oauth2/v2.0/devicecode", XboxClientId)
-            };
-            string lastError = string.Empty;
+                CrashLogger.LogMessage($"[MicrosoftAuth] Configuration validation failed: {validation.Message}");
+                throw new InvalidOperationException($"Microsoft Authentication Configuration: INVALID. Missing/invalid: {validation.Message}");
+            }
 
-            foreach (var (endpoint, clientId) in endpointsAndClients)
+            CrashLogger.LogMessage("[MicrosoftAuth] Starting device code authentication flow");
+
+            // Try consumers endpoint first, fallback to common
+            string[] endpoints = { DeviceCodeEndpointConsumers, DeviceCodeEndpointCommon };
+            string[] tokenEndpoints = { TokenEndpointConsumers, TokenEndpointCommon };
+
+            Exception? lastEx = null;
+
+            for (int i = 0; i < endpoints.Length; i++)
             {
+                var endpoint = endpoints[i];
                 try
                 {
                     var content = new FormUrlEncodedContent(new[]
                     {
-                        new KeyValuePair<string, string>("client_id", clientId),
+                        new KeyValuePair<string, string>("client_id", _activeClientId),
                         new KeyValuePair<string, string>("scope", Scope)
                     });
 
@@ -61,33 +92,26 @@ namespace VayuClient.Services.Authentication
                     if (response.IsSuccessStatusCode)
                     {
                         var deviceCode = JsonConvert.DeserializeObject<DeviceCodeResponse>(json);
-                        if (deviceCode != null && !string.IsNullOrEmpty(deviceCode.DeviceCode))
+                        if (deviceCode != null && !string.IsNullOrEmpty(deviceCode.DeviceCode) && !string.IsNullOrEmpty(deviceCode.UserCode))
                         {
-                            _activeClientId = clientId;
+                            _activeTokenEndpoint = tokenEndpoints[i];
+                            CrashLogger.LogMessage($"[MicrosoftAuth] Device code generated. Code: {deviceCode.UserCode}, URL: {deviceCode.VerificationUri}");
                             return deviceCode;
                         }
                     }
                     else
                     {
-                        try
-                        {
-                            var errObj = JObject.Parse(json);
-                            var desc = errObj["error_description"]?.ToString();
-                            lastError = !string.IsNullOrEmpty(desc) ? desc.Split(new[] { "Trace ID", "Correlation ID" }, StringSplitOptions.None)[0].Trim() : json;
-                        }
-                        catch
-                        {
-                            lastError = json;
-                        }
+                        string err = ParseOAuthError(json);
+                        lastEx = new InvalidOperationException(err);
                     }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    lastError = ex.Message;
+                    lastEx = ex;
                 }
             }
 
-            throw new InvalidOperationException($"Microsoft authentication service could not generate login code: {lastError}. You can also use an Offline Profile to play immediately.");
+            throw lastEx ?? new InvalidOperationException("Failed to request Microsoft device authentication code. Please check your internet connection.");
         }
 
         public async Task<UserProfile> PollForAuthenticationAsync(
@@ -95,10 +119,15 @@ namespace VayuClient.Services.Authentication
             IProgress<string>? status = null,
             CancellationToken ct = default)
         {
-            int interval = Math.Max(5, deviceCode.Interval);
-            var expiry = DateTime.UtcNow.AddSeconds(deviceCode.ExpiresIn);
+            if (deviceCode == null || string.IsNullOrEmpty(deviceCode.DeviceCode))
+            {
+                throw new ArgumentException("Device code response is invalid.", nameof(deviceCode));
+            }
 
-            status?.Report("Waiting for browser authorization...");
+            int interval = Math.Max(5, deviceCode.Interval);
+            var expiry = DateTime.UtcNow.AddSeconds(deviceCode.ExpiresIn > 0 ? deviceCode.ExpiresIn : 900);
+
+            status?.Report("Waiting for browser authorization (enter code)...");
 
             while (DateTime.UtcNow < expiry && !ct.IsCancellationRequested)
             {
@@ -111,44 +140,71 @@ namespace VayuClient.Services.Authentication
                     new KeyValuePair<string, string>("device_code", deviceCode.DeviceCode)
                 });
 
-                var response = await _http.PostAsync("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", content, ct);
-                var json = await response.Content.ReadAsStringAsync(ct);
+                HttpResponseMessage response;
+                string json;
+                try
+                {
+                    response = await _http.PostAsync(_activeTokenEndpoint, content, ct);
+                    json = await response.Content.ReadAsStringAsync(ct);
+                }
+                catch (HttpRequestException)
+                {
+                    continue; // Transient network retry
+                }
 
                 if (response.IsSuccessStatusCode)
                 {
                     var msaToken = JsonConvert.DeserializeObject<MsaTokenResponse>(json);
                     if (msaToken != null && !string.IsNullOrEmpty(msaToken.AccessToken))
                     {
+                        CrashLogger.LogMessage("[MicrosoftAuth] Microsoft identity token acquired successfully.");
                         return await CompleteMinecraftAuthenticationAsync(msaToken, status, ct);
                     }
                 }
                 else
                 {
-                    var errObj = JObject.Parse(json);
-                    var error = errObj["error"]?.ToString();
+                    try
+                    {
+                        var errObj = JObject.Parse(json);
+                        var error = errObj["error"]?.ToString();
 
-                    if (error == "authorization_pending")
-                    {
-                        // Continue waiting
-                        continue;
+                        if (error == "authorization_pending")
+                        {
+                            status?.Report("Waiting for you to enter the code in your browser...");
+                            continue;
+                        }
+                        else if (error == "slow_down")
+                        {
+                            interval += 5;
+                            continue;
+                        }
+                        else if (error == "expired_token" || error == "code_expired")
+                        {
+                            throw new TimeoutException("Device code expired. Please click Sign In to try again.");
+                        }
+                        else if (error == "access_denied")
+                        {
+                            throw new InvalidOperationException("Microsoft sign-in was cancelled or declined in browser.");
+                        }
+                        else
+                        {
+                            string detailedErr = ParseOAuthError(json);
+                            throw new InvalidOperationException(detailedErr);
+                        }
                     }
-                    else if (error == "slow_down")
+                    catch (JsonReaderException)
                     {
-                        interval += 5;
-                        continue;
-                    }
-                    else if (error == "expired_token")
-                    {
-                        throw new TimeoutException("Authentication session expired. Please try signing in again.");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Authentication error: {errObj["error_description"] ?? error}");
+                        throw new InvalidOperationException($"Unexpected response from Microsoft token service: {json}");
                     }
                 }
             }
 
-            throw new TimeoutException("Authentication timed out.");
+            if (ct.IsCancellationRequested)
+            {
+                throw new OperationCanceledException("Microsoft sign-in cancelled by user.");
+            }
+
+            throw new TimeoutException("Microsoft sign-in timed out. Please try signing in again.");
         }
 
         private async Task<UserProfile> CompleteMinecraftAuthenticationAsync(
@@ -171,12 +227,13 @@ namespace VayuClient.Services.Authentication
             };
 
             var xblReq = new StringContent(JsonConvert.SerializeObject(xblPayload), Encoding.UTF8, "application/json");
-            var xblRes = await _http.PostAsync("https://user.auth.xboxlive.com/user/authenticate", xblReq, ct);
+            var xblRes = await _http.PostAsync(XboxAuthEndpoint, xblReq, ct);
             var xblJson = await xblRes.Content.ReadAsStringAsync(ct);
 
             if (!xblRes.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException($"Xbox Live authentication failed: {xblJson}");
+                string xblError = ParseXboxError(xblJson);
+                throw new InvalidOperationException($"Xbox Live authentication failed: {xblError}");
             }
 
             var xblObj = JsonConvert.DeserializeObject<XboxAuthResponse>(xblJson);
@@ -185,7 +242,7 @@ namespace VayuClient.Services.Authentication
 
             if (string.IsNullOrEmpty(xblToken) || string.IsNullOrEmpty(uhs))
             {
-                throw new InvalidOperationException("Failed to acquire Xbox Live security token.");
+                throw new InvalidOperationException("Failed to acquire valid Xbox Live security credentials.");
             }
 
             // 2. XSTS Security Token
@@ -202,12 +259,13 @@ namespace VayuClient.Services.Authentication
             };
 
             var xstsReq = new StringContent(JsonConvert.SerializeObject(xstsPayload), Encoding.UTF8, "application/json");
-            var xstsRes = await _http.PostAsync("https://xsts.auth.xboxlive.com/xsts/authorize", xstsReq, ct);
+            var xstsRes = await _http.PostAsync(XstsAuthEndpoint, xstsReq, ct);
             var xstsJson = await xstsRes.Content.ReadAsStringAsync(ct);
 
             if (!xstsRes.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException($"Xbox XSTS authorization failed. Ensure your Xbox account has no parental or region restrictions: {xstsJson}");
+                string xstsError = ParseXstsError(xstsJson);
+                throw new InvalidOperationException(xstsError);
             }
 
             var xstsObj = JsonConvert.DeserializeObject<XboxAuthResponse>(xstsJson);
@@ -215,7 +273,7 @@ namespace VayuClient.Services.Authentication
 
             if (string.IsNullOrEmpty(xstsToken))
             {
-                throw new InvalidOperationException("Failed to acquire XSTS authorization token.");
+                throw new InvalidOperationException("Failed to acquire XSTS authorization token from Xbox Live.");
             }
 
             // 3. Minecraft Services Login
@@ -226,7 +284,7 @@ namespace VayuClient.Services.Authentication
             };
 
             var mcLoginReq = new StringContent(JsonConvert.SerializeObject(mcLoginPayload), Encoding.UTF8, "application/json");
-            var mcLoginRes = await _http.PostAsync("https://api.minecraftservices.com/authentication/login_with_xbox", mcLoginReq, ct);
+            var mcLoginRes = await _http.PostAsync(MinecraftLoginEndpoint, mcLoginReq, ct);
             var mcLoginJson = await mcLoginRes.Content.ReadAsStringAsync(ct);
 
             if (!mcLoginRes.IsSuccessStatusCode)
@@ -237,38 +295,40 @@ namespace VayuClient.Services.Authentication
             var mcAuth = JsonConvert.DeserializeObject<MinecraftAuthResponse>(mcLoginJson);
             if (mcAuth == null || string.IsNullOrEmpty(mcAuth.AccessToken))
             {
-                throw new InvalidOperationException("Failed to obtain Minecraft access token.");
+                throw new InvalidOperationException("Minecraft Services did not return a valid session token.");
             }
 
             // 4. Check Game Ownership Entitlement
-            status?.Report("Verifying Minecraft Java Edition ownership...");
+            status?.Report("Verifying Minecraft ownership...");
             bool hasEntitlement = await VerifyGameOwnershipAsync(mcAuth.AccessToken, ct);
 
             // 5. Get Minecraft Profile
-            status?.Report("Fetching Minecraft profile...");
-            using var profileReq = new HttpRequestMessage(HttpMethod.Get, "https://api.minecraftservices.com/minecraft/profile");
+            status?.Report("Fetching Minecraft profile from Mojang...");
+            using var profileReq = new HttpRequestMessage(HttpMethod.Get, MinecraftProfileEndpoint);
             profileReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcAuth.AccessToken);
 
             var profileRes = await _http.SendAsync(profileReq, ct);
             var profileJson = await profileRes.Content.ReadAsStringAsync(ct);
 
-            string username = "Player";
-            string uuid = Guid.NewGuid().ToString("N");
-
-            if (profileRes.IsSuccessStatusCode)
+            if (!profileRes.IsSuccessStatusCode)
             {
-                var profileObj = JsonConvert.DeserializeObject<MinecraftProfileResponse>(profileJson);
-                if (profileObj != null && !string.IsNullOrEmpty(profileObj.Name))
+                if (profileRes.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    username = profileObj.Name;
-                    uuid = profileObj.Id;
+                    throw new InvalidOperationException("Minecraft Java Edition profile not found on this Microsoft account. Please create your Minecraft Java profile at minecraft.net first.");
                 }
-            }
-            else if (!hasEntitlement)
-            {
-                throw new InvalidOperationException("Minecraft Java Edition is not owned on this Microsoft account. Please purchase or link game ownership.");
+                throw new InvalidOperationException($"Failed to retrieve Minecraft profile: HTTP {(int)profileRes.StatusCode} - {profileJson}");
             }
 
+            var profileObj = JsonConvert.DeserializeObject<MinecraftProfileResponse>(profileJson);
+            if (profileObj == null || string.IsNullOrWhiteSpace(profileObj.Name) || string.IsNullOrWhiteSpace(profileObj.Id))
+            {
+                throw new InvalidOperationException("Mojang profile response was invalid or missing player name/UUID.");
+            }
+
+            string username = profileObj.Name;
+            string uuid = profileObj.Id;
+
+            CrashLogger.LogMessage($"[Authentication] Microsoft account authenticated successfully (Player: {username}, UUID: {uuid})");
             status?.Report($"Authenticated as {username}!");
 
             return new UserProfile
@@ -279,7 +339,7 @@ namespace VayuClient.Services.Authentication
                 AccountType = AccountType.Microsoft,
                 AccessToken = mcAuth.AccessToken,
                 RefreshToken = msaToken.RefreshToken,
-                TokenExpiresAt = DateTime.UtcNow.AddSeconds(mcAuth.ExpiresIn),
+                TokenExpiresAt = DateTime.UtcNow.AddSeconds(mcAuth.ExpiresIn > 0 ? mcAuth.ExpiresIn : 86400),
                 HasEntitlement = hasEntitlement,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -290,7 +350,7 @@ namespace VayuClient.Services.Authentication
         {
             try
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, "https://api.minecraftservices.com/entitlements/mcstore");
+                using var req = new HttpRequestMessage(HttpMethod.Get, MinecraftStoreEndpoint);
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcAccessToken);
 
                 var res = await _http.SendAsync(req, ct);
@@ -298,7 +358,9 @@ namespace VayuClient.Services.Authentication
                 {
                     var json = await res.Content.ReadAsStringAsync(ct);
                     var entitlements = JsonConvert.DeserializeObject<MinecraftEntitlementsResponse>(json);
-                    if (entitlements?.Items != null && entitlements.Items.Any(i => i.Name.Contains("product_minecraft") || i.Name.Contains("game_minecraft")))
+                    if (entitlements?.Items != null && entitlements.Items.Any(i =>
+                        i.Name.IndexOf("product_minecraft", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        i.Name.IndexOf("game_minecraft", StringComparison.OrdinalIgnoreCase) >= 0))
                     {
                         return true;
                     }
@@ -306,8 +368,7 @@ namespace VayuClient.Services.Authentication
             }
             catch { }
 
-            // Profile check fallback (if profile endpoint succeeded, user has player name)
-            return true;
+            return false;
         }
 
         public async Task<UserProfile?> RefreshTokenAsync(UserProfile profile, CancellationToken ct = default)
@@ -327,7 +388,7 @@ namespace VayuClient.Services.Authentication
                     new KeyValuePair<string, string>("scope", Scope)
                 });
 
-                var response = await _http.PostAsync("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", content, ct);
+                var response = await _http.PostAsync(_activeTokenEndpoint, content, ct);
                 var json = await response.Content.ReadAsStringAsync(ct);
 
                 if (response.IsSuccessStatusCode)
@@ -342,9 +403,53 @@ namespace VayuClient.Services.Authentication
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                CrashLogger.LogMessage($"[MicrosoftAuth] Token refresh error: {ex.Message}");
+            }
 
             return profile;
+        }
+
+        private static string ParseOAuthError(string json)
+        {
+            try
+            {
+                var obj = JObject.Parse(json);
+                var desc = obj["error_description"]?.ToString();
+                if (!string.IsNullOrEmpty(desc)) return desc;
+                var err = obj["error"]?.ToString();
+                if (!string.IsNullOrEmpty(err)) return err;
+            }
+            catch { }
+            return json;
+        }
+
+        private static string ParseXboxError(string json)
+        {
+            try
+            {
+                var obj = JObject.Parse(json);
+                var errCode = obj["XErr"]?.ToString();
+                if (errCode == "2148916233") return "This account does not have an Xbox profile. Please create an Xbox profile on xbox.com.";
+                if (errCode == "2148916238") return "This account is a child account and must be added to a Family Safety group by a parent.";
+            }
+            catch { }
+            return "Xbox Live user authentication failed.";
+        }
+
+        private static string ParseXstsError(string json)
+        {
+            try
+            {
+                var obj = JObject.Parse(json);
+                var errCode = obj["XErr"]?.ToString();
+                if (errCode == "2148916233") return "This account does not have an Xbox profile. Please create one on xbox.com.";
+                if (errCode == "2148916235") return "Xbox Live is not available in your country/region.";
+                if (errCode == "2148916238") return "This account is under 18 and requires adult parental permission.";
+            }
+            catch { }
+            return "Xbox Live security token error.";
         }
     }
 }

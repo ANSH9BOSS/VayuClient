@@ -122,6 +122,13 @@ Write-Host "`n[3/3] Building standalone VayuClientSetup.exe installer (v$activeV
     -p:DebugSymbols=false `
     -o $distDir
 
+# Preserve standalone VayuClient.exe in dist folder
+$standaloneExe = Join-Path $tempPublish "VayuClient.exe"
+if (Test-Path $standaloneExe) {
+    Copy-Item $standaloneExe -Destination (Join-Path $distDir "VayuClient.exe") -Force
+    Write-Host "-> Preserved standalone executable: $(Join-Path $distDir 'VayuClient.exe')" -ForegroundColor Green
+}
+
 # Clean up temp publish
 if (Test-Path $tempPublish) { Remove-Item $tempPublish -Recurse -Force }
 
@@ -141,20 +148,36 @@ try {
         $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ANSH9BOSS (VayuClient), O=VayuClient, C=IN" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(5)
     }
     if ($cert) {
-        try {
-            Set-AuthenticodeSignature -FilePath $finalSetupExe -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop
-            Write-Host "-> Successfully signed VayuClientSetup.exe with Authenticode (SHA256 + Timestamp)!" -ForegroundColor Green
-        }
-        catch {
-            Set-AuthenticodeSignature -FilePath $finalSetupExe -Certificate $cert -HashAlgorithm SHA256
-            Write-Host "-> Successfully signed VayuClientSetup.exe with Authenticode (SHA256)!" -ForegroundColor Green
+        $finalAppExe = Join-Path $distDir "VayuClient.exe"
+        foreach ($targetFile in @($finalSetupExe, $finalAppExe)) {
+            if (Test-Path $targetFile) {
+                try {
+                    Set-AuthenticodeSignature -FilePath $targetFile -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop
+                    Write-Host "-> Successfully signed $(Split-Path $targetFile -Leaf) with Authenticode (SHA256 + Timestamp)!" -ForegroundColor Green
+                }
+                catch {
+                    Set-AuthenticodeSignature -FilePath $targetFile -Certificate $cert -HashAlgorithm SHA256
+                    Write-Host "-> Successfully signed $(Split-Path $targetFile -Leaf) with Authenticode (SHA256)!" -ForegroundColor Green
+                }
+            }
         }
     }
 } catch {
     Write-Host "-> Code signing skipped: $_" -ForegroundColor DarkGray
 }
 
-if (Test-Path $finalSetupExe) {
+$finalAppExe = Join-Path $distDir "VayuClient.exe"
+$setupExists = Test-Path $finalSetupExe
+$appExists = Test-Path $finalAppExe
+
+if ($setupExists -and $appExists) {
+    Write-Host "`n==========================================================" -ForegroundColor Green
+    Write-Host " SUCCESS: REAL EXECUTABLE & INSTALLER CREATED!" -ForegroundColor Green
+    Write-Host " Application Executable: $finalAppExe" -ForegroundColor Yellow
+    Write-Host " Installer Executable:   $finalSetupExe" -ForegroundColor Yellow
+    Write-Host " Version:                v$activeVersion" -ForegroundColor Yellow
+    Write-Host "==========================================================" -ForegroundColor Green
+} elseif ($setupExists) {
     Write-Host "`n==========================================================" -ForegroundColor Green
     Write-Host " SUCCESS: REAL WINDOWS INSTALLER CREATED!" -ForegroundColor Green
     Write-Host " Output:  $finalSetupExe" -ForegroundColor Yellow

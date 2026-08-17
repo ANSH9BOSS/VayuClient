@@ -53,21 +53,51 @@ namespace VayuClient.Services.Launch
             // 1. JVM Arguments
             var jvmArgs = new List<string>();
 
-            // Memory
+            // ─── MEMORY CONFIGURATION ─────────────────────────────────────────
+            // Setting Xms equal to Xmx avoids dynamic heap resizing during chunk generation
             int ramMB = Math.Max(1024, parameters.Instance.RamMB);
-            int minRamMB = Math.Min(1024, ramMB / 2);
 
             bool hasCustomXms = parameters.AdditionalJvmArgs?.Any(a => a.StartsWith("-Xms", StringComparison.OrdinalIgnoreCase)) == true;
             bool hasCustomXmx = parameters.AdditionalJvmArgs?.Any(a => a.StartsWith("-Xmx", StringComparison.OrdinalIgnoreCase)) == true;
 
             if (!hasCustomXms)
             {
-                jvmArgs.Add($"-Xms{minRamMB}M");
+                jvmArgs.Add($"-Xms{ramMB}M");
             }
             if (!hasCustomXmx)
             {
                 jvmArgs.Add($"-Xmx{ramMB}M");
             }
+
+            // ─── HIGH-FPS AIKAR G1GC PERFORMANCE OPTIMIZATION FLAGS ───────────
+            // Production-tested GC tuning: minimizes pause times and eliminates frame stutter
+            jvmArgs.Add("-XX:+UseG1GC");
+            jvmArgs.Add("-XX:+ParallelRefProcEnabled");
+            jvmArgs.Add("-XX:MaxGCPauseMillis=200");
+            jvmArgs.Add("-XX:+UnlockExperimentalVMOptions");
+            jvmArgs.Add("-XX:+DisableExplicitGC");
+            jvmArgs.Add("-XX:+AlwaysPreTouch");
+            jvmArgs.Add("-XX:G1NewSizePercent=30");
+            jvmArgs.Add("-XX:G1MaxNewSizePercent=40");
+            jvmArgs.Add("-XX:G1ReservePercent=20");
+            jvmArgs.Add("-XX:G1HeapWastePercent=5");
+            jvmArgs.Add("-XX:G1MixedGCCountTarget=4");
+            jvmArgs.Add("-XX:InitiatingHeapOccupancyPercent=15");
+            jvmArgs.Add("-XX:G1MixedGCLiveThresholdPercent=90");
+            jvmArgs.Add("-XX:G1RSetUpdatingPauseTimePercent=5");
+            jvmArgs.Add("-XX:SurvivorRatio=32");
+            jvmArgs.Add("-XX:+PerfDisableSharedMem");
+            jvmArgs.Add("-XX:MaxTenuringThreshold=1");
+            jvmArgs.Add("-Dusing.aikars.flags=https://mcflags.emc.gs");
+            jvmArgs.Add("-Daikars.new.flags=true");
+
+            // Hardware-optimized thread allocation
+            int logicalCores = Math.Max(2, Environment.ProcessorCount);
+            int parallelGcThreads = Math.Max(2, logicalCores > 8 ? logicalCores / 2 : logicalCores - 1);
+            int concGcThreads = Math.Max(1, parallelGcThreads / 2);
+
+            jvmArgs.Add($"-XX:ParallelGCThreads={parallelGcThreads}");
+            jvmArgs.Add($"-XX:ConcGCThreads={concGcThreads}");
 
             // Standard JVM properties
             if (parameters.VersionPackage.Arguments?.Jvm == null || parameters.VersionPackage.Arguments.Jvm.Count == 0)
@@ -79,17 +109,9 @@ namespace VayuClient.Services.Launch
             jvmArgs.Add("-Dminecraft.launcher.brand=VayuClient");
             jvmArgs.Add($"-Dminecraft.launcher.version={Core.AppInfo.VersionString}");
 
-            // Hardware-optimized thread allocation & 2D/3D hardware pipeline flags
-            int logicalCores = Math.Max(2, Environment.ProcessorCount);
-            int parallelGcThreads = Math.Max(2, logicalCores > 8 ? logicalCores / 2 : logicalCores - 1);
-            int concGcThreads = Math.Max(1, parallelGcThreads / 2);
-
-            jvmArgs.Add($"-XX:ParallelGCThreads={parallelGcThreads}");
-            jvmArgs.Add($"-XX:ConcGCThreads={concGcThreads}");
-
             int javaMajor = parameters.JavaRuntime?.MajorVersion ?? 21;
 
-            // Check if arguments.jvm defined in version JSON
+            // Version-specific JVM arguments from package
             if (parameters.VersionPackage.Arguments?.Jvm != null && parameters.VersionPackage.Arguments.Jvm.Count > 0)
             {
                 foreach (var jvmItem in parameters.VersionPackage.Arguments.Jvm)
@@ -122,7 +144,7 @@ namespace VayuClient.Services.Launch
                 }
             }
 
-            // Add user additional JVM args if any
+            // User additional JVM args (override defaults)
             if (parameters.AdditionalJvmArgs != null)
             {
                 foreach (var arg in parameters.AdditionalJvmArgs)
@@ -182,7 +204,6 @@ namespace VayuClient.Services.Launch
             }
             else if (!string.IsNullOrEmpty(parameters.VersionPackage.MinecraftArguments))
             {
-                // Legacy minecraftArguments string format
                 var legacyTokens = parameters.VersionPackage.MinecraftArguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var token in legacyTokens)
                 {
@@ -192,7 +213,6 @@ namespace VayuClient.Services.Launch
             }
             else
             {
-                // Baseline fallback arguments
                 gameArgs.AddRange(new[]
                 {
                     "--username", parameters.Profile.Username,
@@ -227,14 +247,12 @@ namespace VayuClient.Services.Launch
                 var action = rule["action"]?.ToString() ?? "allow";
                 bool isAllow = string.Equals(action, "allow", StringComparison.OrdinalIgnoreCase);
 
-                // 1. OS check
                 var os = rule["os"]?["name"]?.ToString();
                 if (os != null && !string.Equals(os, "windows", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                // 2. Features check (e.g. quick play, custom resolution, demo user)
                 if (rule["features"] is JObject features)
                 {
                     bool featuresMatch = true;
@@ -252,7 +270,6 @@ namespace VayuClient.Services.Launch
                             case "is_quick_play_singleplayer":
                             case "is_quick_play_multiplayer":
                             case "is_quick_play_realms":
-                                // Never allow quick play flags unless explicitly requested in parameters
                                 featuresMatch = false;
                                 break;
                             default:
@@ -287,41 +304,21 @@ namespace VayuClient.Services.Launch
             if (string.IsNullOrWhiteSpace(rawArg)) return;
             var trimmed = rawArg.Trim();
 
-            // 1. Skip classpath tokens inside arguments.jvm (we append -cp <classpath> atomically at the end)
             if (trimmed == "-cp" || trimmed == "-classpath" || trimmed.Contains("${classpath}"))
             {
                 return;
             }
 
-            // 2. Filter out Java version incompatible flags
-            // Java 24+ flag: --sun-misc-unsafe-memory-access=allow
             if (trimmed.StartsWith("--sun-misc-unsafe-memory-access", StringComparison.OrdinalIgnoreCase) && javaMajor < 24)
             {
                 return;
             }
 
-            // Java 22+ flag: --enable-native-access=ALL-UNNAMED
-            if (trimmed.StartsWith("--enable-native-access", StringComparison.OrdinalIgnoreCase) && javaMajor < 22)
+            var resolved = ReplaceTokens(trimmed, tokenMap);
+            if (!string.IsNullOrWhiteSpace(resolved) && !jvmArgs.Contains(resolved, StringComparer.OrdinalIgnoreCase))
             {
-                return;
+                jvmArgs.Add(resolved);
             }
-
-            var resolved = ReplaceTokens(rawArg, tokenMap);
-            if (!string.IsNullOrWhiteSpace(resolved))
-            {
-                var trimmedVal = resolved.Trim();
-                if (trimmedVal == "-cp" || trimmedVal == "-classpath") return;
-                if (!jvmArgs.Contains(trimmedVal, StringComparer.OrdinalIgnoreCase))
-                {
-                    jvmArgs.Add(trimmedVal);
-                }
-            }
-        }
-
-        private static string Quote(string val)
-        {
-            if (string.IsNullOrEmpty(val)) return string.Empty;
-            return val.Contains(' ') && !val.StartsWith('"') ? $"\"{val}\"" : val;
         }
     }
 }

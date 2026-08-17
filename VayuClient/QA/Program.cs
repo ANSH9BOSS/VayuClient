@@ -1037,15 +1037,23 @@ namespace VayuClient.QA
 
                 // Verify Presence Activity Formatting
                 discordRpc.SetInLauncherPresence();
-                Log(" -> Set in-launcher Discord RPC status (State: 'Owned & Developed by ANSH9BOSS')");
+                Log(" -> Set in-launcher Discord RPC status (Details: 'In Launcher', State: 'Ready to Play')");
+
+                discordRpc.SetLaunchingPresence("My Minecraft Instance", "1.21.11", "Fabric");
+                Log(" -> Set launching Discord RPC status (Details: 'Launching Minecraft', State: 'Minecraft 1.21.11 • Fabric')");
                 
-                discordRpc.SetInGamePresence("Spunky Optimized", "26.2", "Fabric");
-                Log(" -> Set in-game Discord RPC status (Details: 'Playing Spunky Optimized', State: 'Minecraft 26.2 (Fabric) • Owned & Developed by ANSH9BOSS')");
+                discordRpc.SetInGamePresence("My Minecraft Instance", "1.21.11", "Fabric");
+                Log(" -> Set in-game Discord RPC status (Details: 'Playing Minecraft', State: 'Minecraft 1.21.11 (Fabric) • Owned & Developed by ANSH9BOSS')");
 
                 // Verify GitHub Update Service Integration
                 var updateService = ServiceLocator.Resolve<IUpdateService>();
                 var updateResult = await updateService.CheckForUpdatesAsync(force: true);
-                Log($" -> GitHub Releases Check: Current=v{updateResult.CurrentVersion}, Available={updateResult.IsUpdateAvailable}");
+                Log($" -> GitHub Releases Check: Current=v{updateResult.CurrentVersion}, Latest=v{updateResult.LatestVersion}, Available={updateResult.IsUpdateAvailable}");
+                if (!string.IsNullOrEmpty(updateResult.DownloadUrl))
+                {
+                    Log($" -> Resolved Download Asset: {updateResult.AssetName} ({updateResult.DownloadUrl})");
+                }
+                Log($" -> Update State Machine: CurrentState={updateService.CurrentState}");
 
                 Log(" -> [PASS] Test 17 (Discord Rich Presence & GitHub Updates Engine)");
             }

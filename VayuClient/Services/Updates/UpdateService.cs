@@ -14,6 +14,19 @@ using VayuClient.Services.Download;
 
 namespace VayuClient.Services.Updates
 {
+    public enum UpdateState
+    {
+        Idle,
+        Checking,
+        UpToDate,
+        UpdateAvailable,
+        Downloading,
+        Verifying,
+        Installing,
+        Restarting,
+        Failed
+    }
+
     public class UpdateCheckResult
     {
         public bool IsUpdateAvailable { get; set; }
@@ -22,17 +35,21 @@ namespace VayuClient.Services.Updates
         public string ReleaseTitle { get; set; } = string.Empty;
         public string ReleaseNotes { get; set; } = string.Empty;
         public string DownloadUrl { get; set; } = string.Empty;
+        public string AssetName { get; set; } = string.Empty;
         public long FileSizeBytes { get; set; }
         public DateTime? PublishedAt { get; set; }
         public string HtmlUrl { get; set; } = string.Empty;
+        public string StatusMessage { get; set; } = string.Empty;
     }
 
     public interface IUpdateService
     {
+        UpdateState CurrentState { get; }
         UpdateCheckResult? LatestUpdateInfo { get; }
+        event Action<UpdateState, string>? StateChanged;
         event Action<UpdateCheckResult>? UpdateAvailable;
 
-        Task<UpdateCheckResult> CheckForUpdatesAsync(bool force = false);
+        Task<UpdateCheckResult> CheckForUpdatesAsync(bool force = false, CancellationToken ct = default);
         Task<bool> DownloadAndInstallUpdateAsync(UpdateCheckResult updateInfo, IProgress<DownloadProgressInfo>? progress = null, CancellationToken ct = default);
     }
 
@@ -43,8 +60,11 @@ namespace VayuClient.Services.Updates
         private readonly IDownloadService _downloadService;
         private UpdateCheckResult? _latestUpdateInfo;
         private DateTime _lastCheckTime = DateTime.MinValue;
+        private UpdateState _currentState = UpdateState.Idle;
 
+        public UpdateState CurrentState => _currentState;
         public UpdateCheckResult? LatestUpdateInfo => _latestUpdateInfo;
+        public event Action<UpdateState, string>? StateChanged;
         public event Action<UpdateCheckResult>? UpdateAvailable;
 
         public UpdateService()
@@ -52,7 +72,7 @@ namespace VayuClient.Services.Updates
             _downloadService = ServiceLocator.Resolve<IDownloadService>();
             _http = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(6)
+                Timeout = TimeSpan.FromSeconds(10)
             };
             _http.DefaultRequestHeaders.Add("User-Agent", AppInfo.UserAgent);
             _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
@@ -64,12 +84,22 @@ namespace VayuClient.Services.Updates
             }
         }
 
-        public async Task<UpdateCheckResult> CheckForUpdatesAsync(bool force = false)
+        private void SetState(UpdateState state, string message = "")
+        {
+            _currentState = state;
+            StateChanged?.Invoke(state, message);
+        }
+
+        public async Task<UpdateCheckResult> CheckForUpdatesAsync(bool force = false, CancellationToken ct = default)
         {
             if (!force && _latestUpdateInfo != null && (DateTime.UtcNow - _lastCheckTime).TotalMinutes < 30)
             {
                 return _latestUpdateInfo;
             }
+
+            SetState(UpdateState.Checking, "Connecting to GitHub Releases...");
+            CrashLogger.LogMessage($"[AutoUpdate] Current version: {AppInfo.VersionString}");
+            CrashLogger.LogMessage("[AutoUpdate] Checking GitHub Releases...");
 
             var result = new UpdateCheckResult
             {
@@ -79,56 +109,87 @@ namespace VayuClient.Services.Updates
             try
             {
                 _lastCheckTime = DateTime.UtcNow;
-                string apiUrl = $"https://api.github.com/repos/{GitHubRepo}/releases/latest";
-                using var response = await _http.GetAsync(apiUrl);
+                string apiUrl = $"https://api.github.com/repos/{GitHubRepo}/releases";
+                using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+                using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
-                JsonDocument? doc = null;
-                JsonElement root = default;
-
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    doc = JsonDocument.Parse(json);
-                    root = doc.RootElement;
-                }
-                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    // Fallback to releases list
-                    string listUrl = $"https://api.github.com/repos/{GitHubRepo}/releases";
-                    using var listRes = await _http.GetAsync(listUrl);
-                    if (listRes.IsSuccessStatusCode)
-                    {
-                        var listJson = await listRes.Content.ReadAsStringAsync();
-                        doc = JsonDocument.Parse(listJson);
-                        if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
-                        {
-                            root = doc.RootElement.EnumerateArray().First();
-                        }
-                    }
-                }
-
-                if (doc == null || root.ValueKind != JsonValueKind.Object)
-                {
-                    CrashLogger.LogMessage($"[Auto-Update]: GitHub releases checked (Status: {response.StatusCode}). You are up to date.");
+                    string msg = "GitHub API rate limit reached. Please try again later.";
+                    CrashLogger.LogMessage($"[AutoUpdate] Check failed: {msg}");
                     result.IsUpdateAvailable = false;
-                    result.LatestVersion = AppInfo.VersionString;
+                    result.StatusMessage = msg;
+                    SetState(UpdateState.Failed, msg);
                     _latestUpdateInfo = result;
                     return result;
                 }
 
-                string tagName = root.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? "" : "";
-                string releaseName = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? "" : tagName;
-                string body = root.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() ?? "" : "";
-                string htmlUrl = root.TryGetProperty("html_url", out var htmlProp) ? htmlProp.GetString() ?? "" : "";
-                
+                if (!response.IsSuccessStatusCode)
+                {
+                    string msg = $"GitHub API returned status code {(int)response.StatusCode} ({response.ReasonPhrase})";
+                    CrashLogger.LogMessage($"[AutoUpdate] Check failed: {msg}");
+                    result.IsUpdateAvailable = false;
+                    result.StatusMessage = msg;
+                    SetState(UpdateState.Failed, msg);
+                    _latestUpdateInfo = result;
+                    return result;
+                }
+
+                var json = await response.Content.ReadAsStringAsync(ct);
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
+                {
+                    string msg = "No releases found on GitHub repository.";
+                    CrashLogger.LogMessage($"[AutoUpdate] {msg}");
+                    result.IsUpdateAvailable = false;
+                    result.StatusMessage = msg;
+                    result.LatestVersion = AppInfo.VersionString;
+                    SetState(UpdateState.UpToDate, "Running latest version.");
+                    _latestUpdateInfo = result;
+                    return result;
+                }
+
+                // Iterate releases to find the latest valid non-draft, non-prerelease
+                JsonElement? bestRelease = null;
+                string bestTag = "";
+
+                foreach (var rel in doc.RootElement.EnumerateArray())
+                {
+                    bool isDraft = rel.TryGetProperty("draft", out var dProp) && dProp.GetBoolean();
+                    bool isPre = rel.TryGetProperty("prerelease", out var pProp) && pProp.GetBoolean();
+                    if (isDraft || isPre) continue;
+
+                    string tag = rel.TryGetProperty("tag_name", out var tProp) ? tProp.GetString() ?? "" : "";
+                    if (!string.IsNullOrWhiteSpace(tag))
+                    {
+                        bestRelease = rel;
+                        bestTag = tag;
+                        break;
+                    }
+                }
+
+                if (!bestRelease.HasValue)
+                {
+                    result.IsUpdateAvailable = false;
+                    result.LatestVersion = AppInfo.VersionString;
+                    result.StatusMessage = "No stable release published.";
+                    SetState(UpdateState.UpToDate, "Up to date.");
+                    _latestUpdateInfo = result;
+                    return result;
+                }
+
+                var releaseElem = bestRelease.Value;
+                string cleanLatestTag = bestTag.TrimStart('v', 'V').Trim();
+                string releaseName = releaseElem.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? "" : bestTag;
+                string body = releaseElem.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() ?? "" : "";
+                string htmlUrl = releaseElem.TryGetProperty("html_url", out var htmlProp) ? htmlProp.GetString() ?? "" : "";
+
                 DateTime? pubDate = null;
-                if (root.TryGetProperty("published_at", out var pubProp) && pubProp.TryGetDateTime(out var dt))
+                if (releaseElem.TryGetProperty("published_at", out var pubProp) && pubProp.TryGetDateTime(out var dt))
                 {
                     pubDate = dt;
                 }
-
-                string cleanLatestTag = tagName.TrimStart('v', 'V').Trim();
-                if (string.IsNullOrEmpty(cleanLatestTag)) cleanLatestTag = AppInfo.VersionString;
 
                 result.LatestVersion = cleanLatestTag;
                 result.ReleaseTitle = releaseName;
@@ -136,13 +197,18 @@ namespace VayuClient.Services.Updates
                 result.PublishedAt = pubDate;
                 result.HtmlUrl = htmlUrl;
 
-                // Semantic Version Comparison
+                CrashLogger.LogMessage($"[AutoUpdate] Latest release: v{cleanLatestTag}");
+
+                // Compare semantic versions
                 if (IsNewerVersion(cleanLatestTag, AppInfo.VersionString))
                 {
-                    result.IsUpdateAvailable = true;
+                    CrashLogger.LogMessage("[AutoUpdate] Update required");
 
-                    // Locate VayuClientSetup.exe asset
-                    if (root.TryGetProperty("assets", out var assetsArray) && assetsArray.ValueKind == JsonValueKind.Array)
+                    // Robust Asset Resolution: search for Windows installer .exe
+                    (string Name, string Url, long Size) selectedAsset = default;
+                    int bestScore = -1;
+
+                    if (releaseElem.TryGetProperty("assets", out var assetsArray) && assetsArray.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var asset in assetsArray.EnumerateArray())
                         {
@@ -150,30 +216,83 @@ namespace VayuClient.Services.Updates
                             string downloadUrl = asset.TryGetProperty("browser_download_url", out var dUrl) ? dUrl.GetString() ?? "" : "";
                             long size = asset.TryGetProperty("size", out var sProp) ? sProp.GetInt64() : 0;
 
-                            if (assetName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                            if (!assetName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(downloadUrl))
                             {
-                                result.DownloadUrl = downloadUrl;
-                                result.FileSizeBytes = size;
-                                break;
+                                continue;
+                            }
+
+                            int score = 0;
+                            if (assetName.Equals("VayuClientSetup.exe", StringComparison.OrdinalIgnoreCase)) score = 100;
+                            else if (assetName.Contains("Setup", StringComparison.OrdinalIgnoreCase)) score = 80;
+                            else if (assetName.Contains("Installer", StringComparison.OrdinalIgnoreCase)) score = 70;
+                            else if (assetName.Contains("VayuClient", StringComparison.OrdinalIgnoreCase)) score = 60;
+                            else score = 10;
+
+                            if (score > bestScore)
+                            {
+                                bestScore = score;
+                                selectedAsset = (assetName, downloadUrl, size);
                             }
                         }
                     }
 
-                    _latestUpdateInfo = result;
-                    CrashLogger.LogMessage($"[Auto-Update]: New version available: v{result.LatestVersion} (Current: v{result.CurrentVersion})");
-                    UpdateAvailable?.Invoke(result);
+                    if (!string.IsNullOrEmpty(selectedAsset.Url))
+                    {
+                        result.IsUpdateAvailable = true;
+                        result.DownloadUrl = selectedAsset.Url;
+                        result.AssetName = selectedAsset.Name ?? "";
+                        result.FileSizeBytes = selectedAsset.Size;
+                        result.StatusMessage = $"Update v{cleanLatestTag} available ({selectedAsset.Name})";
+
+                        CrashLogger.LogMessage($"[AutoUpdate] Found asset: {selectedAsset.Name}");
+                        CrashLogger.LogMessage($"[AutoUpdate] Download URL resolved: {selectedAsset.Url}");
+
+                        SetState(UpdateState.UpdateAvailable, result.StatusMessage);
+                        _latestUpdateInfo = result;
+                        UpdateAvailable?.Invoke(result);
+                    }
+                    else
+                    {
+                        result.IsUpdateAvailable = false;
+                        result.StatusMessage = $"Update unavailable: GitHub release v{cleanLatestTag} does not contain a compatible Windows installer.";
+                        CrashLogger.LogMessage($"[AutoUpdate] {result.StatusMessage}");
+                        SetState(UpdateState.Failed, result.StatusMessage);
+                        _latestUpdateInfo = result;
+                    }
                 }
                 else
                 {
                     result.IsUpdateAvailable = false;
+                    result.StatusMessage = $"You are running the latest version of VayuClient (v{AppInfo.VersionString}).";
+                    CrashLogger.LogMessage($"[AutoUpdate] Running latest version: v{AppInfo.VersionString}");
+                    SetState(UpdateState.UpToDate, result.StatusMessage);
                     _latestUpdateInfo = result;
-                    CrashLogger.LogMessage($"[Auto-Update]: Running latest version v{AppInfo.VersionString}");
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                string msg = $"Network error checking updates: {ex.Message}";
+                CrashLogger.LogMessage($"[AutoUpdate] {msg}");
+                result.IsUpdateAvailable = false;
+                result.StatusMessage = msg;
+                SetState(UpdateState.Failed, msg);
+                _latestUpdateInfo = result;
+            }
+            catch (TaskCanceledException)
+            {
+                string msg = "Update check timed out.";
+                CrashLogger.LogMessage($"[AutoUpdate] {msg}");
+                result.IsUpdateAvailable = false;
+                result.StatusMessage = msg;
+                SetState(UpdateState.Failed, msg);
+                _latestUpdateInfo = result;
             }
             catch (Exception ex)
             {
                 CrashLogger.LogException("CheckForUpdatesAsync", ex);
                 result.IsUpdateAvailable = false;
+                result.StatusMessage = $"Update check error: {ex.Message}";
+                SetState(UpdateState.Failed, result.StatusMessage);
                 _latestUpdateInfo = result;
             }
 
@@ -184,12 +303,25 @@ namespace VayuClient.Services.Updates
         {
             if (string.IsNullOrEmpty(updateInfo.DownloadUrl))
             {
-                throw new InvalidOperationException("No download asset URL provided for update.");
+                string err = $"No download asset URL provided for release v{updateInfo.LatestVersion}.";
+                CrashLogger.LogMessage($"[AutoUpdate] Download error: {err}");
+                SetState(UpdateState.Failed, err);
+                throw new InvalidOperationException(err);
             }
 
+            SetState(UpdateState.Downloading, $"Downloading update v{updateInfo.LatestVersion}...");
             string tempSetupDir = Path.Combine(Path.GetTempPath(), "VayuClientUpdate");
             Directory.CreateDirectory(tempSetupDir);
-            string installerPath = Path.Combine(tempSetupDir, $"VayuClientSetup_v{updateInfo.LatestVersion}.exe");
+
+            string assetFileName = !string.IsNullOrWhiteSpace(updateInfo.AssetName) 
+                ? updateInfo.AssetName 
+                : $"VayuClientSetup_v{updateInfo.LatestVersion}.exe";
+            string installerPath = Path.Combine(tempSetupDir, assetFileName);
+
+            if (File.Exists(installerPath))
+            {
+                try { File.Delete(installerPath); } catch { }
+            }
 
             var downloadItem = new DownloadItem
             {
@@ -200,15 +332,34 @@ namespace VayuClient.Services.Updates
                 Description = $"VayuClient Setup v{updateInfo.LatestVersion}"
             };
 
-            CrashLogger.LogMessage($"[Auto-Update]: Downloading update v{updateInfo.LatestVersion} from {updateInfo.DownloadUrl}...");
+            CrashLogger.LogMessage($"[AutoUpdate] Download started from {updateInfo.DownloadUrl}");
             bool ok = await _downloadService.DownloadFileAsync(downloadItem, progress, ct);
 
             if (!ok || !File.Exists(installerPath))
             {
-                throw new InvalidOperationException("Failed to download update installer.");
+                string err = "Failed to download update installer.";
+                CrashLogger.LogMessage($"[AutoUpdate] {err}");
+                SetState(UpdateState.Failed, err);
+                throw new InvalidOperationException(err);
             }
 
-            CrashLogger.LogMessage($"[Auto-Update]: Launching installer {installerPath}...");
+            // Verification phase
+            SetState(UpdateState.Verifying, "Verifying installer package...");
+            var fileInfo = new FileInfo(installerPath);
+            if (fileInfo.Length < 1024 * 100) // Minimum 100 KB for real executable
+            {
+                string err = "Downloaded installer file appears corrupted or incomplete.";
+                CrashLogger.LogMessage($"[AutoUpdate] {err} (Size: {fileInfo.Length} bytes)");
+                SetState(UpdateState.Failed, err);
+                throw new InvalidOperationException(err);
+            }
+
+            CrashLogger.LogMessage("[AutoUpdate] Download completed");
+            CrashLogger.LogMessage("[AutoUpdate] Verification passed");
+
+            // Installation phase
+            SetState(UpdateState.Installing, "Starting installer...");
+            CrashLogger.LogMessage($"[AutoUpdate] Starting installer: {installerPath}");
 
             var psi = new ProcessStartInfo
             {
@@ -218,7 +369,9 @@ namespace VayuClient.Services.Updates
 
             Process.Start(psi);
 
-            await Task.Delay(500, ct);
+            SetState(UpdateState.Restarting, "Restarting VayuClient...");
+            await Task.Delay(600, ct);
+
             var app = Application.Current;
             if (app?.Dispatcher != null)
             {

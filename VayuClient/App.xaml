@@ -23,6 +23,10 @@
             <converters:WebImageConverter x:Key="WebImage"/>
             <converters:BoolToOnlineStatusBrushConverter x:Key="BoolToOnlineStatusBrush"/>
             <converters:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter"/>
+            <converters:ZeroToVisibilityConverter x:Key="ZeroToVis"/>
+            <converters:NonZeroToVisibilityConverter x:Key="NonZeroToVis"/>
+            <converters:PingToColorBrushConverter x:Key="PingToColorBrush"/>
+            <converters:BoolToStringConverter x:Key="BoolToString"/>
 
             <!-- Implicit View-to-ViewModel Navigation DataTemplates -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">
@@ -42,6 +46,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:VersionsViewModel}">
                 <views:VersionsPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ServerViewModel}">
+                <views:ServerPage/>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

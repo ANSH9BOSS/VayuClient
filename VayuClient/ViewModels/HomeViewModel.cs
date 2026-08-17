@@ -99,7 +99,9 @@ namespace VayuClient.ViewModels
 
         public ObservableCollection<MinecraftInstance> Instances => _main.Instances;
 
-        public string ProfileUsernameDisplay => ActiveProfile != null ? ActiveProfile.Username : "No Profile Selected";
+        public string ProfileUsernameDisplay => ActiveProfile != null 
+            ? (!string.IsNullOrEmpty(ActiveProfile.Username) ? ActiveProfile.Username : "Microsoft account authenticated — Minecraft profile unavailable") 
+            : "Not signed in";
         public string ProfileSubtitleDisplay => ActiveProfile != null ? JavaStatusText : "Create or select a profile";
 
         public string ActiveLoaderDisplay => ActiveInstance != null ? ActiveInstance.Loader.ToUpperInvariant() : "MINECRAFT";

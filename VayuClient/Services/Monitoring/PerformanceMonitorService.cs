@@ -17,6 +17,8 @@ namespace VayuClient.Services.Monitoring
         private DateTime _lastSampleTime;
         private readonly Process _currentProcess;
         private readonly int _processorCount;
+        private HardwareProfile? _cachedHw;
+        private DateTime _lastHwRefresh = DateTime.MinValue;
 
         public bool IsRunning => _isRunning;
         public PerformanceSnapshot CurrentSnapshot { get; private set; } = new();
@@ -31,7 +33,7 @@ namespace VayuClient.Services.Monitoring
             _lastSampleTime = DateTime.UtcNow;
         }
 
-        public void StartMonitoring(int intervalMs = 1500)
+        public void StartMonitoring(int intervalMs = 2500)
         {
             lock (_lock)
             {
@@ -76,7 +78,7 @@ namespace VayuClient.Services.Monitoring
             {
                 var now = DateTime.UtcNow;
                 var timeDelta = now - _lastSampleTime;
-                if (timeDelta.TotalMilliseconds < 200) return;
+                if (timeDelta.TotalMilliseconds < 500) return;
 
                 _currentProcess.Refresh();
                 var currentCpuTime = _currentProcess.TotalProcessorTime;
@@ -87,14 +89,19 @@ namespace VayuClient.Services.Monitoring
                 _lastCpuTime = currentCpuTime;
                 _lastSampleTime = now;
 
-                var hw = _hardwareInfoService.GetHardwareProfile(forceRefresh: false);
+                // Cache hardware profile so we never query WMI continuously during gameplay
+                if (_cachedHw == null || (now - _lastHwRefresh).TotalSeconds > 60)
+                {
+                    _cachedHw = _hardwareInfoService.GetHardwareProfile(forceRefresh: false);
+                    _lastHwRefresh = now;
+                }
 
                 var snapshot = new PerformanceSnapshot
                 {
                     LauncherCpuPercent = Math.Round(cpuPercent, 1),
                     LauncherWorkingSetMB = Math.Round(_currentProcess.WorkingSet64 / (1024.0 * 1024.0), 1),
-                    HostAvailableRamGB = hw.AvailableRamGB,
-                    HostTotalRamGB = hw.TotalRamGB,
+                    HostAvailableRamGB = _cachedHw.AvailableRamGB,
+                    HostTotalRamGB = _cachedHw.TotalRamGB,
                     Timestamp = DateTime.Now
                 };
 
@@ -106,7 +113,6 @@ namespace VayuClient.Services.Monitoring
                         {
                             if (!_minecraftProcess.HasExited)
                             {
-                                _minecraftProcess.Refresh();
                                 snapshot.IsMinecraftRunning = true;
                                 snapshot.MinecraftPid = _minecraftProcess.Id;
                                 snapshot.MinecraftMemoryMB = Math.Round(_minecraftProcess.WorkingSet64 / (1024.0 * 1024.0), 1);

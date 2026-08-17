@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using VayuClient.Core;
 using VayuClient.Models;
 
 namespace VayuClient.Services.Instance
@@ -59,8 +60,7 @@ namespace VayuClient.Services.Instance
             instance.CreatedAt = DateTime.UtcNow;
 
             var jsonPath = Path.Combine(instanceDir, "instance.json");
-            var json = JsonConvert.SerializeObject(instance, Formatting.Indented);
-            await File.WriteAllTextAsync(jsonPath, json);
+            await SafeJsonStorage.SaveAtomicAsync(jsonPath, instance);
 
             // Add to in-memory list
             var existing = _instances.FirstOrDefault(i => i.InstanceId == instance.InstanceId);
@@ -92,8 +92,7 @@ namespace VayuClient.Services.Instance
             }
 
             var jsonPath = Path.Combine(instanceDir, "instance.json");
-            var json = JsonConvert.SerializeObject(instance, Formatting.Indented);
-            await File.WriteAllTextAsync(jsonPath, json);
+            await SafeJsonStorage.SaveAtomicAsync(jsonPath, instance);
 
             var existingIndex = _instances.FindIndex(i => i.InstanceId == instance.InstanceId);
             if (existingIndex >= 0)
@@ -153,20 +152,15 @@ namespace VayuClient.Services.Instance
                     var jsonPath = Path.Combine(dir, "instance.json");
                     if (File.Exists(jsonPath))
                     {
-                        try
+                        var inst = SafeJsonStorage.LoadSafe<MinecraftInstance>(jsonPath);
+                        if (inst != null)
                         {
-                            var json = File.ReadAllText(jsonPath);
-                            var inst = JsonConvert.DeserializeObject<MinecraftInstance>(json);
-                            if (inst != null)
+                            if (string.IsNullOrEmpty(inst.GameDirectory))
                             {
-                                if (string.IsNullOrEmpty(inst.GameDirectory))
-                                {
-                                    inst.GameDirectory = Path.Combine(dir, "game");
-                                }
-                                _instances.Add(inst);
+                                inst.GameDirectory = Path.Combine(dir, "game");
                             }
+                            _instances.Add(inst);
                         }
-                        catch { }
                     }
                 }
             }

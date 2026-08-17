@@ -233,6 +233,29 @@ namespace VayuClient.ViewModels
         }
 
         [RelayCommand]
+        private void OpenGameDirectory()
+        {
+            var inst = SelectedInstallation ?? _instanceService?.GetActiveInstance();
+            if (inst != null)
+            {
+                OpenInstanceFolder(inst);
+                return;
+            }
+
+            try
+            {
+                var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VayuClient", "Instances");
+                Directory.CreateDirectory(dir);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", dir) { UseShellExecute = true });
+                _main.ShowNotification("Folder Opened", "Opened Instances folder in Explorer.", NotificationType.Info);
+            }
+            catch (Exception ex)
+            {
+                _main.ShowNotification("Error", $"Could not open folder: {ex.Message}", NotificationType.Error);
+            }
+        }
+
+        [RelayCommand]
         private void DeleteInstance(MinecraftInstance? instance)
         {
             var inst = instance ?? SelectedInstallation;

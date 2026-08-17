@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Hardware;
+using VayuClient.Services.Instance;
 using VayuClient.Services.Java;
 using VayuClient.Services.Monitoring;
 using VayuClient.Services.Settings;
@@ -26,6 +27,7 @@ namespace VayuClient.ViewModels
         private readonly IJavaRuntimeService? _javaService;
         private readonly IHardwareInfoService _hardwareInfoService;
         private readonly IPerformanceMonitorService _performanceMonitor;
+        private readonly IInstanceService _instanceService;
 
         [ObservableProperty]
         private string _activeTab = "Performance"; // Performance, Appearance, GameLaunch, Network, About
@@ -50,6 +52,61 @@ namespace VayuClient.ViewModels
         private int _defaultRamMB = 4096;
 
         public string RamDisplay => $"{DefaultRamMB} MB ({DefaultRamMB / 1024.0:F1} GB)";
+
+        // ─── Per-Instance RAM (Feature 14) ───────────────────────────────────
+        // Reflects the active instance's RAM. Changes persist to instance.json.
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(InstanceRamDisplay))]
+        [NotifyPropertyChangedFor(nameof(RamWarningText))]
+        [NotifyPropertyChangedFor(nameof(ShowRamWarning))]
+        private int _instanceRamMB = 4096;
+
+        [ObservableProperty]
+        private string _activeInstanceNameForRam = "No instance selected";
+
+        [ObservableProperty]
+        private bool _hasActiveInstanceForRam;
+
+        public string InstanceRamDisplay => $"{InstanceRamMB} MB  ({InstanceRamMB / 1024.0:F1} GB)";
+
+        /// <summary>Real total physical RAM from WMI — never hardcoded.</summary>
+        public string SystemTotalRamDisplay => Hardware.TotalRamGB > 0
+            ? $"{Hardware.TotalRamGB:F1} GB"
+            : "Detecting...";
+
+        /// <summary>Real available RAM updated on benchmark / tab open.</summary>
+        public string SystemAvailableRamDisplay => $"{LiveHostAvailableRamGB:F1} GB";
+
+        /// <summary>Recommended RAM for the active instance based on loader + mod count.</summary>
+        public string RecommendedRamDisplay => $"{Hardware.RecommendedRamMB} MB  ({Hardware.RecommendedRamMB / 1024.0:F1} GB)";
+
+        /// <summary>Safe maximum: 75% of total physical RAM, rounded to 512 MB.</summary>
+        public int SafeMaxRamMB => ComputeSafeMaxRamMB();
+        public string SafeMaxRamDisplay => $"{SafeMaxRamMB} MB  ({SafeMaxRamMB / 1024.0:F1} GB)";
+
+        /// <summary>Warning when selected allocation exceeds safe threshold.</summary>
+        public bool ShowRamWarning => InstanceRamMB > SafeMaxRamMB;
+        public string RamWarningText => ShowRamWarning
+            ? $"⚠️  {InstanceRamMB} MB exceeds safe maximum ({SafeMaxRamMB} MB = 75% of {Hardware.TotalRamGB:F1} GB total). Windows and other apps may be starved."
+            : string.Empty;
+
+        // Which preset buttons should be visible (only if preset ≤ safe max)
+        public bool ShowPreset2GB  => SafeMaxRamMB >= 2048;
+        public bool ShowPreset4GB  => SafeMaxRamMB >= 4096;
+        public bool ShowPreset6GB  => SafeMaxRamMB >= 6144;
+        public bool ShowPreset8GB  => SafeMaxRamMB >= 8192;
+        public bool ShowPreset12GB => SafeMaxRamMB >= 12288;
+        public bool ShowPreset16GB => SafeMaxRamMB >= 16384;
+
+        private int ComputeSafeMaxRamMB()
+        {
+            long totalBytes = Hardware?.TotalPhysicalRamBytes ?? 0;
+            if (totalBytes <= 0) return 8192; // safe fallback
+            // 75% of physical RAM, snapped to nearest 512 MB
+            int maxMB = (int)(totalBytes * 0.75 / (1024 * 1024));
+            return (maxMB / 512) * 512;
+        }
 
         [ObservableProperty]
         private string _selectedJavaRuntime = "Auto-Detect LTS (Recommended)";
@@ -222,6 +279,7 @@ namespace VayuClient.ViewModels
             _javaService = ServiceLocator.Resolve<IJavaRuntimeService>();
             _hardwareInfoService = ServiceLocator.Resolve<IHardwareInfoService>();
             _performanceMonitor = ServiceLocator.Resolve<IPerformanceMonitorService>();
+            _instanceService = ServiceLocator.Resolve<IInstanceService>();
 
             _hardware = _hardwareInfoService.GetHardwareProfile();
 
@@ -234,6 +292,100 @@ namespace VayuClient.ViewModels
 
             LoadDetectedJavaRuntimes();
             LoadFromSettings();
+            RefreshInstanceRam();
+        }
+
+        /// <summary>
+        /// Refresh per-instance RAM panel from the currently active instance.
+        /// Called on tab open and after instance changes.
+        /// </summary>
+        public void RefreshInstanceRam()
+        {
+            try
+            {
+                var inst = _instanceService.GetActiveInstance();
+                if (inst != null)
+                {
+                    HasActiveInstanceForRam = true;
+                    ActiveInstanceNameForRam = inst.Name;
+                    InstanceRamMB = Math.Max(512, inst.RamMB);
+                    OnPropertyChanged(nameof(InstanceRamDisplay));
+                    OnPropertyChanged(nameof(ShowRamWarning));
+                    OnPropertyChanged(nameof(RamWarningText));
+                }
+                else
+                {
+                    HasActiveInstanceForRam = false;
+                    ActiveInstanceNameForRam = "No instance selected";
+                }
+
+                // Always refresh hardware-derived computed properties
+                OnPropertyChanged(nameof(SystemTotalRamDisplay));
+                OnPropertyChanged(nameof(SystemAvailableRamDisplay));
+                OnPropertyChanged(nameof(RecommendedRamDisplay));
+                OnPropertyChanged(nameof(SafeMaxRamDisplay));
+                OnPropertyChanged(nameof(SafeMaxRamMB));
+                OnPropertyChanged(nameof(ShowPreset2GB));
+                OnPropertyChanged(nameof(ShowPreset4GB));
+                OnPropertyChanged(nameof(ShowPreset6GB));
+                OnPropertyChanged(nameof(ShowPreset8GB));
+                OnPropertyChanged(nameof(ShowPreset12GB));
+                OnPropertyChanged(nameof(ShowPreset16GB));
+            }
+            catch { }
+        }
+
+        partial void OnInstanceRamMBChanged(int value)
+        {
+            OnPropertyChanged(nameof(InstanceRamDisplay));
+            OnPropertyChanged(nameof(ShowRamWarning));
+            OnPropertyChanged(nameof(RamWarningText));
+            SaveInstanceRam(value);
+        }
+
+        private void SaveInstanceRam(int ramMB)
+        {
+            try
+            {
+                var inst = _instanceService.GetActiveInstance();
+                if (inst == null) return;
+
+                // Clamp: minimum 512 MB, maximum safe max (hard cap for safety)
+                int safeMax = ComputeSafeMaxRamMB();
+                int clamped = Math.Max(512, Math.Min(ramMB, safeMax + 4096)); // allow exceeding safe max but not dangerously
+                inst.RamMB = clamped;
+
+                // Fire-and-forget: partial method callback is synchronous; persist on background thread
+                _ = _instanceService.SaveInstanceAsync(inst).ContinueWith(t =>
+                {
+                    if (t.IsFaulted && t.Exception != null)
+                        CrashLogger.LogException("SettingsViewModel.SaveInstanceRam", t.Exception.GetBaseException());
+                    else
+                        CrashLogger.LogMessage($"[PerInstanceRAM]: Instance '{inst.Name}' RAM updated to {clamped} MB (-Xmx{clamped}M)");
+                }, System.Threading.Tasks.TaskContinuationOptions.None);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("SettingsViewModel.SaveInstanceRam", ex);
+            }
+        }
+
+
+        [RelayCommand]
+        private void SetInstanceRam(object? parameter)
+        {
+            if (!HasActiveInstanceForRam) return;
+            if (parameter is not string s) return;
+            if (!int.TryParse(s, out int mb)) return;
+            InstanceRamMB = mb; // triggers OnInstanceRamMBChanged → SaveInstanceRam
+        }
+
+        [RelayCommand]
+        private void ApplyRecommendedRam()
+        {
+            if (!HasActiveInstanceForRam) return;
+            InstanceRamMB = Hardware.RecommendedRamMB;
+            _main.ShowNotification("RAM Applied", $"Recommended {Hardware.RecommendedRamMB} MB applied to '{ActiveInstanceNameForRam}'.", NotificationType.Success);
         }
 
         private void OnPerformanceSnapshotUpdated(object? sender, PerformanceSnapshot snap)
@@ -460,7 +612,7 @@ namespace VayuClient.ViewModels
 
             IsCheckingUpdates = true;
             UpdateStatusText = "Connecting to GitHub Releases...";
-            _main.ShowNotification("Checking Updates", "Connecting to GitHub Releases...", NotificationType.Info);
+            _main.ShowNotification("Checking Updates", "Connecting to GitHub Releases...", NotificationType.Info, tag: "Update");
 
             try
             {
@@ -471,18 +623,25 @@ namespace VayuClient.ViewModels
                     _main.LatestUpdateVersion = res.LatestVersion;
                     _main.UpdateNotes = res.ReleaseNotes;
                     UpdateStatusText = $"✨ New version v{res.LatestVersion} available!";
-                    _main.ShowNotification("Update Found", $"New version v{res.LatestVersion} is available! Click 'Update Directly Now' in the top banner.", NotificationType.Success);
+                    _main.ShowNotification("Update Available", $"VayuClient v{res.LatestVersion} is available. Click 'Update Directly Now' in the top banner.", NotificationType.Success, tag: "Update", autoDismissSeconds: 8.0);
+                }
+                else if (!string.IsNullOrEmpty(res.StatusMessage) && res.StatusMessage.Contains("unavailable", StringComparison.OrdinalIgnoreCase))
+                {
+                    _main.IsUpdateAvailable = false;
+                    UpdateStatusText = res.StatusMessage;
+                    _main.ShowNotification("Update Unavailable", res.StatusMessage, NotificationType.Warning, tag: "Update");
                 }
                 else
                 {
+                    _main.IsUpdateAvailable = false;
                     UpdateStatusText = $"✓ Up to date (v{AppInfo.VersionString})";
-                    _main.ShowNotification("Up to Date", $"You are running the latest version of VayuClient (v{AppInfo.VersionString}).", NotificationType.Success);
+                    _main.ShowNotification("Up to Date", $"You are running the latest version of VayuClient (v{AppInfo.VersionString}).", NotificationType.Success, tag: "Update");
                 }
             }
             catch (Exception ex)
             {
                 UpdateStatusText = "Could not reach GitHub Releases";
-                _main.ShowNotification("Update Check Error", ex.Message, NotificationType.Error);
+                _main.ShowNotification("Update Check Error", ex.Message, NotificationType.Error, tag: "Update");
             }
             finally
             {

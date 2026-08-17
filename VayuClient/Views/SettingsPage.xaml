@@ -231,17 +231,107 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- RAM Slider Card -->
+                                <!-- ══ Smart RAM Recommendations Card (Feature 14) ══ -->
+                                <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <!-- Header: Active Instance + Allocation Display -->
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="INSTANCE RAM ALLOCATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                                <TextBlock Text="{Binding ActiveInstanceNameForRam}" FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding InstanceRamDisplay}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- Slider (only when instance selected) -->
+                                        <Slider Value="{Binding InstanceRamMB}" Minimum="512" Maximum="32768" SmallChange="256" LargeChange="1024"
+                                                IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,10"/>
+
+                                        <!-- Preset Buttons Row -->
+                                        <WrapPanel Margin="0,0,0,10">
+                                            <Button Content="2 GB" CommandParameter="2048" Command="{Binding SetInstanceRamCommand}"
+                                                    Visibility="{Binding ShowPreset2GB, Converter={StaticResource BoolToVis}}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuDarkButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                            <Button Content="4 GB" CommandParameter="4096" Command="{Binding SetInstanceRamCommand}"
+                                                    Visibility="{Binding ShowPreset4GB, Converter={StaticResource BoolToVis}}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuDarkButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                            <Button Content="6 GB" CommandParameter="6144" Command="{Binding SetInstanceRamCommand}"
+                                                    Visibility="{Binding ShowPreset6GB, Converter={StaticResource BoolToVis}}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuDarkButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                            <Button Content="8 GB" CommandParameter="8192" Command="{Binding SetInstanceRamCommand}"
+                                                    Visibility="{Binding ShowPreset8GB, Converter={StaticResource BoolToVis}}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuDarkButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                            <Button Content="12 GB" CommandParameter="12288" Command="{Binding SetInstanceRamCommand}"
+                                                    Visibility="{Binding ShowPreset12GB, Converter={StaticResource BoolToVis}}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuDarkButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                            <Button Content="16 GB" CommandParameter="16384" Command="{Binding SetInstanceRamCommand}"
+                                                    Visibility="{Binding ShowPreset16GB, Converter={StaticResource BoolToVis}}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuDarkButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                            <Button Content="⭐ Recommended" Command="{Binding ApplyRecommendedRamCommand}"
+                                                    IsEnabled="{Binding HasActiveInstanceForRam}"
+                                                    Style="{StaticResource VayuPrimaryButton}" Padding="10,5" Margin="0,0,6,6" FontSize="11" Cursor="Hand"/>
+                                        </WrapPanel>
+
+                                        <!-- Hardware Reference Row -->
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="TOTAL RAM" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                                <TextBlock Text="{Binding SystemTotalRamDisplay}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="AVAILABLE NOW" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                                <TextBlock Text="{Binding SystemAvailableRamDisplay}" FontSize="11" FontWeight="Bold" Foreground="#38BDF8"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="SAFE MAX (75%)" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                                <TextBlock Text="{Binding SafeMaxRamDisplay}" FontSize="11" FontWeight="Bold" Foreground="#4ADE80"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Over-allocation Warning (real-time) -->
+                                        <Border CornerRadius="6" Background="#2D1A0A" BorderBrush="#F59E0B" BorderThickness="1" Padding="10,8" Margin="0,0,0,6"
+                                                Visibility="{Binding ShowRamWarning, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{Binding RamWarningText}" FontSize="10.5" Foreground="#FCD34D" TextWrapping="Wrap"/>
+                                        </Border>
+
+                                        <!-- No-instance hint -->
+                                        <TextBlock Text="Select an instance on the Home screen to configure per-instance RAM."
+                                                   FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}"
+                                                   Visibility="{Binding HasActiveInstanceForRam, Converter={StaticResource InverseBoolToVis}}"/>
+
+                                        <TextBlock Text="Changes are persisted immediately to instance.json and injected as -Xmx on next launch."
+                                                   FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,4,0,0"
+                                                   Visibility="{Binding HasActiveInstanceForRam, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Global Default RAM (for new instances) -->
                                 <Border CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}" BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1" Padding="18,16" Margin="0,0,0,16">
                                     <StackPanel>
                                         <Grid Margin="0,0,0,10">
-                                            <TextBlock Text="DEFAULT MINECRAFT RAM ALLOCATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                            <TextBlock Text="NEW INSTANCE DEFAULT RAM" FontSize="11" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
                                             <TextBlock Text="{Binding RamDisplay}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Right"/>
                                         </Grid>
                                         <Slider Value="{Binding DefaultRamMB}" Minimum="1024" Maximum="16384" SmallChange="512" LargeChange="1024"
                                                 Style="{StaticResource VayuGlassSlider}" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Allocated maximum heap (-Xmx). Automatically bounded to prevent OS memory starvation."
-                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                        <TextBlock Text="Default -Xmx applied when creating new instances. Does not override existing per-instance settings."
+                                                   FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

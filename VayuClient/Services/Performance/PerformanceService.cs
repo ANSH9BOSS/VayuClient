@@ -40,27 +40,14 @@ namespace VayuClient.Services.Performance
 
         private void LoadSettings()
         {
-            try
-            {
-                if (File.Exists(_settingsFilePath))
-                {
-                    var json = File.ReadAllText(_settingsFilePath);
-                    var loaded = JsonConvert.DeserializeObject<PerformanceSettings>(json);
-                    if (loaded != null)
-                    {
-                        _settings = loaded;
-                    }
-                }
-            }
-            catch { }
+            _settings = Core.SafeJsonStorage.LoadSafe<PerformanceSettings>(_settingsFilePath, () => new PerformanceSettings()) ?? new PerformanceSettings();
         }
 
         private void SaveSettings()
         {
             try
             {
-                var json = JsonConvert.SerializeObject(_settings, Formatting.Indented);
-                File.WriteAllText(_settingsFilePath, json);
+                Core.SafeJsonStorage.SaveAtomic(_settingsFilePath, _settings);
             }
             catch { }
         }

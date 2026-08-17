@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using VayuClient.Core;
 
@@ -14,6 +15,18 @@ namespace VayuClient
         {
             base.OnStartup(e);
             CrashLogger.Initialize();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            try
+            {
+                var discordRpc = ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>();
+                discordRpc?.Shutdown();
+            }
+            catch { }
+
+            base.OnExit(e);
         }
     }
 }

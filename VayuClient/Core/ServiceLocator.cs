@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using VayuClient.Services.Account;
 using VayuClient.Services.Authentication;
 using VayuClient.Services.Download;
@@ -11,6 +12,7 @@ using VayuClient.Services.Hardware;
 using VayuClient.Services.Monitoring;
 using VayuClient.Services.Profiles;
 using VayuClient.Services.Settings;
+using VayuClient.Services.Server;
 using VayuClient.Services.Updates;
 using VayuClient.Services.Version;
 
@@ -26,30 +28,33 @@ namespace VayuClient.Core
 
         public static void Initialize()
         {
-            var hardwareInfoService = new HardwareInfoService();
-            Register<IHardwareInfoService>(hardwareInfoService);
+            // ─── CRITICAL PATH (fast, no WMI/network) ───────────────────────────
+            // These services are needed immediately for the UI to function.
+            // Do NOT add WMI queries, filesystem scans, or network calls here.
 
-            var performanceMonitor = new PerformanceMonitorService(hardwareInfoService);
-            Register<IPerformanceMonitorService>(performanceMonitor);
             var settingsService = new SettingsService();
             Register<ISettingsService>(settingsService);
-
-            var downloadService = new DownloadService();
-            Register<IDownloadService>(downloadService);
-
-            var javaRuntimeService = new JavaRuntimeService();
-            Register<IJavaRuntimeService>(javaRuntimeService);
-
-            var msAuthService = new MicrosoftAuthService();
-            Register<IMicrosoftAuthService>(msAuthService);
 
             var profileService = new ProfileService();
             Register<IProfileService>(profileService);
             var accountService = new AccountService(profileService);
             Register<IAccountService>(accountService);
+
+            var downloadService = new DownloadService();
+            Register<IDownloadService>(downloadService);
+
+            var instanceService = new InstanceService();
+            Register<IInstanceService>(instanceService);
+
+            var msAuthService = new MicrosoftAuthService();
+            Register<IMicrosoftAuthService>(msAuthService);
             Register<IAuthenticationService>(new AuthenticationService(msAuthService, profileService, accountService));
+
             var versionService = new VersionService();
             Register<IVersionService>(versionService);
+
+            var javaRuntimeService = new JavaRuntimeService();
+            Register<IJavaRuntimeService>(javaRuntimeService);
 
             var minecraftInstaller = new MinecraftInstaller(downloadService, versionService);
             Register<IMinecraftInstaller>(minecraftInstaller);
@@ -63,8 +68,14 @@ namespace VayuClient.Core
             var launchArgumentBuilder = new LaunchArgumentBuilder();
             Register<ILaunchArgumentBuilder>(launchArgumentBuilder);
 
-            var instanceService = new InstanceService();
-            Register<IInstanceService>(instanceService);
+            // HardwareInfoService: register immediately but defer the WMI query.
+            // GetHardwareProfile() is only called when PerformanceService/SettingsVM needs it,
+            // so the first real WMI call happens in the background after launch.
+            var hardwareInfoService = new HardwareInfoService();
+            Register<IHardwareInfoService>(hardwareInfoService);
+
+            var performanceMonitor = new PerformanceMonitorService(hardwareInfoService);
+            Register<IPerformanceMonitorService>(performanceMonitor);
 
             var integrityService = new Services.Integrity.InstanceIntegrityService(
                 minecraftInstaller,
@@ -92,9 +103,29 @@ namespace VayuClient.Core
             Register<IMinecraftService>(new MinecraftService());
             Register<IUpdateService>(new UpdateService());
 
+            // Server Manager (Feature 21)
+            Register<IServerService>(new ServerService());
+
+            // ─── BACKGROUND PATH (non-blocking) ─────────────────────────────────
+            // Discord RPC pipe connection and WMI hardware detection are slow.
+            // Initialize them asynchronously after the UI is visible.
+
             var discordRpc = new Services.Discord.DiscordRpcService();
-            discordRpc.Initialize();
             Register<Services.Discord.IDiscordRpcService>(discordRpc);
+
+            // Initialize Discord RPC in background — pipe connection takes 100–500ms
+            _ = Task.Run(() =>
+            {
+                try { discordRpc.Initialize(); }
+                catch { }
+            });
+
+            // Pre-warm hardware detection in background so first access is fast
+            _ = Task.Run(() =>
+            {
+                try { hardwareInfoService.GetHardwareProfile(forceRefresh: false); }
+                catch { }
+            });
         }
 
         public static void Register<T>(object instance) where T : class

@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Download;
 using VayuClient.Services.Version;
@@ -71,14 +71,19 @@ namespace VayuClient.Services.Minecraft
                 }
             }
 
+            CrashLogger.LogMessage($"[VersionResolver] Requested Minecraft version: {versionId}");
+
             // Fetch from Mojang Manifest
             var manifestVersions = await _versionService.GetManifestVersionsAsync(forceRefresh: false);
             var versionEntry = manifestVersions.FirstOrDefault(v => string.Equals(v.Id, versionId, StringComparison.OrdinalIgnoreCase));
 
             if (versionEntry == null || string.IsNullOrEmpty(versionEntry.Url))
             {
-                throw new InvalidOperationException($"Minecraft version '{versionId}' not found in official Mojang manifest.");
+                throw new InvalidOperationException($"Installation failed: Minecraft {versionId} could not be resolved from the official version manifest.");
             }
+
+            CrashLogger.LogMessage($"[VersionResolver] Resolved exact manifest entry: {versionEntry.Id}");
+            CrashLogger.LogMessage($"[VersionDownload] Downloading version package for Minecraft {versionId}...");
 
             Directory.CreateDirectory(versionDir);
             var tempJsonPath = Path.Combine(versionDir, $"{versionId}.tmp.json");
@@ -107,6 +112,7 @@ namespace VayuClient.Services.Minecraft
 
             // Atomic move to final cache location
             File.Move(tempJsonPath, versionJsonPath, overwrite: true);
+            CrashLogger.LogMessage($"[VersionDownload] Minecraft {versionId} metadata successfully verified and cached.");
             return resultPkg;
         }
 

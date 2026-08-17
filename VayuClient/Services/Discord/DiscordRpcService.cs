@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,8 +14,8 @@ namespace VayuClient.Services.Discord
 {
     public class DiscordRpcService : IDiscordRpcService
     {
-        // Verified registered Discord Application Client ID for VayuClient (Owner: ANSH9BOSS)
-        private const string DefaultClientId = "1538504622652661830";
+        // Registered Discord Application Client ID for VayuClient
+        private const string DefaultClientId = "1338504622652661830";
         private const int HandshakeOpcode = 0;
         private const int FrameOpcode = 1;
         private const int CloseOpcode = 2;
@@ -24,19 +25,29 @@ namespace VayuClient.Services.Discord
         private CancellationTokenSource? _cts;
         private bool _isInitialized;
         private bool _isEnabled = true;
+        private bool _lastReportedConnectedState;
         private DateTime _sessionStartTime = DateTime.UtcNow;
         private DateTime _lastPushTime = DateTime.MinValue;
 
         private string _clientId = DefaultClientId;
-        private string _currentDetails = "In Launcher • Managing Instances & Mods";
-        private string _currentState = "Owned & Developed by ANSH9BOSS";
+        private string _currentDetails = "In Launcher";
+        private string _currentState = "Ready to Play";
         private string? _currentLargeKey = "vayu_logo";
         private string? _currentLargeText = $"VayuClient v{AppInfo.VersionString}";
         private string? _currentSmallKey = "vayu_logo";
         private string? _currentSmallText = "Developer: ANSH9BOSS";
         private DateTime? _currentStartTime;
 
-        public bool IsConnected => _pipe != null && _pipe.IsConnected;
+        public bool IsConnected
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _pipe != null && _pipe.IsConnected;
+                }
+            }
+        }
 
         public string ClientId
         {
@@ -86,26 +97,6 @@ namespace VayuClient.Services.Discord
             }
         }
 
-        public void SetEnabled(bool enabled)
-        {
-            IsEnabled = enabled;
-            if (!enabled)
-            {
-                ClearPresence();
-            }
-            else
-            {
-                if (!IsConnected)
-                {
-                    Task.Run(TryConnect);
-                }
-                else
-                {
-                    PushPresence();
-                }
-            }
-        }
-
         public void Initialize()
         {
             lock (_lock)
@@ -125,23 +116,25 @@ namespace VayuClient.Services.Discord
 
         public void SetInLauncherPresence(string? instanceName = null, string? version = null, string? loader = null)
         {
-            string details;
-            if (!string.IsNullOrWhiteSpace(instanceName))
+            string details = "In Launcher";
+            string state = "Ready to Play";
+
+            if (!string.IsNullOrWhiteSpace(version))
             {
                 string loaderStr = !string.IsNullOrWhiteSpace(loader) && !loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase)
-                    ? $" • {loader}"
+                    ? $" ({loader})"
                     : "";
-                string verStr = !string.IsNullOrWhiteSpace(version) ? $"Minecraft {version}" : instanceName;
-                details = $"Selected: {verStr}{loaderStr}";
+                details = $"Minecraft {version}{loaderStr}";
+                state = !string.IsNullOrWhiteSpace(instanceName) ? instanceName : "Ready to Play";
             }
-            else
+            else if (!string.IsNullOrWhiteSpace(instanceName))
             {
-                details = "In Launcher • Ready to Play";
+                state = instanceName;
             }
 
             UpdatePresence(
                 details: details,
-                state: "Owned & Developed by ANSH9BOSS",
+                state: state,
                 largeImageKey: "vayu_logo",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",
                 smallImageKey: "vayu_logo",
@@ -149,19 +142,36 @@ namespace VayuClient.Services.Discord
                 startTime: _sessionStartTime);
         }
 
-        public void SetInGamePresence(string instanceName, string version, string loader)
+        public void SetLaunchingPresence(string instanceName, string version, string loader)
         {
             string loaderInfo = !string.IsNullOrWhiteSpace(loader) && !loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase)
                 ? $" ({loader})"
                 : "";
+
             UpdatePresence(
-                details: $"Playing {instanceName}",
-                state: $"Minecraft {version}{loaderInfo} • Owned & Developed by ANSH9BOSS",
+                details: "Launching Minecraft",
+                state: $"Minecraft {version}{loaderInfo}",
                 largeImageKey: "vayu_logo",
                 largeImageText: $"VayuClient v{AppInfo.VersionString}",
                 smallImageKey: "vayu_logo",
                 smallImageText: "Developer: ANSH9BOSS",
                 startTime: DateTime.UtcNow);
+        }
+
+        public void SetInGamePresence(string instanceName, string version, string loader)
+        {
+            string loaderInfo = !string.IsNullOrWhiteSpace(loader) && !loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase)
+                ? $" ({loader})"
+                : "";
+
+            UpdatePresence(
+                details: $"Playing Minecraft {version}{loaderInfo}",
+                state: "High-FPS Session Active",
+                largeImageKey: "vayu_logo",
+                largeImageText: $"VayuClient v{AppInfo.VersionString}",
+                smallImageKey: "vayu_logo",
+                smallImageText: "Developer: ANSH9BOSS",
+                startTime: _sessionStartTime);
         }
 
         public void UpdatePresence(
@@ -213,10 +223,7 @@ namespace VayuClient.Services.Discord
 
                 SendPacket(FrameOpcode, payload.ToString(Formatting.None));
             }
-            catch (Exception ex)
-            {
-                CrashLogger.LogException("DiscordClearPresence", ex);
-            }
+            catch { }
         }
 
         private void PushPresence()
@@ -270,7 +277,6 @@ namespace VayuClient.Services.Discord
 
                 SendPacket(FrameOpcode, root.ToString(Formatting.None));
                 _lastPushTime = DateTime.UtcNow;
-                CrashLogger.LogMessage($"[Discord RPC]: Presence updated -> {_currentDetails} | {_currentState}");
             }
             catch (Exception ex)
             {
@@ -290,23 +296,31 @@ namespace VayuClient.Services.Discord
                         if (!IsConnected)
                         {
                             TryConnect();
+                            // If still not connected, wait 15 seconds before next retry to avoid CPU/IO overhead
+                            await Task.Delay(TimeSpan.FromSeconds(15), ct);
                         }
-                        else if ((DateTime.UtcNow - _lastPushTime).TotalSeconds >= 20)
+                        else
                         {
-                            // Keep-alive heartbeat refresh so Discord presence stays active in background
-                            PushPresence();
+                            // Keep-alive refresh every 30 seconds
+                            if ((DateTime.UtcNow - _lastPushTime).TotalSeconds >= 30)
+                            {
+                                PushPresence();
+                            }
+                            await Task.Delay(TimeSpan.FromSeconds(10), ct);
                         }
                     }
-
-                    await Task.Delay(TimeSpan.FromSeconds(4), ct);
+                    else
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(10), ct);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
                     break;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    CrashLogger.LogException("DiscordBackgroundLoop", ex);
+                    await Task.Delay(TimeSpan.FromSeconds(15), ct);
                 }
             }
         }
@@ -324,7 +338,7 @@ namespace VayuClient.Services.Discord
                     {
                         var pipeName = $"discord-ipc-{i}";
                         pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-                        pipe.Connect(300);
+                        pipe.Connect(150);
 
                         if (pipe.IsConnected)
                         {
@@ -339,11 +353,15 @@ namespace VayuClient.Services.Discord
 
                             SendPacket(HandshakeOpcode, handshake.ToString(Formatting.None));
 
-                            // Read Handshake response asynchronously with a timeout
+                            // Read Handshake response with a short timeout
                             var response = ReadPacketWithTimeout(TimeSpan.FromSeconds(2));
                             if (!string.IsNullOrEmpty(response))
                             {
-                                CrashLogger.LogMessage($"[Discord RPC]: Connected to Discord on pipe {pipeName}");
+                                if (!_lastReportedConnectedState)
+                                {
+                                    _lastReportedConnectedState = true;
+                                    CrashLogger.LogMessage($"[Discord RPC] Connected to {pipeName}");
+                                }
                                 PushPresence();
                                 return true;
                             }
@@ -361,6 +379,12 @@ namespace VayuClient.Services.Discord
                         }
                         ClosePipe();
                     }
+                }
+
+                if (_lastReportedConnectedState)
+                {
+                    _lastReportedConnectedState = false;
+                    CrashLogger.LogMessage("[Discord RPC] Disconnected");
                 }
 
                 return false;

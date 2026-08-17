@@ -38,6 +38,17 @@ namespace VayuClient.Services.Loaders
         {
             var result = new ModLoaderInstallResult();
 
+            if (!string.Equals(baseMcPkg.Id, instance.MinecraftVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Mod loader installation version mismatch. " +
+                    $"Expected Minecraft {instance.MinecraftVersion}, received {baseMcPkg.Id}."
+                );
+            }
+
+            CrashLogger.LogMessage($"[LoaderInstall] Requested loader: {instance.Loader}");
+            CrashLogger.LogMessage($"[LoaderInstall] Minecraft compatibility: {instance.MinecraftVersion}");
+
             if (string.IsNullOrEmpty(instance.Loader) || instance.Loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase))
             {
                 result.CustomMainClass = baseMcPkg.MainClass ?? "net.minecraft.client.main.Main";

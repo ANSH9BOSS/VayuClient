@@ -1,5 +1,6 @@
 using System.IO;
 using Newtonsoft.Json;
+using VayuClient.Core;
 using VayuClient.Models;
 
 namespace VayuClient.Services.Profiles
@@ -139,12 +140,14 @@ namespace VayuClient.Services.Profiles
         {
             try
             {
-                var json = JsonConvert.SerializeObject(_profiles, Formatting.Indented);
-                File.WriteAllText(_profilesPath, json);
+                lock (_profiles)
+                {
+                    Core.SafeJsonStorage.SaveAtomic(_profilesPath, _profiles);
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to save profiles: {ex.Message}");
+                Core.CrashLogger.LogException("ProfileService.SaveProfiles", ex);
             }
         }
 
@@ -152,20 +155,19 @@ namespace VayuClient.Services.Profiles
         {
             try
             {
-                if (File.Exists(_profilesPath))
+                lock (_profiles)
                 {
-                    var json = File.ReadAllText(_profilesPath);
-                    var loaded = JsonConvert.DeserializeObject<List<UserProfile>>(json);
+                    var loaded = Core.SafeJsonStorage.LoadSafe<List<UserProfile>>(_profilesPath, () => new List<UserProfile>());
+                    _profiles.Clear();
                     if (loaded != null)
                     {
-                        _profiles.Clear();
                         _profiles.AddRange(loaded);
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load profiles: {ex.Message}");
+                Core.CrashLogger.LogException("ProfileService.LoadProfiles", ex);
             }
         }
     }

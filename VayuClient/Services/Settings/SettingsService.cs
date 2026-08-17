@@ -27,27 +27,8 @@ namespace VayuClient.Services.Settings
 
         public void LoadSettings()
         {
-            try
-            {
-                if (File.Exists(_settingsFilePath))
-                {
-                    var json = File.ReadAllText(_settingsFilePath);
-                    var loaded = JsonConvert.DeserializeObject<LauncherSettings>(json);
-                    if (loaded != null)
-                    {
-                        _settings = loaded;
-                        CrashLogger.LogMessage($"[SettingsService]: Loaded user settings from {_settingsFilePath}");
-                        return;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                CrashLogger.LogException("SettingsService.LoadSettings", ex);
-            }
-
-            _settings = new LauncherSettings();
-            SaveSettingsSync(_settings);
+            _settings = SafeJsonStorage.LoadSafe<LauncherSettings>(_settingsFilePath, () => new LauncherSettings()) ?? new LauncherSettings();
+            CrashLogger.LogMessage($"[SettingsService]: Loaded user settings from {_settingsFilePath}");
         }
 
         public async Task SaveSettingsAsync(LauncherSettings settings)
@@ -55,8 +36,7 @@ namespace VayuClient.Services.Settings
             try
             {
                 _settings = settings;
-                var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
-                await File.WriteAllTextAsync(_settingsFilePath, json);
+                await SafeJsonStorage.SaveAtomicAsync(_settingsFilePath, settings);
                 CrashLogger.LogMessage($"[SettingsService]: Settings saved to {_settingsFilePath}");
                 SettingsChanged?.Invoke(_settings);
             }
@@ -71,8 +51,7 @@ namespace VayuClient.Services.Settings
             try
             {
                 _settings = settings;
-                var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
-                File.WriteAllText(_settingsFilePath, json);
+                SafeJsonStorage.SaveAtomic(_settingsFilePath, settings);
                 SettingsChanged?.Invoke(_settings);
             }
             catch (Exception ex)

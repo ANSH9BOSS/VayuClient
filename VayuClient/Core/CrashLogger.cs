@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace VayuClient.Core
@@ -13,6 +16,13 @@ namespace VayuClient.Core
 
         public static string CurrentPage { get; set; } = "Home";
 
+        private static readonly ConcurrentQueue<string> _liveLogQueue = new();
+        private static readonly ConcurrentQueue<string> _diskWriteQueue = new();
+        private static readonly System.Timers.Timer _flushTimer = new(500);
+        private static bool _pendingUiNotification;
+
+        public static event Action? LogsUpdated;
+
         public static void Initialize()
         {
             try
@@ -22,6 +32,10 @@ namespace VayuClient.Core
                 Directory.CreateDirectory(logDir);
                 _launcherLogPath = Path.Combine(logDir, "launcher.log");
                 _crashLogPath = Path.Combine(logDir, "crash.log");
+
+                _flushTimer.Elapsed += (s, e) => FlushQueuedLogsToDisk();
+                _flushTimer.AutoReset = true;
+                _flushTimer.Start();
 
                 AppDomain.CurrentDomain.UnhandledException += (s, e) =>
                 {
@@ -61,6 +75,37 @@ namespace VayuClient.Core
             catch { }
         }
 
+        private static void FlushQueuedLogsToDisk()
+        {
+            if (_diskWriteQueue.IsEmpty) return;
+
+            var sb = new System.Text.StringBuilder();
+            while (_diskWriteQueue.TryDequeue(out var line))
+            {
+                sb.AppendLine(line);
+            }
+
+            var text = sb.ToString();
+            if (!string.IsNullOrEmpty(text) && _launcherLogPath != null)
+            {
+                try
+                {
+                    File.AppendAllText(_launcherLogPath, text);
+                }
+                catch { }
+            }
+
+            if (_pendingUiNotification)
+            {
+                _pendingUiNotification = false;
+                try
+                {
+                    LogsUpdated?.Invoke();
+                }
+                catch { }
+            }
+        }
+
         public static void LogException(string source, Exception ex, string? pageContext = null)
         {
             var page = pageContext ?? CurrentPage;
@@ -82,7 +127,7 @@ Inner Stack Trace:
 
             LogMessage(logEntry);
 
-            // Also append specifically to crash.log
+            // Also append immediately to crash.log
             try
             {
                 lock (_lock)
@@ -96,39 +141,31 @@ Inner Stack Trace:
             catch { }
         }
 
-        private static readonly System.Collections.Concurrent.ConcurrentQueue<string> _liveLogQueue = new();
-        public static event Action? LogsUpdated;
-
         public static string GetLiveLogsText()
         {
-            lock (_lock)
+            if (_liveLogQueue.IsEmpty)
             {
-                if (_liveLogQueue.IsEmpty)
+                if (_launcherLogPath != null && File.Exists(_launcherLogPath))
                 {
-                    if (_launcherLogPath != null && File.Exists(_launcherLogPath))
-                    {
-                        try { return File.ReadAllText(_launcherLogPath); } catch { }
-                    }
-                    return "No launcher logs available.";
+                    try { return File.ReadAllText(_launcherLogPath); } catch { }
                 }
-                return string.Join(Environment.NewLine, _liveLogQueue);
+                return "No launcher logs available.";
             }
+            return string.Join(Environment.NewLine, _liveLogQueue);
         }
 
         public static void Clear()
         {
-            lock (_lock)
+            while (_liveLogQueue.TryDequeue(out _)) { }
+            while (_diskWriteQueue.TryDequeue(out _)) { }
+            try
             {
-                while (_liveLogQueue.TryDequeue(out _)) { }
-                try
+                if (_launcherLogPath != null && File.Exists(_launcherLogPath))
                 {
-                    if (_launcherLogPath != null && File.Exists(_launcherLogPath))
-                    {
-                        File.WriteAllText(_launcherLogPath, string.Empty);
-                    }
+                    File.WriteAllText(_launcherLogPath, string.Empty);
                 }
-                catch { }
             }
+            catch { }
             LogsUpdated?.Invoke();
         }
 
@@ -138,87 +175,68 @@ Inner Stack Trace:
             {
                 var entry = $"[{DateTime.Now:HH:mm:ss} INFO] {message}";
                 _liveLogQueue.Enqueue(entry);
-                while (_liveLogQueue.Count > 500) _liveLogQueue.TryDequeue(out _);
+                while (_liveLogQueue.Count > 400) _liveLogQueue.TryDequeue(out _);
 
-                lock (_lock)
-                {
-                    if (_launcherLogPath == null)
-                    {
-                        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                        var logDir = Path.Combine(appData, "VayuClient", "logs");
-                        Directory.CreateDirectory(logDir);
-                        _launcherLogPath = Path.Combine(logDir, "launcher.log");
-                        _crashLogPath = Path.Combine(logDir, "crash.log");
-                    }
-
-                    File.AppendAllText(_launcherLogPath, entry + Environment.NewLine);
-                }
-
-                LogsUpdated?.Invoke();
+                _diskWriteQueue.Enqueue(entry);
+                _pendingUiNotification = true;
             }
             catch { }
         }
 
-        public static string GetRecentLogLines(int count = 60)
-        {
-            lock (_lock)
-            {
-                var items = _liveLogQueue.ToArray();
-                if (items.Length == 0) return GetLiveLogsText();
-                int skip = Math.Max(0, items.Length - count);
-                return string.Join(Environment.NewLine, items.Skip(skip));
-            }
-        }
-
-        public static (string details, string logPath) GetCrashDetails(string? instanceDir, string fallbackMessage)
+        public static (string Details, string LogFilePath) GetCrashDetails(string? gameDir, string fallbackError)
         {
             try
             {
-                if (!string.IsNullOrEmpty(instanceDir) && Directory.Exists(instanceDir))
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var launcherLog = Path.Combine(appData, "VayuClient", "logs", "launcher.log");
+
+                if (!string.IsNullOrEmpty(gameDir) && Directory.Exists(gameDir))
                 {
-                    // 1. Check crash-reports directory for latest crash report
-                    var crashReportsDir = Path.Combine(instanceDir, "crash-reports");
+                    var crashReportsDir = Path.Combine(gameDir, "crash-reports");
                     if (Directory.Exists(crashReportsDir))
                     {
-                        var latestReport = new DirectoryInfo(crashReportsDir)
-                            .GetFiles("*.txt")
+                        var latestCrash = new DirectoryInfo(crashReportsDir)
+                            .GetFiles("crash-*.txt")
                             .OrderByDescending(f => f.LastWriteTimeUtc)
                             .FirstOrDefault();
 
-                        if (latestReport != null && (DateTime.UtcNow - latestReport.LastWriteTimeUtc).TotalMinutes < 10)
+                        if (latestCrash != null && (DateTime.UtcNow - latestCrash.LastWriteTimeUtc).TotalMinutes < 5)
                         {
-                            return (File.ReadAllText(latestReport.FullName), latestReport.FullName);
+                            return (Sanitize(File.ReadAllText(latestCrash.FullName)), latestCrash.FullName);
                         }
                     }
 
-                    // 2. Check logs/latest.log
-                    var latestLog = Path.Combine(instanceDir, "logs", "latest.log");
+                    var latestLog = Path.Combine(gameDir, "logs", "latest.log");
                     if (File.Exists(latestLog))
                     {
                         var lines = File.ReadAllLines(latestLog);
-                        int take = Math.Min(100, lines.Length);
-                        string text = string.Join(Environment.NewLine, lines.Skip(lines.Length - take));
-                        return (text, latestLog);
+                        var tail = string.Join(Environment.NewLine, lines.TakeLast(60));
+                        return (Sanitize(tail), latestLog);
                     }
+                }
+
+                if (File.Exists(launcherLog))
+                {
+                    var lines = File.ReadAllLines(launcherLog);
+                    var tail = string.Join(Environment.NewLine, lines.TakeLast(40));
+                    return (Sanitize(tail), launcherLog);
                 }
             }
             catch { }
 
-            string fallbackText = !string.IsNullOrEmpty(fallbackMessage) 
-                ? $"{fallbackMessage}\n\nRecent Process Output:\n{GetRecentLogLines(60)}"
-                : GetRecentLogLines(60);
-
-            return (fallbackText, _launcherLogPath ?? "launcher.log");
+            return (Sanitize(fallbackError), "None");
         }
 
         public static string Sanitize(string input)
         {
             if (string.IsNullOrEmpty(input)) return string.Empty;
 
-            // Mask access tokens, refresh tokens, passwords
-            var sanitized = Regex.Replace(input, @"(access_token|accessToken|refresh_token|refreshToken|password|client_secret)=([^&\s""']+)", "$1=[PROTECTED_TOKEN]", RegexOptions.IgnoreCase);
-            sanitized = Regex.Replace(sanitized, @"Bearer\s+[a-zA-Z0-9\-_.]+", "Bearer [PROTECTED_TOKEN]", RegexOptions.IgnoreCase);
-            return sanitized;
+            // Remove access tokens, session tokens, passwords, and emails
+            input = Regex.Replace(input, @"(accessToken|token|session|auth_session|password)=([^\s&""']+)", "$1=REDACTED", RegexOptions.IgnoreCase);
+            input = Regex.Replace(input, @"Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*", "Bearer REDACTED", RegexOptions.IgnoreCase);
+            input = Regex.Replace(input, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "[EMAIL_REDACTED]");
+
+            return input;
         }
     }
 }
