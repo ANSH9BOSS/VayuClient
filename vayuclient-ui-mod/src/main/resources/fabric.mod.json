@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "vayuclient-ui",
+  "version": "1.6.0",
+  "name": "VayuClient UI",
+  "description": "Premium Modern Minecraft Client Interface System for VayuClient by ANSH9BOSS.",
+  "authors": [
+    "ANSH9BOSS"
+  ],
+  "contact": {
+    "homepage": "https://github.com/ANSH9BOSS/VayuClient",
+    "sources": "https://github.com/ANSH9BOSS/VayuClient"
+  },
+  "license": "MIT",
+  "icon": "assets/vayuclient-ui/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.vayuclient.ui.VayuClientUI"
+    ]
+  },
+  "mixins": [
+    "vayuclient-ui.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "*"
+  }
+}
