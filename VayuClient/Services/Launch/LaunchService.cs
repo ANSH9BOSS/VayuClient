@@ -245,7 +245,10 @@ namespace VayuClient.Services.Launch
                 Log("Starting Minecraft assets, libraries, and natives installation...");
 
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var nativesDir = Path.Combine(appData, "VayuClient", "Instances", instance.Name, "natives");
+                var instanceBaseDir = !string.IsNullOrEmpty(instance.GameDirectory) && Directory.Exists(instance.GameDirectory)
+                    ? (Directory.GetParent(instance.GameDirectory)?.FullName ?? instance.GameDirectory)
+                    : Path.Combine(appData, "VayuClient", "Instances", instance.Name);
+                var nativesDir = Path.Combine(instanceBaseDir, "natives");
                 var sharedAssetsDir = Path.Combine(appData, "VayuClient", "assets");
                 Directory.CreateDirectory(nativesDir);
                 Directory.CreateDirectory(instance.GameDirectory);

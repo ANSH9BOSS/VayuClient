@@ -212,49 +212,29 @@ namespace VayuClient.Services.Java
             var runtimes = DetectInstalledRuntimes();
             if (runtimes.Count == 0) return null;
 
-            // 1. Exact match for required version (e.g. 25, 21, 17, 8)
-            var exact = runtimes.FirstOrDefault(r => r.MajorVersion == requiredMajorVersion && r.Is64Bit);
+            // 1. Exact match for required version (e.g. 21, 17, 8, 16) - 64-bit first
+            var exact64 = runtimes.FirstOrDefault(r => r.MajorVersion == requiredMajorVersion && r.Is64Bit);
+            if (exact64 != null) return exact64;
+
+            var exact = runtimes.FirstOrDefault(r => r.MajorVersion == requiredMajorVersion);
             if (exact != null) return exact;
 
-            // 2. For Java >= 25 (Minecraft 26+): Strictly Java >= 25
-            if (requiredMajorVersion >= 25)
-            {
-                return runtimes.FirstOrDefault(r => r.MajorVersion >= 25 && r.Is64Bit)
-                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 25);
-            }
+            // 2. Proximity match (choose the closest compatible version >= requiredMajorVersion, 64-bit preferred)
+            var compatible = runtimes
+                .Where(r => r.MajorVersion >= requiredMajorVersion)
+                .OrderBy(r => !r.Is64Bit) // 64-bit first
+                .ThenBy(r => Math.Abs(r.MajorVersion - requiredMajorVersion)) // Closest to requested version first (e.g. 21 before 25)
+                .FirstOrDefault();
 
-            // 3. For Java 21 (Minecraft 1.20.5 - 1.21.x): Java >= 21
-            if (requiredMajorVersion == 21)
-            {
-                return runtimes.FirstOrDefault(r => r.MajorVersion >= 21 && r.Is64Bit)
-                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 21);
-            }
+            if (compatible != null) return compatible;
 
-            // 4. For Java 17 (Minecraft 1.18 - 1.20.4): Java >= 17
-            if (requiredMajorVersion == 17)
-            {
-                return runtimes.FirstOrDefault(r => r.MajorVersion >= 17 && r.Is64Bit)
-                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 17);
-            }
-
-            // 5. For Java 16: Java >= 16
-            if (requiredMajorVersion == 16)
-            {
-                return runtimes.FirstOrDefault(r => r.MajorVersion >= 16 && r.Is64Bit)
-                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 16);
-            }
-
-            // 6. For legacy Java 8: Java 8 or 11
+            // 3. Fallback for legacy Java 8: accept Java 11 or 17
             if (requiredMajorVersion <= 8)
             {
-                return runtimes.FirstOrDefault(r => r.MajorVersion == 8 && r.Is64Bit)
-                       ?? runtimes.FirstOrDefault(r => r.MajorVersion == 11 && r.Is64Bit)
-                       ?? runtimes.FirstOrDefault(r => r.MajorVersion >= 8 && r.Is64Bit);
+                return runtimes.OrderBy(r => !r.Is64Bit).ThenBy(r => r.MajorVersion).FirstOrDefault();
             }
 
-            // 7. Strict Safe fallback: ONLY accept runtime where MajorVersion >= requiredMajorVersion
-            return runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion && r.Is64Bit)
-                   ?? runtimes.FirstOrDefault(r => r.MajorVersion >= requiredMajorVersion);
+            return null;
         }
 
         private static void AddJavaExeIfValid(HashSet<string> paths, string path)
