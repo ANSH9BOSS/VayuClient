@@ -581,10 +581,44 @@ namespace VayuClient.ViewModels
             catch { }
         }
 
+        [ObservableProperty]
+        private bool _isOnboardingVisible = false;
+
+        private OnboardingViewModel? _onboardingVM;
+        public OnboardingViewModel OnboardingVM => _onboardingVM ??= new OnboardingViewModel(this);
+
         [RelayCommand]
         private void SplashCompleted()
         {
             IsSplashVisible = false;
+            try
+            {
+                var settings = ServiceLocator.Resolve<Services.Settings.ISettingsService>()?.Settings;
+                var profiles = ServiceLocator.Resolve<Services.Profiles.IProfileService>()?.GetAllProfiles();
+
+                bool needsOnboarding = (settings != null && !settings.HasCompletedOnboarding && (profiles == null || profiles.Count == 0));
+                if (needsOnboarding)
+                {
+                    IsOnboardingVisible = true;
+                }
+                else
+                {
+                    IsOnboardingVisible = false;
+                    NavigateTo("Home");
+                }
+            }
+            catch
+            {
+                IsOnboardingVisible = false;
+                NavigateTo("Home");
+            }
+        }
+
+        public void FinishOnboarding()
+        {
+            IsOnboardingVisible = false;
+            NavigateTo("Home");
+            HomeVM.RefreshProfile();
         }
 
         public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info, string? tag = null, double autoDismissSeconds = 4.5)

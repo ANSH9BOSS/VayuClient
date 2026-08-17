@@ -12,6 +12,7 @@ namespace VayuClient.Models
         public string AnimationQuality { get; set; } = "Full"; // "Full", "Reduced", "Minimal", "Off"
 
         // Interface
+        public bool HasCompletedOnboarding { get; set; } = false;
         public string InstallationsSorting { get; set; } = "Sort installations by name";
         public bool HideDefaultInstallations { get; set; } = false;
         public bool ShowLauncherConsole { get; set; } = false;
