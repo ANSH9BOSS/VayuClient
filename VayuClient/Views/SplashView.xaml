@@ -2,8 +2,6 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:core="clr-namespace:VayuClient.Core"
-             Background="Transparent"
-             IsHitTestVisible="True"
              Cursor="Arrow">
 
     <Grid x:Name="Root" Background="#060912" ClipToBounds="True">

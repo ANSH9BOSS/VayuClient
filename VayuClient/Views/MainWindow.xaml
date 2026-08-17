@@ -288,10 +288,16 @@
             </Grid>
 
             <!-- First-Time Welcome / Onboarding Overlay -->
-            <views:OnboardingView DataContext="{Binding OnboardingVM}" Visibility="{Binding IsOnboardingVisible, Converter={StaticResource BoolToVis}}" Panel.ZIndex="90"/>
+            <views:OnboardingView DataContext="{Binding OnboardingVM}"
+                                 Visibility="{Binding IsOnboardingVisible, Converter={StaticResource BoolToVis}}"
+                                 IsHitTestVisible="{Binding IsOnboardingVisible}"
+                                 Panel.ZIndex="100"/>
 
             <!-- Splash Screen Transition Overlay -->
-            <views:SplashView x:Name="SplashOverlay" Visibility="{Binding IsSplashVisible, Converter={StaticResource BoolToVis}}" Panel.ZIndex="100"/>
+            <views:SplashView x:Name="SplashOverlay"
+                             Visibility="{Binding IsSplashVisible, Converter={StaticResource BoolToVis}}"
+                             IsHitTestVisible="{Binding IsSplashVisible}"
+                             Panel.ZIndex="200"/>
         </Grid>
     </Border>
 </Window>

@@ -152,6 +152,7 @@ namespace VayuClient.Views
             {
                 SplashOverlay.Visibility = Visibility.Collapsed;
                 SplashOverlay.IsHitTestVisible = false;
+                System.Windows.Controls.Panel.SetZIndex(SplashOverlay, -1);
             }
         }
 
