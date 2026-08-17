@@ -11,10 +11,11 @@ using VayuClient.Services.Version;
 
 namespace VayuClient.ViewModels
 {
-    public partial class VersionsViewModel : ObservableObject
+    public partial class VersionsViewModel : ObservableObject, ILifecycleViewModel
     {
         private readonly MainViewModel _main;
         private List<MinecraftVersion> _rawManifestVersions = new();
+        private bool _disposed;
 
         [ObservableProperty]
         private bool _isLoading;
@@ -155,6 +156,30 @@ namespace VayuClient.ViewModels
             _recommendedRamMB = 4096;
 
             _ = LoadVersionsAsync();
+        }
+
+        public async Task InitializeAsync()
+        {
+            await LoadVersionsAsync();
+        }
+
+        public void Activate()
+        {
+            if (DisplayVersions.Count == 0)
+            {
+                _ = LoadVersionsAsync();
+            }
+        }
+
+        public void Deactivate()
+        {
+            IsWizardOpen = false;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
         }
 
         partial void OnSelectedRamMBChanged(int value)

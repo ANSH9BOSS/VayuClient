@@ -295,9 +295,23 @@ namespace VayuClient.Services.Discord
                     {
                         if (!IsConnected)
                         {
-                            TryConnect();
-                            // If still not connected, wait 15 seconds before next retry to avoid CPU/IO overhead
-                            await Task.Delay(TimeSpan.FromSeconds(15), ct);
+                            // Fast check: verify Discord desktop process is active before probing named pipes
+                            bool isDiscordProcessRunning = false;
+                            try
+                            {
+                                isDiscordProcessRunning = Process.GetProcessesByName("Discord").Length > 0 ||
+                                                         Process.GetProcessesByName("DiscordCanary").Length > 0 ||
+                                                         Process.GetProcessesByName("DiscordPTB").Length > 0;
+                            }
+                            catch { }
+
+                            if (isDiscordProcessRunning)
+                            {
+                                TryConnect();
+                            }
+
+                            // If not connected or Discord isn't open, wait 25 seconds before next check
+                            await Task.Delay(TimeSpan.FromSeconds(IsConnected ? 10 : 25), ct);
                         }
                         else
                         {
@@ -311,7 +325,7 @@ namespace VayuClient.Services.Discord
                     }
                     else
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(10), ct);
+                        await Task.Delay(TimeSpan.FromSeconds(15), ct);
                     }
                 }
                 catch (OperationCanceledException)
@@ -320,7 +334,7 @@ namespace VayuClient.Services.Discord
                 }
                 catch
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(15), ct);
+                    await Task.Delay(TimeSpan.FromSeconds(25), ct);
                 }
             }
         }
@@ -338,7 +352,7 @@ namespace VayuClient.Services.Discord
                     {
                         var pipeName = $"discord-ipc-{i}";
                         pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-                        pipe.Connect(150);
+                        pipe.Connect(80);
 
                         if (pipe.IsConnected)
                         {
@@ -354,7 +368,7 @@ namespace VayuClient.Services.Discord
                             SendPacket(HandshakeOpcode, handshake.ToString(Formatting.None));
 
                             // Read Handshake response with a short timeout
-                            var response = ReadPacketWithTimeout(TimeSpan.FromSeconds(2));
+                            var response = ReadPacketWithTimeout(TimeSpan.FromSeconds(1));
                             if (!string.IsNullOrEmpty(response))
                             {
                                 if (!_lastReportedConnectedState)

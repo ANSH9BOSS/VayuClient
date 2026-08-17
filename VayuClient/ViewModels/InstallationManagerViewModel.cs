@@ -19,11 +19,12 @@ using VayuClient.Services.Version;
 
 namespace VayuClient.ViewModels
 {
-    public partial class InstallationManagerViewModel : ObservableObject
+    public partial class InstallationManagerViewModel : ObservableObject, ILifecycleViewModel
     {
         private readonly MainViewModel _main;
         private readonly IInstanceService? _instanceService;
         private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(15) };
+        private bool _disposed;
 
         static InstallationManagerViewModel()
         {
@@ -164,6 +165,34 @@ namespace VayuClient.ViewModels
                 };
             }
             catch { }
+        }
+
+        public Task InitializeAsync()
+        {
+            LoadInstallations();
+            return Task.CompletedTask;
+        }
+
+        public void Activate()
+        {
+            LoadInstallations();
+            if (ActiveTab != "Installations")
+            {
+                _ = LoadModrinthProjectsAsync();
+            }
+        }
+
+        public void Deactivate()
+        {
+            IsModpackModalOpen = false;
+            IsTargetInstanceModalOpen = false;
+            IsEditModalOpen = false;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
         }
 
         partial void OnActiveTabChanged(string value)

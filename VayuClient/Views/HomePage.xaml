@@ -86,13 +86,13 @@
                         Visibility="{Binding HasActiveInstance, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Ellipse Width="7" Height="7" Fill="#10B981" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding ActiveInstanceBadgeDetails, FallbackValue='1.21.4 (Fabric) • 4096 MB'}" 
+                        <TextBlock Text="{Binding ActiveInstanceBadgeDetails}" 
                                    FontSize="11" FontWeight="Bold" Foreground="#E2E8F0"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Right: Wallpaper Switcher Dropdown Button -->
-                <Button Grid.Column="1" Command="{Binding CycleThemeBackgroundCommand}"
+                <Button Grid.Column="1" Command="{Binding CycleWallpaperCommand}"
                         Background="#A00B1220" BorderBrush="#1E293B" BorderThickness="1"
                         Padding="12,6" Cursor="Hand">
                     <Button.Template>
@@ -119,19 +119,19 @@
                     
                     <!-- Loader Tag -->
                     <Border CornerRadius="4" Background="{StaticResource VayuBrightBlueBrush}" Padding="8,3" Margin="0,0,6,0">
-                        <TextBlock Text="{Binding ActiveInstanceLoaderUpper, FallbackValue='FABRIC'}" 
+                        <TextBlock Text="{Binding ActiveInstanceLoaderUpper}" 
                                    FontSize="10" FontWeight="Black" Foreground="#FFFFFF"/>
                     </Border>
 
                     <!-- Version Tag -->
                     <Border CornerRadius="4" Background="#1E293B" Padding="8,3" Margin="0,0,6,0">
-                        <TextBlock Text="{Binding ActiveInstanceVersion, FallbackValue='1.21.4'}" 
+                        <TextBlock Text="{Binding ActiveInstanceVersion}" 
                                    FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
                     </Border>
 
                     <!-- Memory Allocation Tag -->
                     <Border CornerRadius="4" Background="#0F172A" Padding="8,3" Margin="0,0,6,0" BorderBrush="#1E293B" BorderThickness="1">
-                        <TextBlock Text="{Binding ActiveInstanceRamDisplay, FallbackValue='4096 MB (4.0 GB)'}" 
+                        <TextBlock Text="{Binding ActiveInstanceRamDisplay}" 
                                    FontSize="10" FontWeight="SemiBold" Foreground="#94A3B8"/>
                     </Border>
 
@@ -143,13 +143,13 @@
                 </StackPanel>
 
                 <!-- Instance Hero Title -->
-                <TextBlock Text="{Binding ActiveInstanceTitle, FallbackValue='Select or Create an Instance'}" 
+                <TextBlock Text="{Binding ActiveInstanceTitle}" 
                            FontSize="34" FontWeight="Black" Foreground="#FFFFFF" 
                            HorizontalAlignment="Center" Margin="0,0,0,6"
                            TextOptions.TextRenderingMode="ClearType"/>
 
                 <!-- Instance Subtitle / Motd -->
-                <TextBlock Text="{Binding ActiveInstanceSubtitle, FallbackValue='Ready for your next adventure with seamless performance and isolated mods.'}" 
+                <TextBlock Text="{Binding ActiveInstanceSubtitle}" 
                            FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,0,0,24"
                            Visibility="{Binding HasActiveInstance, Converter={StaticResource BoolToVis}}"/>
 

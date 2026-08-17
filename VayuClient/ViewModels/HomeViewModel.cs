@@ -128,7 +128,31 @@ namespace VayuClient.ViewModels
             : "Not signed in";
         public string ProfileSubtitleDisplay => ActiveProfile != null ? JavaStatusText : "Create or select a profile";
 
+        // ─── Dynamic Selected-Instance Properties for UI Bindings ─────────────────────────
+        public string ActiveInstanceTitle => ActiveInstance != null 
+            ? ActiveInstance.Name 
+            : (Instances.Count > 0 ? "Select an instance" : "Select or Create an Instance");
+
+        public string ActiveInstanceBadgeDetails => ActiveInstance != null 
+            ? $"{ActiveInstance.MinecraftVersion} ({ActiveInstance.Loader}) • {ActiveInstance.DisplayRam}" 
+            : string.Empty;
+
+        public string ActiveInstanceLoaderUpper => ActiveInstance != null 
+            ? ActiveInstance.Loader.ToUpperInvariant() 
+            : string.Empty;
+
+        public string ActiveInstanceVersion => ActiveInstance != null 
+            ? ActiveInstance.MinecraftVersion 
+            : string.Empty;
+
+        public string ActiveInstanceRamDisplay => ActiveInstance != null 
+            ? ActiveInstance.DisplayRam 
+            : string.Empty;
+
         public string ActiveLoaderDisplay => ActiveInstance != null ? ActiveInstance.Loader.ToUpperInvariant() : "MINECRAFT";
+        public string ActiveVersionDisplay => ActiveInstance != null ? ActiveInstance.MinecraftVersion : "No Version";
+        public string ActiveRamDisplay => ActiveInstance != null ? ActiveInstance.DisplayRam : "4096 MB";
+
         private static readonly string[] _availableWallpapers = new[]
         {
             "/Assets/Images/vayu_minecraft_hero.jpg",
@@ -158,8 +182,11 @@ namespace VayuClient.ViewModels
             _main.ShowNotification("Wallpaper Changed", $"Switched hero wallpaper theme ({_currentWallpaperIndex + 1}/{_availableWallpapers.Length})", NotificationType.Info);
         }
 
-        public string ActiveVersionDisplay => ActiveInstance != null ? ActiveInstance.MinecraftVersion : "No Version";
-        public string ActiveRamDisplay => ActiveInstance != null ? ActiveInstance.DisplayRam : "4096 MB";
+        [RelayCommand]
+        public void CycleThemeBackground() => CycleWallpaper();
+
+        [RelayCommand]
+        public void ShowLauncherLogs() => ToggleConsole();
 
         public HomeViewModel(MainViewModel main)
         {
@@ -415,10 +442,22 @@ namespace VayuClient.ViewModels
 
                 var activeInstance = _instanceService.GetActiveInstance();
                 ActiveInstance = activeInstance;
+
+                // Log synchronization for forensics
+                if (activeInstance != null)
+                {
+                    CrashLogger.LogMessage($"[HomeViewModel]\nActiveInstance synchronized:\nName={activeInstance.Name}\nMinecraftVersion={activeInstance.MinecraftVersion}\nLoader={activeInstance.Loader}\nRamMB={activeInstance.RamMB}");
+                }
+                else
+                {
+                    CrashLogger.LogMessage("[HomeViewModel]\nActiveInstance synchronized: null (No instance active)");
+                }
+
                 if (activeInstance != null)
                 {
                     HasActiveInstance = true;
                     PlayButtonText = "PLAY";
+                    PlayButtonSubText = "READY TO LAUNCH";
                     ActiveInstanceName = activeInstance.Name;
                     ActiveInstanceSubtitle = $"{activeInstance.MinecraftVersion} ({activeInstance.Loader}) • {activeInstance.DisplayRam}";
                     SelectedVersion = $"{activeInstance.MinecraftVersion} ({activeInstance.Loader})";
@@ -432,6 +471,7 @@ namespace VayuClient.ViewModels
                 {
                     HasActiveInstance = false;
                     PlayButtonText = "CREATE INSTANCE";
+                    PlayButtonSubText = "OPEN CREATION WIZARD";
                     ActiveInstanceName = allInstances.Count > 0 ? "Select an instance" : "No Minecraft installations";
                     ActiveInstanceSubtitle = allInstances.Count > 0 ? "Choose an instance to play" : "Install a Minecraft version to get started";
                     SelectedVersion = "No version selected";
@@ -439,11 +479,20 @@ namespace VayuClient.ViewModels
                     JavaStatusText = "Java Auto-Detected";
                 }
 
-                OnPropertyChanged(nameof(ProfileUsernameDisplay));
-                OnPropertyChanged(nameof(ProfileSubtitleDisplay));
+                OnPropertyChanged(nameof(HasActiveInstance));
+                OnPropertyChanged(nameof(ActiveInstanceTitle));
+                OnPropertyChanged(nameof(ActiveInstanceName));
+                OnPropertyChanged(nameof(ActiveInstanceSubtitle));
+                OnPropertyChanged(nameof(ActiveInstanceBadgeDetails));
+                OnPropertyChanged(nameof(ActiveInstanceLoaderUpper));
+                OnPropertyChanged(nameof(ActiveInstanceVersion));
+                OnPropertyChanged(nameof(ActiveInstanceRamDisplay));
                 OnPropertyChanged(nameof(ActiveLoaderDisplay));
                 OnPropertyChanged(nameof(ActiveVersionDisplay));
                 OnPropertyChanged(nameof(ActiveRamDisplay));
+                OnPropertyChanged(nameof(ProfileUsernameDisplay));
+                OnPropertyChanged(nameof(ProfileSubtitleDisplay));
+                OnPropertyChanged(nameof(Instances));
 
                 if (!IsPlaying)
                 {
@@ -462,10 +511,17 @@ namespace VayuClient.ViewModels
                     catch { }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                CrashLogger.LogException("HomeViewModel.RefreshProfile", ex, "Instances");
                 HasProfile = false;
                 HasActiveInstance = false;
+                OnPropertyChanged(nameof(HasActiveInstance));
+                OnPropertyChanged(nameof(ActiveInstanceTitle));
+                OnPropertyChanged(nameof(ActiveInstanceBadgeDetails));
+                OnPropertyChanged(nameof(ActiveInstanceLoaderUpper));
+                OnPropertyChanged(nameof(ActiveInstanceVersion));
+                OnPropertyChanged(nameof(ActiveInstanceRamDisplay));
             }
         }
 

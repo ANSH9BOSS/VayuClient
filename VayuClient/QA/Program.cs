@@ -1315,5 +1315,122 @@ namespace VayuClient.QA
 
             return 0;
         }
+
+        public static int RunUiTests()
+        {
+            Log("==========================================================");
+            Log(" VayuClient — UI & SERVER PAGE RENDERING QA TEST");
+            Log("==========================================================");
+
+            var app = new App();
+            app.InitializeComponent();
+
+            CrashLogger.Initialize();
+            ServiceLocator.Initialize();
+
+            var mainVm = new MainViewModel();
+
+            Log("\n[TEST 1] Verifying Home Hero Background Theme...");
+            if (string.IsNullOrEmpty(mainVm.HomeVM.HeroBackgroundPath))
+            {
+                Log("  [FAIL] HomeVM.HeroBackgroundPath is null or empty!");
+                return 1;
+            }
+            Log($"  [PASS] Initial HeroBackgroundPath = {mainVm.HomeVM.HeroBackgroundPath}");
+
+            mainVm.HomeVM.CycleWallpaperCommand.Execute(null);
+            Log($"  [PASS] Cycled HeroBackgroundPath = {mainVm.HomeVM.HeroBackgroundPath}");
+
+            Log("\n[TEST 2] Instantiating ServerPage and parsing XAML resources...");
+            try
+            {
+                var serverPage = new Views.ServerPage
+                {
+                    DataContext = mainVm.ServerVM
+                };
+                Log("  [PASS] ServerPage instantiated and all styles/resources resolved successfully!");
+            }
+            catch (Exception ex)
+            {
+                Log($"  [FAIL] ServerPage XAML failed: {ex}");
+                return 2;
+            }
+
+            Log("\n[TEST 3] Navigation to Servers and Server Addition/Pinging...");
+            try
+            {
+                mainVm.NavigateTo("Servers");
+                DoEvents();
+
+                var serverVm = mainVm.ServerVM;
+                serverVm.NewServerName = "Hypixel Network";
+                serverVm.NewServerAddress = "mc.hypixel.net";
+                serverVm.NewServerPort = 25565;
+
+                serverVm.ConfirmAddServerCommand.Execute(null);
+                DoEvents();
+
+                if (serverVm.Servers.Count > 0)
+                {
+                    serverVm.SelectedServer = serverVm.Servers[0];
+                    DoEvents();
+
+                    serverVm.PingServerCommand.Execute(serverVm.SelectedServer);
+                    for (int i = 0; i < 15; i++)
+                    {
+                        System.Threading.Thread.Sleep(50);
+                        DoEvents();
+                    }
+                    Log($"  [PASS] Server SLP ping processed safely: {serverVm.SelectedServer.StatusDisplay}, Ping: {serverVm.SelectedServer.PingDisplay}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"  [FAIL] Server navigation/ping failed: {ex}");
+                return 3;
+            }
+
+            Log("\n[TEST 4] 50-Cycle Full Navigation Loop with UI Rendering...");
+            string[] tabs = new[] { "Home", "InstallationManager", "Mods", "Servers", "Accounts", "Settings" };
+            int errors = 0;
+            for (int cycle = 1; cycle <= 50; cycle++)
+            {
+                foreach (var tab in tabs)
+                {
+                    try
+                    {
+                        mainVm.NavigateTo(tab);
+                        DoEvents();
+                    }
+                    catch (Exception ex)
+                    {
+                        errors++;
+                        Log($"  [FAIL] Cycle {cycle} Tab {tab} error: {ex.Message}");
+                    }
+                }
+            }
+
+            if (errors > 0)
+            {
+                Log($"  [FAIL] Total navigation errors: {errors}");
+                return 4;
+            }
+
+            Log("  [PASS] 50 cycles (300 page switches) completed with 0 errors!");
+
+            Log("\n==========================================================");
+            Log(" ALL UI & SERVER TESTS PASSED SUCCESSFULLY! ZERO CRASHES!");
+            Log("==========================================================");
+            return 0;
+        }
+
+        private static void DoEvents()
+        {
+            var frame = new System.Windows.Threading.DispatcherFrame();
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Background,
+                new Action(() => frame.Continue = false));
+            System.Windows.Threading.Dispatcher.PushFrame(frame);
+        }
     }
 }

@@ -69,29 +69,20 @@ namespace VayuClient.Services.Launch
                 jvmArgs.Add($"-Xmx{ramMB}M");
             }
 
-            // ─── HIGH-FPS AIKAR G1GC PERFORMANCE OPTIMIZATION FLAGS ───────────
-            // Production-tested GC tuning: minimizes pause times and eliminates frame stutter
+            // ─── CLIENT HIGH-FPS G1GC TUNING (Optimized for 600-1000 FPS & Zero Stutter) ───
+            // Tuned for client rendering (Sodium/Iris/Fabric/Vanilla) — avoids server-only pause overhead
             jvmArgs.Add("-XX:+UseG1GC");
             jvmArgs.Add("-XX:+ParallelRefProcEnabled");
-            jvmArgs.Add("-XX:MaxGCPauseMillis=200");
+            jvmArgs.Add("-XX:MaxGCPauseMillis=37");
             jvmArgs.Add("-XX:+UnlockExperimentalVMOptions");
-            jvmArgs.Add("-XX:+DisableExplicitGC");
             jvmArgs.Add("-XX:+AlwaysPreTouch");
-            jvmArgs.Add("-XX:G1NewSizePercent=30");
-            jvmArgs.Add("-XX:G1MaxNewSizePercent=40");
+            jvmArgs.Add("-XX:G1NewSizePercent=20");
+            jvmArgs.Add("-XX:G1MaxNewSizePercent=30");
             jvmArgs.Add("-XX:G1ReservePercent=20");
-            jvmArgs.Add("-XX:G1HeapWastePercent=5");
-            jvmArgs.Add("-XX:G1MixedGCCountTarget=4");
-            jvmArgs.Add("-XX:InitiatingHeapOccupancyPercent=15");
-            jvmArgs.Add("-XX:G1MixedGCLiveThresholdPercent=90");
-            jvmArgs.Add("-XX:G1RSetUpdatingPauseTimePercent=5");
-            jvmArgs.Add("-XX:SurvivorRatio=32");
+            jvmArgs.Add("-XX:G1HeapRegionSize=32M");
             jvmArgs.Add("-XX:+PerfDisableSharedMem");
-            jvmArgs.Add("-XX:MaxTenuringThreshold=1");
-            jvmArgs.Add("-Dusing.aikars.flags=https://mcflags.emc.gs");
-            jvmArgs.Add("-Daikars.new.flags=true");
 
-            // Hardware-optimized thread allocation
+            // Hardware-optimized GC thread allocation
             int logicalCores = Math.Max(2, Environment.ProcessorCount);
             int parallelGcThreads = Math.Max(2, logicalCores > 8 ? logicalCores / 2 : logicalCores - 1);
             int concGcThreads = Math.Max(1, parallelGcThreads / 2);

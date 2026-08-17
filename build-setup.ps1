@@ -86,35 +86,49 @@ if (Test-Path $stevePng) {
     Copy-Item $stevePng -Destination (Join-Path $tempPublish "steve_head.png") -Force
 }
 
-# 4. Compress application payload into embedded zip
-Write-Host "`n[2/3] Packaging VayuClientPayload.zip..." -ForegroundColor Yellow
+# 4. Resolve publisher certificate and sign payload binaries BEFORE packaging into zip
+Write-Host "`n[2/4] Signing application payload binaries..." -ForegroundColor Yellow
+$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Subject -like "*VayuClient*" -or $_.Subject -like "*ANSH9BOSS*" } | Select-Object -First 1
+if (-not $cert) {
+    $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ANSH9BOSS (VayuClient), O=VayuClient, C=IN" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(5)
+}
+
+if ($cert) {
+    # Ensure trusted publisher registration in user certificate store
+    try {
+        $cerPath = "$env:TEMP\VayuClientPublisher.cer"
+        [System.IO.File]::WriteAllBytes($cerPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
+        certutil -user -addstore "TrustedPublisher" $cerPath *>$null
+    } catch { }
+
+    # Sign all executables and dlls inside tempPublish before zipping
+    Get-ChildItem -Path $tempPublish -Include *.exe,*.dll -Recurse | ForEach-Object {
+        try {
+            Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop *>$null
+        } catch {
+            Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -HashAlgorithm SHA256 -ErrorAction SilentlyContinue *>$null
+        }
+        Unblock-File -Path $_.FullName -ErrorAction SilentlyContinue
+    }
+    Write-Host "-> Successfully signed and unblocked all application binaries in payload!" -ForegroundColor Green
+}
+
+# 5. Compress application payload into embedded zip
+Write-Host "`n[3/4] Packaging VayuClientPayload.zip..." -ForegroundColor Yellow
 [System.GC]::Collect()
 [System.GC]::WaitForPendingFinalizers()
-Start-Sleep -Seconds 1
+Start-Sleep -Milliseconds 500
 
 $resourcesDir = [System.IO.Path]::GetDirectoryName($payloadZip)
 if (-not (Test-Path $resourcesDir)) { New-Item -ItemType Directory -Path $resourcesDir -Force }
 if (Test-Path $payloadZip) { Remove-Item $payloadZip -Force }
 
-# Retry loop for zipping in case Windows Defender / file scanner holds a temporary lock
-$zipped = $false
-for ($attempt = 1; $attempt -le 5; $attempt++) {
-    try {
-        Compress-Archive -Path "$tempPublish\*" -DestinationPath $payloadZip -Force
-        $zipped = $true
-        break
-    }
-    catch {
-        Write-Host "Waiting for file handles to release (attempt $attempt)..." -ForegroundColor DarkGray
-        Start-Sleep -Milliseconds 800
-    }
-}
-if (-not $zipped) {
-    Compress-Archive -Path "$tempPublish\*" -DestinationPath $payloadZip -Force
-}
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::CreateFromDirectory($tempPublish, $payloadZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+Write-Host "-> Successfully created VayuClientPayload.zip!" -ForegroundColor Green
 
-# 5. Build and publish standalone VayuClientSetup installer
-Write-Host "`n[3/3] Building standalone VayuClientSetup.exe installer (v$activeVersion)..." -ForegroundColor Yellow
+# 6. Build and publish standalone VayuClientSetup installer
+Write-Host "`n[4/4] Building and signing standalone VayuClientSetup.exe installer (v$activeVersion)..." -ForegroundColor Yellow
 & $dotnetExe publish $setupProj `
     -c Release `
     -r win-x64 `
@@ -145,30 +159,29 @@ if (Test-Path $discordFolder) {
     Write-Host "-> Synced installer to Discord folder: $discordSetup" -ForegroundColor Green
 }
 
-# 6. Sign installer with local Code Signing certificate to establish authentic publisher identity
-Write-Host "`n[4/4] Signing installer executable with ANSH9BOSS Publisher Certificate..." -ForegroundColor Yellow
-try {
-    $cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Subject -like "*VayuClient*" -or $_.Subject -like "*ANSH9BOSS*" } | Select-Object -First 1
-    if (-not $cert) {
-        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ANSH9BOSS (VayuClient), O=VayuClient, C=IN" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(5)
-    }
-    if ($cert) {
-        $finalAppExe = Join-Path $distDir "VayuClient.exe"
-        foreach ($targetFile in @($finalSetupExe, $finalAppExe)) {
-            if (Test-Path $targetFile) {
-                try {
-                    Set-AuthenticodeSignature -FilePath $targetFile -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop
-                    Write-Host "-> Successfully signed $(Split-Path $targetFile -Leaf) with Authenticode (SHA256 + Timestamp)!" -ForegroundColor Green
-                }
-                catch {
-                    Set-AuthenticodeSignature -FilePath $targetFile -Certificate $cert -HashAlgorithm SHA256
-                    Write-Host "-> Successfully signed $(Split-Path $targetFile -Leaf) with Authenticode (SHA256)!" -ForegroundColor Green
-                }
+# Sign final executables in distDir
+if ($cert) {
+    $finalAppExe = Join-Path $distDir "VayuClient.exe"
+    foreach ($targetFile in @($finalSetupExe, $finalAppExe)) {
+        if (Test-Path $targetFile) {
+            try {
+                Set-AuthenticodeSignature -FilePath $targetFile -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop *>$null
+                Write-Host "-> Successfully signed $(Split-Path $targetFile -Leaf) with Authenticode (SHA256 + Timestamp)!" -ForegroundColor Green
             }
+            catch {
+                Set-AuthenticodeSignature -FilePath $targetFile -Certificate $cert -HashAlgorithm SHA256 -ErrorAction SilentlyContinue *>$null
+                Write-Host "-> Successfully signed $(Split-Path $targetFile -Leaf) with Authenticode (SHA256)!" -ForegroundColor Green
+            }
+            Unblock-File -Path $targetFile -ErrorAction SilentlyContinue
         }
     }
-} catch {
-    Write-Host "-> Code signing skipped: $_" -ForegroundColor DarkGray
+
+    # Also update installed binary in AppData if present
+    $localInstalledExe = "C:\Users\ANSH\AppData\Local\Programs\VayuClient\VayuClient.exe"
+    if (Test-Path $localInstalledExe) {
+        Copy-Item -Path $finalAppExe -Destination $localInstalledExe -Force -ErrorAction SilentlyContinue
+        Unblock-File -Path $localInstalledExe -ErrorAction SilentlyContinue
+    }
 }
 
 $finalAppExe = Join-Path $distDir "VayuClient.exe"

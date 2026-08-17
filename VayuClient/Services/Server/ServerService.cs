@@ -97,9 +97,7 @@ namespace VayuClient.Services.Server
 
         public async Task<bool> PingServerAsync(ServerInfo server, CancellationToken ct = default)
         {
-            server.Status = ServerPingStatus.Pinging;
-            server.PingMs = -1;
-            server.NotifyRuntimeChanged();
+            server.UpdateRuntimeState(ServerPingStatus.Pinging, -1);
 
             try
             {
@@ -112,23 +110,20 @@ namespace VayuClient.Services.Server
 
                 if (result != null)
                 {
-                    server.PingMs = (int)sw.ElapsedMilliseconds;
-                    server.Status = ServerPingStatus.Online;
-                    server.Motd = result.Motd;
-                    server.OnlinePlayers = result.OnlinePlayers;
-                    server.MaxPlayers = result.MaxPlayers;
-                    server.ServerVersion = result.Version;
-                    server.FaviconBase64 = result.FaviconBase64;
-                    server.LastPingedAt = DateTime.Now;
-                    server.NotifyRuntimeChanged();
+                    server.UpdateRuntimeState(
+                        ServerPingStatus.Online,
+                        (int)sw.ElapsedMilliseconds,
+                        result.Motd,
+                        result.OnlinePlayers,
+                        result.MaxPlayers,
+                        result.Version,
+                        result.FaviconBase64);
                     return true;
                 }
             }
             catch { }
 
-            server.Status = ServerPingStatus.Offline;
-            server.LastPingedAt = DateTime.Now;
-            server.NotifyRuntimeChanged();
+            server.UpdateRuntimeState(ServerPingStatus.Offline, -1);
             return false;
         }
 

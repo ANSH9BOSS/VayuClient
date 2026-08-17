@@ -353,23 +353,16 @@ namespace VayuClient.ViewModels
 
             try
             {
-                string previousPage = CurrentPage;
-                if (previousPage == "Servers" && page != "Servers" && _serverVM != null)
+                // 1. Deactivate outgoing ViewModel
+                if (CurrentPageViewModel is ILifecycleViewModel outgoingLifecycle)
                 {
-                    _serverVM.OnNavigatedFrom();
+                    try { outgoingLifecycle.Deactivate(); } catch { }
                 }
 
                 CrashLogger.CurrentPage = page;
                 CurrentPage = page;
 
-                if (page == "Mods") ModsVM.LoadInstances();
-                else if (page == "Accounts") AccountsVM.LoadProfiles();
-                else if (page == "Home") HomeVM.RefreshProfile();
-                else if (page == "InstallationManager") InstallationManagerVM.LoadInstallations();
-                else if (page == "Settings") SettingsVM.RefreshInstanceRam();
-                else if (page == "Servers") ServerVM.OnNavigatedTo();
-
-                CurrentPageViewModel = page switch
+                ObservableObject nextVm = page switch
                 {
                     "Home" => HomeVM,
                     "Accounts" => AccountsVM,
@@ -380,6 +373,14 @@ namespace VayuClient.ViewModels
                     "Servers" => ServerVM,
                     _ => HomeVM
                 };
+
+                CurrentPageViewModel = nextVm;
+
+                // 2. Activate incoming ViewModel
+                if (nextVm is ILifecycleViewModel incomingLifecycle)
+                {
+                    try { incomingLifecycle.Activate(); } catch { }
+                }
             }
             catch (Exception ex)
             {
@@ -387,6 +388,7 @@ namespace VayuClient.ViewModels
                 ShowNotification("Navigation Error", $"Unable to navigate to '{page}': {ex.Message}", NotificationType.Error);
                 CurrentPage = "Home";
                 CurrentPageViewModel = HomeVM;
+                try { HomeVM.Activate(); } catch { }
             }
         }
 

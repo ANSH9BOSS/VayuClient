@@ -231,6 +231,24 @@ namespace VayuClientSetup.Services
                 }
             }
 
+            // Unblock all extracted binaries and remove Mark-of-the-Web (Zone.Identifier)
+            try
+            {
+                foreach (var filePath in Directory.GetFiles(targetDir, "*.*", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        var zoneStream = $"{filePath}:Zone.Identifier";
+                        if (File.Exists(zoneStream))
+                        {
+                            File.Delete(zoneStream);
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
             // Ensure root vayu_logo.ico exists in target installation directory
             var rootIco = Path.Combine(targetDir, "vayu_logo.ico");
             var subIco = Path.Combine(targetDir, "Assets", "Images", "vayu_logo.ico");

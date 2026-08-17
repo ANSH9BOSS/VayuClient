@@ -96,8 +96,78 @@ namespace VayuClient.Models
         [JsonIgnore]
         public bool IsPinging => Status == ServerPingStatus.Pinging;
 
+        public void UpdateRuntimeState(
+            ServerPingStatus status,
+            int pingMs = -1,
+            string? motd = null,
+            int onlinePlayers = 0,
+            int maxPlayers = 0,
+            string? serverVersion = null,
+            string? faviconBase64 = null)
+        {
+            void Apply()
+            {
+                Status = status;
+                PingMs = pingMs;
+                if (motd != null) Motd = motd;
+                OnlinePlayers = onlinePlayers;
+                MaxPlayers = maxPlayers;
+                if (serverVersion != null) ServerVersion = serverVersion;
+                if (faviconBase64 != null) FaviconBase64 = faviconBase64;
+                LastPingedAt = DateTime.Now;
+
+                OnPropertyChanged(nameof(StatusDisplay));
+                OnPropertyChanged(nameof(PingDisplay));
+                OnPropertyChanged(nameof(IsOnline));
+                OnPropertyChanged(nameof(IsPinging));
+            }
+
+            var app = System.Windows.Application.Current;
+            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
+            {
+                try
+                {
+                    app.Dispatcher.BeginInvoke(Apply);
+                    return;
+                }
+                catch { }
+            }
+
+            Apply();
+        }
+
         public void NotifyRuntimeChanged()
         {
+            var app = System.Windows.Application.Current;
+            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
+            {
+                try
+                {
+                    app.Dispatcher.BeginInvoke(() =>
+                    {
+                        OnPropertyChanged(nameof(Status));
+                        OnPropertyChanged(nameof(PingMs));
+                        OnPropertyChanged(nameof(Motd));
+                        OnPropertyChanged(nameof(OnlinePlayers));
+                        OnPropertyChanged(nameof(MaxPlayers));
+                        OnPropertyChanged(nameof(ServerVersion));
+                        OnPropertyChanged(nameof(FaviconBase64));
+                        OnPropertyChanged(nameof(StatusDisplay));
+                        OnPropertyChanged(nameof(PingDisplay));
+                        OnPropertyChanged(nameof(IsOnline));
+                        OnPropertyChanged(nameof(IsPinging));
+                    });
+                    return;
+                }
+                catch { }
+            }
+            OnPropertyChanged(nameof(Status));
+            OnPropertyChanged(nameof(PingMs));
+            OnPropertyChanged(nameof(Motd));
+            OnPropertyChanged(nameof(OnlinePlayers));
+            OnPropertyChanged(nameof(MaxPlayers));
+            OnPropertyChanged(nameof(ServerVersion));
+            OnPropertyChanged(nameof(FaviconBase64));
             OnPropertyChanged(nameof(StatusDisplay));
             OnPropertyChanged(nameof(PingDisplay));
             OnPropertyChanged(nameof(IsOnline));

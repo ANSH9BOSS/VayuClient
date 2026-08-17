@@ -22,15 +22,22 @@ namespace VayuClient.Animations
         public static string CurrentQuality =>
             SettingsService?.Settings?.AnimationQuality ?? "Full";
 
-        public static bool IsAnimationEnabled =>
-            !string.Equals(CurrentQuality, "Off", StringComparison.OrdinalIgnoreCase);
+        public static bool IsAnimationEnabled
+        {
+            get
+            {
+                var q = CurrentQuality;
+                return !string.Equals(q, "Off", StringComparison.OrdinalIgnoreCase) &&
+                       !string.Equals(q, "Minimal", StringComparison.OrdinalIgnoreCase);
+            }
+        }
 
         public static double GetDurationMultiplier()
         {
             var q = CurrentQuality;
             if (string.Equals(q, "Off", StringComparison.OrdinalIgnoreCase)) return 0.0;
-            if (string.Equals(q, "Minimal", StringComparison.OrdinalIgnoreCase)) return 0.35;
-            if (string.Equals(q, "Reduced", StringComparison.OrdinalIgnoreCase)) return 0.6;
+            if (string.Equals(q, "Minimal", StringComparison.OrdinalIgnoreCase)) return 0.0;
+            if (string.Equals(q, "Reduced", StringComparison.OrdinalIgnoreCase)) return 0.5;
             return 1.0; // Full
         }
 

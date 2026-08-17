@@ -265,6 +265,45 @@
     <Style x:Key="VayuGlassButton" TargetType="Button" BasedOn="{StaticResource VayuDarkButton}"/>
     <Style x:Key="VayuGhostButton" TargetType="Button" BasedOn="{StaticResource VayuDarkButton}"/>
 
+    <!-- Icon Button Style (Compact utility buttons for lists) -->
+    <Style x:Key="VayuIconButton" TargetType="Button">
+        <Setter Property="Background" Value="#151F32"/>
+        <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
+        <Setter Property="BorderBrush" Value="#243247"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" CornerRadius="4"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1E3A66"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#0F172A"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Large Premium Blue PLAY Button (#2563EB -> #3B82F6) -->
     <Style x:Key="VayuPlayButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource VayuPlayGradient}"/>
@@ -539,8 +578,53 @@
         </Setter>
     </Style>
 
+    <Style x:Key="VayuTextBox" TargetType="TextBox" BasedOn="{StaticResource VayuGlassTextBox}"/>
+
     <!-- ═══════════════════════════════════════════════ -->
-    <!-- 7. SLIDER STYLE                                 -->
+    <!-- 7. LISTVIEW STYLES                              -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuListView" TargetType="ListView">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0,2"/>
+                    <Setter Property="SnapsToDevicePixels" Value="True"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border x:Name="ItemBorder" CornerRadius="6"
+                                        Background="{TemplateBinding Background}"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#152033"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#1E2E4A"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 8. SLIDER STYLE                                 -->
     <!-- ═══════════════════════════════════════════════ -->
 
     <Style x:Key="VayuGlassSlider" TargetType="Slider">

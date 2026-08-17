@@ -186,6 +186,23 @@ namespace VayuClient.Services.Launch
                 Log($"Fetching Mojang version package for {instance.MinecraftVersion}...");
                 var pkg = await _minecraftInstaller.GetVersionPackageAsync(instance.MinecraftVersion, ct);
 
+                if (pkg == null)
+                {
+                    var msg = $"Failed to retrieve version package for Minecraft {instance.MinecraftVersion}. Launch aborted.";
+                    SetState(LaunchState.Failed, msg);
+                    Log($"ERROR: {msg}");
+                    return false;
+                }
+
+                // Strict version invariant check: Resolved package ID must match the instance version
+                if (!string.Equals(instance.MinecraftVersion, pkg.Id, StringComparison.OrdinalIgnoreCase))
+                {
+                    var msg = $"Version package invariant violation! Instance requires Minecraft '{instance.MinecraftVersion}', but resolved package is '{pkg.Id}'. Launch aborted to prevent version mismatch.";
+                    SetState(LaunchState.Failed, msg);
+                    Log($"FATAL: {msg}");
+                    return false;
+                }
+
                 // 4. Progress Reporter for Downloads & Installation
                 var progressReporter = new Progress<DownloadProgressInfo>(p =>
                 {
@@ -428,13 +445,37 @@ namespace VayuClient.Services.Launch
                             CreateNoWindow = true
                         };
 
+                        // Enforce dedicated GPU execution on Windows dual-GPU systems (NVIDIA RTX 5050 / AMD Radeon)
+                        try
+                        {
+                            startInfo.EnvironmentVariables["__NV_PRIME_RENDER_OFFLOAD"] = "1";
+                            startInfo.EnvironmentVariables["__GLX_VENDOR_LIBRARY_NAME"] = "nvidia";
+                            startInfo.EnvironmentVariables["SHIM_MCCOMPAT"] = "0x800000001";
+                            startInfo.EnvironmentVariables["CUDA_VISIBLE_DEVICES"] = "0";
+                            startInfo.EnvironmentVariables["GPU_DEVICE_ORDINAL"] = "0";
+
+                            // Set Windows DirectX high-performance GPU preference for this javaw executable
+                            using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\DirectX\UserGpuPreferences");
+                            if (key != null)
+                            {
+                                key.SetValue(javaPath, "GpuPreference=2;");
+                            }
+                        }
+                        catch { }
+
                         var p = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
 
                         p.OutputDataReceived += (s, e) =>
                         {
                             if (!string.IsNullOrEmpty(e.Data))
                             {
-                                Log($"[GAME OUT] {e.Data}");
+                                logChannel.Writer.TryWrite($"[{DateTime.Now:HH:mm:ss.fff}] [GAME OUT] {e.Data}");
+                                if (e.Data.Contains("ERROR", StringComparison.OrdinalIgnoreCase) || 
+                                    e.Data.Contains("FATAL", StringComparison.OrdinalIgnoreCase) ||
+                                    e.Data.Contains("Exception", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    CrashLogger.LogMessage($"[GAME ERROR] {e.Data}");
+                                }
                             }
                         };
 
@@ -442,14 +483,15 @@ namespace VayuClient.Services.Launch
                         {
                             if (!string.IsNullOrEmpty(e.Data))
                             {
-                                Log($"[GAME ERR] {e.Data}");
+                                logChannel.Writer.TryWrite($"[{DateTime.Now:HH:mm:ss.fff}] [GAME ERR] {e.Data}");
+                                CrashLogger.LogMessage($"[GAME ERR] {e.Data}");
                             }
                         };
 
                         if (p.Start())
                         {
                             process = p;
-                            Log($"Started Java process successfully with: {javaPath} (PID: {p.Id})");
+                            Log($"Started Java process successfully on high-performance GPU with: {javaPath} (PID: {p.Id})");
                             break;
                         }
                     }

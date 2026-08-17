@@ -90,7 +90,7 @@ namespace VayuClient.ViewModels
         /// <summary>Formatted presence summary, e.g. "3 Players Online".</summary>
         public string VayuPresenceSummary => IsPresenceAvailable
             ? $"{VayuOnlineCount} {(VayuOnlineCount == 1 ? "Player" : "Players")} Online"
-            : "Player count unavailable";
+            : "Partner server information is currently unavailable.";
 
         /// <summary>
         /// Last time the presence panel was updated (local time, formatted).

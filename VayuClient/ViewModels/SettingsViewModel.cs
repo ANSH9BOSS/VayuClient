@@ -20,7 +20,7 @@ using VayuClient.Services.Updates;
 
 namespace VayuClient.ViewModels
 {
-    public partial class SettingsViewModel : ObservableObject
+    public partial class SettingsViewModel : ObservableObject, ILifecycleViewModel
     {
         private readonly MainViewModel _main;
         private readonly ISettingsService _settingsService;
@@ -28,9 +28,22 @@ namespace VayuClient.ViewModels
         private readonly IHardwareInfoService _hardwareInfoService;
         private readonly IPerformanceMonitorService _performanceMonitor;
         private readonly IInstanceService _instanceService;
+        private bool _disposed;
 
         [ObservableProperty]
         private string _activeTab = "Performance"; // Performance, Appearance, GameLaunch, Network, About
+
+        partial void OnActiveTabChanged(string value)
+        {
+            if (value == "Performance")
+            {
+                _performanceMonitor?.StartMonitoring(2500);
+            }
+            else
+            {
+                _performanceMonitor?.StopMonitoring();
+            }
+        }
 
         // ═══ Performance Profile & Hardware ═══
         [ObservableProperty]
@@ -41,10 +54,10 @@ namespace VayuClient.ViewModels
 
         public ObservableCollection<string> PerformanceModes { get; } = new()
         {
-            "⚡ High Performance Gaming",
             "⚖️ Balanced (Recommended)",
-            "🌱 Power Saver",
-            "🛠️ Custom Tuning"
+            "⚡ High FPS (Low Overhead)",
+            "🏆 Competitive (Low Latency)",
+            "🛠️ Custom"
         };
 
         // ═══ 1. Performance & JVM ═══
@@ -145,6 +158,12 @@ namespace VayuClient.ViewModels
 
         [ObservableProperty]
         private string _liveMinecraftStatus = "Idle / Ready";
+
+        [ObservableProperty]
+        private string _liveFpsDisplay = "Waiting for Minecraft telemetry";
+
+        [ObservableProperty]
+        private string _liveFrameTimeDisplay = "—";
 
         [ObservableProperty]
         private string _benchmarkReport = "Click 'Run System Benchmark' to measure hardware and launch pipeline throughput.";
@@ -296,11 +315,40 @@ namespace VayuClient.ViewModels
             _downloadConcurrency = _hardware.RecommendedDownloadThreads;
 
             _performanceMonitor.SnapshotUpdated += OnPerformanceSnapshotUpdated;
-            _performanceMonitor.StartMonitoring(1500);
 
             LoadDetectedJavaRuntimes();
             LoadFromSettings();
             RefreshInstanceRam();
+        }
+
+        public Task InitializeAsync()
+        {
+            LoadDetectedJavaRuntimes();
+            LoadFromSettings();
+            RefreshInstanceRam();
+            return Task.CompletedTask;
+        }
+
+        public void Activate()
+        {
+            RefreshInstanceRam();
+            if (ActiveTab == "Performance")
+            {
+                _performanceMonitor.StartMonitoring(2500);
+            }
+        }
+
+        public void Deactivate()
+        {
+            _performanceMonitor.StopMonitoring();
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _performanceMonitor.StopMonitoring();
+            _performanceMonitor.SnapshotUpdated -= OnPerformanceSnapshotUpdated;
         }
 
         /// <summary>
@@ -437,10 +485,10 @@ namespace VayuClient.ViewModels
 
         partial void OnSelectedPerformanceModeChanged(string value)
         {
-            if (value.Contains("High Performance"))
+            if (value.Contains("High FPS"))
             {
                 SelectedJvmPreset = "FastCraft / Sodium Boost (High FPS)";
-                DefaultRamMB = Math.Max(Hardware.RecommendedRamMB, 6144);
+                DefaultRamMB = Math.Clamp(Hardware.RecommendedRamMB, 4096, SafeMaxRamMB);
                 UseDedicatedGpu = true;
                 SmoothAnimations = true;
                 DownloadConcurrency = Math.Max(8, Hardware.RecommendedDownloadThreads);
@@ -449,19 +497,24 @@ namespace VayuClient.ViewModels
             else if (value.Contains("Balanced"))
             {
                 SelectedJvmPreset = "Balanced (Standard G1GC)";
-                DefaultRamMB = Hardware.RecommendedRamMB;
+                DefaultRamMB = Math.Clamp(Hardware.RecommendedRamMB, 3072, SafeMaxRamMB);
                 UseDedicatedGpu = true;
                 SmoothAnimations = true;
                 DownloadConcurrency = Hardware.RecommendedDownloadThreads;
                 CustomJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=15 -XX:G1HeapRegionSize=32M";
             }
-            else if (value.Contains("Power Saver"))
+            else if (value.Contains("Competitive"))
             {
-                SelectedJvmPreset = "Low Memory Optimizer (Minimal Footprint)";
-                DefaultRamMB = Math.Min(3072, Hardware.RecommendedRamMB);
-                SmoothAnimations = false;
-                DownloadConcurrency = 4;
-                CustomJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=25 -XX:MaxGCPauseMillis=100";
+                SelectedJvmPreset = "Aikar's Flags (Low Latency G1GC)";
+                DefaultRamMB = Math.Clamp(Hardware.RecommendedRamMB, 4096, SafeMaxRamMB);
+                UseDedicatedGpu = true;
+                SmoothAnimations = true;
+                DownloadConcurrency = Hardware.RecommendedDownloadThreads;
+                CustomJvmArgs = "-XX:+UseG1GC -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=20 -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40";
+            }
+            else if (value.Contains("Custom"))
+            {
+                // Preserve user configured RAM and JVM arguments
             }
         }
 

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using VayuClient.Core;
+using VayuClient.Models;
 using VayuClient.ViewModels;
 
 namespace VayuClient.Tests
@@ -28,10 +29,19 @@ namespace VayuClient.Tests
             Console.WriteLine($"[INIT] Starting memory: {initialMemory / (1024 * 1024)} MB | Working Set: {initialWorkingSet} MB");
 
             var mainVm = new MainViewModel();
+            var instanceService = ServiceLocator.Resolve<Services.Instance.IInstanceService>();
+
+            // Create 2 test instances for live selection stress
+            var instA = new MinecraftInstance { InstanceId = "stress_a", Name = "Stress-A", MinecraftVersion = "1.21.4", Loader = "Fabric", RamMB = 4096 };
+            var instB = new MinecraftInstance { InstanceId = "stress_b", Name = "Stress-B", MinecraftVersion = "1.21.11", Loader = "Fabric", RamMB = 6144 };
+            instanceService.CreateInstanceAsync(instA).GetAwaiter().GetResult();
+            instanceService.CreateInstanceAsync(instB).GetAwaiter().GetResult();
 
             string[] sequence = new[] { "Home", "InstallationManager", "Mods", "Servers", "Accounts", "Settings", "Home" };
+            string[] settingsTabs = new[] { "Performance", "Appearance", "Game", "Network", "About" };
             int totalCycles = 100;
             int totalTransitions = 0;
+            int totalInstanceSwitches = 0;
             int errorCount = 0;
             var sw = Stopwatch.StartNew();
 
@@ -43,6 +53,22 @@ namespace VayuClient.Tests
                     {
                         mainVm.NavigateTo(page);
                         totalTransitions++;
+
+                        if (page == "Settings" && mainVm.CurrentPageViewModel is SettingsViewModel settingsVm)
+                        {
+                            foreach (var tab in settingsTabs)
+                            {
+                                settingsVm.ActiveTab = tab;
+                                DoEvents();
+                            }
+                        }
+                        else if (page == "Home")
+                        {
+                            // Cycle instance selection
+                            string targetId = (cycle % 2 == 0) ? "stress_a" : "stress_b";
+                            instanceService.SetActiveInstance(targetId);
+                            totalInstanceSwitches++;
+                        }
 
                         // Allow WPF dispatcher to process any queued render/data events
                         DoEvents();
@@ -61,9 +87,13 @@ namespace VayuClient.Tests
                     long currentMem = GC.GetTotalMemory(false) / (1024 * 1024);
                     proc.Refresh();
                     long currentWs = proc.WorkingSet64 / (1024 * 1024);
-                    Console.WriteLine($"  [CYCLE {cycle,3}/{totalCycles}] Completed {totalTransitions} transitions | Managed Heap: {currentMem} MB | Working Set: {currentWs} MB");
+                    Console.WriteLine($"  [CYCLE {cycle,3}/{totalCycles}] Completed {totalTransitions} transitions ({totalInstanceSwitches} inst switches) | Heap: {currentMem} MB | Working Set: {currentWs} MB");
                 }
             }
+
+            // Cleanup test instances
+            instanceService.DeleteInstance("stress_a");
+            instanceService.DeleteInstance("stress_b");
 
             sw.Stop();
 
@@ -80,6 +110,7 @@ namespace VayuClient.Tests
             Console.WriteLine("==========================================================");
             Console.WriteLine($"Total Cycles:          {totalCycles}");
             Console.WriteLine($"Total Page Switches:   {totalTransitions}");
+            Console.WriteLine($"Instance Switches:     {totalInstanceSwitches}");
             Console.WriteLine($"Total Errors/Crashes:  {errorCount}");
             Console.WriteLine($"Total Duration:        {sw.ElapsedMilliseconds} ms (Avg {(double)sw.ElapsedMilliseconds / totalTransitions:F2} ms / transition)");
             Console.WriteLine($"Final Managed Heap:    {finalMemory} MB");
@@ -90,6 +121,7 @@ namespace VayuClient.Tests
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n>>> PASS: 100 CYCLES COMPLETED WITH 0 CRASHES AND STABLE MEMORY <<<");
                 Console.ResetColor();
+                Environment.Exit(0);
                 return 0;
             }
             else
@@ -97,6 +129,7 @@ namespace VayuClient.Tests
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n>>> FAIL: ERRORS DETECTED DURING NAVIGATION STRESS TEST <<<");
                 Console.ResetColor();
+                Environment.Exit(1);
                 return 1;
             }
         }

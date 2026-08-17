@@ -169,13 +169,14 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1.2*"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Metric 1: Launcher CPU -->
                                 <StackPanel Grid.Column="0" Margin="4,0">
                                     <TextBlock Text="LAUNCHER CPU" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
                                     <TextBlock Text="{Binding LiveLauncherCpu, StringFormat={}{0:F1}%}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="Differential Process Time" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    <TextBlock Text="Process Time" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
 
                                 <!-- Metric 2: Launcher RAM -->
@@ -187,16 +188,23 @@
 
                                 <!-- Metric 3: Host Available RAM -->
                                 <StackPanel Grid.Column="2" Margin="4,0">
-                                    <TextBlock Text="AVAILABLE SYSTEM RAM" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="SYSTEM RAM FREE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
                                     <TextBlock Text="{Binding LiveHostAvailableRamGB, StringFormat={}{0:F1} GB}" FontSize="15" FontWeight="Bold" Foreground="#38BDF8"/>
-                                    <TextBlock Text="Free Physical Memory" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    <TextBlock Text="Physical Free RAM" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
 
                                 <!-- Metric 4: Minecraft Process State -->
                                 <StackPanel Grid.Column="3" Margin="4,0">
-                                    <TextBlock Text="MINECRAFT PROCESS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
-                                    <TextBlock Text="{Binding LiveMinecraftStatus}" FontSize="12.5" FontWeight="Bold" Foreground="#4ADE80" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="Active Game Session" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                    <TextBlock Text="GAME PROCESS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="{Binding LiveMinecraftStatus}" FontSize="12" FontWeight="Bold" Foreground="#4ADE80" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="Game Session" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                </StackPanel>
+
+                                <!-- Metric 5: Minecraft Telemetry / FPS -->
+                                <StackPanel Grid.Column="4" Margin="4,0">
+                                    <TextBlock Text="MINECRAFT FPS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}"/>
+                                    <TextBlock Text="{Binding LiveFpsDisplay}" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="Real In-Game Telemetry" FontSize="9.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
                                 </StackPanel>
                             </Grid>
                         </Border>

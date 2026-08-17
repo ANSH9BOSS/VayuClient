@@ -15,13 +15,14 @@ using VayuClient.Services.Profiles;
 
 namespace VayuClient.ViewModels
 {
-    public partial class AccountsViewModel : ObservableObject
+    public partial class AccountsViewModel : ObservableObject, ILifecycleViewModel
     {
         private readonly MainViewModel _main;
         private readonly IAuthenticationService _authService;
         private readonly IProfileService _profileService;
         private readonly IAccountService _accountService;
         private CancellationTokenSource? _msAuthCts;
+        private bool _disposed;
 
         [ObservableProperty]
         private string _newProfileUsername = string.Empty;
@@ -61,6 +62,34 @@ namespace VayuClient.ViewModels
             _accountService = ServiceLocator.Resolve<IAccountService>();
 
             LoadProfiles();
+        }
+
+        public Task InitializeAsync()
+        {
+            LoadProfiles();
+            return Task.CompletedTask;
+        }
+
+        public void Activate()
+        {
+            LoadProfiles();
+        }
+
+        public void Deactivate()
+        {
+            if (IsLoggingInMicrosoft)
+            {
+                CancelMicrosoftLogin();
+            }
+            IsCreatingProfile = false;
+            IsRenaming = false;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            CancelMicrosoftLogin();
         }
 
         private static void Dispatch(Action action)

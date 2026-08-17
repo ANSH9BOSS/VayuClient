@@ -31,6 +31,14 @@ namespace VayuClient
                 return;
             }
 
+            if (args.Length > 0 && args.Any(a => a.Equals("--test-ui", StringComparison.OrdinalIgnoreCase) || a.Equals("/test-ui", StringComparison.OrdinalIgnoreCase)))
+            {
+                AttachConsole(ATTACH_PARENT_PROCESS);
+                int exitCode = QaRunner.RunUiTests();
+                Environment.Exit(exitCode);
+                return;
+            }
+
             if (args.Length > 0 && args.Any(a => a.Equals("--benchmark", StringComparison.OrdinalIgnoreCase) || a.Equals("/benchmark", StringComparison.OrdinalIgnoreCase)))
             {
                 AttachConsole(ATTACH_PARENT_PROCESS);

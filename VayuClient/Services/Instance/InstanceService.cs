@@ -37,6 +37,50 @@ namespace VayuClient.Services.Instance
                 inst.IsActive = (inst.InstanceId == instanceId);
             }
             _activeInstance = _instances.FirstOrDefault(i => i.IsActive);
+
+            // Persist active instance ID and metadata to disk
+            try
+            {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var activePath = Path.Combine(appData, "VayuClient", "active_instance.json");
+                if (_activeInstance != null)
+                {
+                    SafeJsonStorage.SaveAtomic(activePath, new ActiveInstanceMetadata
+                    {
+                        ActiveInstanceId = _activeInstance.InstanceId,
+                        ActiveInstanceName = _activeInstance.Name,
+                        MinecraftVersion = _activeInstance.MinecraftVersion,
+                        Loader = _activeInstance.Loader,
+                        RamMB = _activeInstance.RamMB,
+                        LastSelectedAt = DateTime.UtcNow
+                    });
+
+                    var dir = Path.GetDirectoryName(_activeInstance.GameDirectory);
+                    if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                    {
+                        var jsonPath = Path.Combine(dir, "instance.json");
+                        SafeJsonStorage.SaveAtomic(jsonPath, _activeInstance);
+                    }
+                }
+                else if (File.Exists(activePath))
+                {
+                    File.Delete(activePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("InstanceService.SetActiveInstance.Persist", ex);
+            }
+
+            if (_activeInstance != null)
+            {
+                CrashLogger.LogMessage($"[InstanceSelection]\nSelectedId={_activeInstance.InstanceId}\nName={_activeInstance.Name}\nMinecraftVersion={_activeInstance.MinecraftVersion}\nLoader={_activeInstance.Loader}\nRamMB={_activeInstance.RamMB}");
+            }
+            else
+            {
+                CrashLogger.LogMessage("[InstanceSelection]\nNo active instance selected.");
+            }
+
             InstancesChanged?.Invoke();
         }
 
@@ -165,7 +209,37 @@ namespace VayuClient.Services.Instance
                 }
             }
 
-            var active = _instances.FirstOrDefault(i => i.IsActive) ?? _instances.FirstOrDefault();
+            // Restore persisted active instance ID
+            string? persistedActiveId = null;
+            try
+            {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var activePath = Path.Combine(appData, "VayuClient", "active_instance.json");
+                if (File.Exists(activePath))
+                {
+                    var meta = SafeJsonStorage.LoadSafe<ActiveInstanceMetadata>(activePath);
+                    if (meta != null && !string.IsNullOrEmpty(meta.ActiveInstanceId))
+                    {
+                        persistedActiveId = meta.ActiveInstanceId;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("InstanceService.LoadAllInstances.RestoreActive", ex);
+            }
+
+            MinecraftInstance? active = null;
+            if (!string.IsNullOrEmpty(persistedActiveId))
+            {
+                active = _instances.FirstOrDefault(i => i.InstanceId == persistedActiveId);
+            }
+
+            if (active == null)
+            {
+                active = _instances.FirstOrDefault(i => i.IsActive) ?? _instances.FirstOrDefault();
+            }
+
             if (active != null)
             {
                 SetActiveInstance(active.InstanceId);
@@ -176,5 +250,15 @@ namespace VayuClient.Services.Instance
                 InstancesChanged?.Invoke();
             }
         }
+    }
+
+    public sealed class ActiveInstanceMetadata
+    {
+        public string ActiveInstanceId { get; set; } = string.Empty;
+        public string ActiveInstanceName { get; set; } = string.Empty;
+        public string MinecraftVersion { get; set; } = string.Empty;
+        public string Loader { get; set; } = "Vanilla";
+        public int RamMB { get; set; } = 4096;
+        public DateTime LastSelectedAt { get; set; } = DateTime.UtcNow;
     }
 }

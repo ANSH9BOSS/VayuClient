@@ -16,10 +16,11 @@ using VayuClient.Services.Instance;
 
 namespace VayuClient.ViewModels
 {
-    public partial class ModsViewModel : ObservableObject
+    public partial class ModsViewModel : ObservableObject, ILifecycleViewModel
     {
         private readonly MainViewModel _main;
         private readonly IInstanceService _instanceService;
+        private bool _disposed;
 
         [ObservableProperty]
         private string _searchQuery = string.Empty;
@@ -48,6 +49,27 @@ namespace VayuClient.ViewModels
             _main = main;
             _instanceService = ServiceLocator.Resolve<IInstanceService>();
             LoadInstances();
+        }
+
+        public Task InitializeAsync()
+        {
+            LoadInstances();
+            return Task.CompletedTask;
+        }
+
+        public void Activate()
+        {
+            LoadInstances();
+        }
+
+        public void Deactivate()
+        {
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
         }
 
         private static void Dispatch(Action action)
