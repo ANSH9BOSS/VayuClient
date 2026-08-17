@@ -17,6 +17,7 @@
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVis"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVis"/>
             <converters:EqualValueToVisibilityConverter x:Key="EqualValueToVis"/>
             <converters:EqualValueToBoolConverter x:Key="EqualValueToBool"/>
             <converters:EqualValueToBoolConverter x:Key="StringEqualConverter"/>
