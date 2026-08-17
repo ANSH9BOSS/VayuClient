@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
+using VayuClient.Animations;
 
 namespace VayuClient.Views
 {
@@ -22,25 +24,7 @@ namespace VayuClient.Views
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
-            StartLogoPulse();
             await RunCinematicSplashSequence();
-        }
-
-        private void StartLogoPulse()
-        {
-            try
-            {
-                var pulseAnim = new DoubleAnimation(0.95, 1.05, new Duration(TimeSpan.FromMilliseconds(900)))
-                {
-                    AutoReverse = true,
-                    RepeatBehavior = RepeatBehavior.Forever,
-                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-                };
-
-                LogoScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, pulseAnim);
-                LogoScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, pulseAnim);
-            }
-            catch { }
         }
 
         public void SkipSplash()
@@ -61,40 +45,66 @@ namespace VayuClient.Views
 
             try
             {
+                // PHASE 1: Dark Screen Initial Hold
+                await Task.Delay(80);
+                if (_isCompleted) return;
+
+                // PHASE 2: Background Layer Fade In (0 -> 1.0)
+                await AnimateDouble(BackgroundLayer, OpacityProperty, 0.0, 1.0, 320, AnimationEngine.QuarticEaseOut);
+                if (_isCompleted) return;
+
+                // PHASE 3: Logo Entrance (Scale 0.90 -> 1.0, Slide Up, Fade In)
+                var logoFade = AnimateDouble(MainContent, OpacityProperty, 0.0, 1.0, 360, AnimationEngine.QuarticEaseOut);
+                var logoScaleX = AnimateDouble(LogoScale, ScaleTransform.ScaleXProperty, 0.90, 1.0, 420, AnimationEngine.BackEaseOut);
+                var logoScaleY = AnimateDouble(LogoScale, ScaleTransform.ScaleYProperty, 0.90, 1.0, 420, AnimationEngine.BackEaseOut);
+                var logoSlide = AnimateDouble(ContentTranslate, TranslateTransform.YProperty, 16, 0, 380, AnimationEngine.QuarticEaseOut);
+                await Task.WhenAll(logoFade, logoScaleX, logoScaleY, logoSlide);
+                if (_isCompleted) return;
+
+                // PHASE 4: Shimmer Sweep Glow across the Logo
+                ShimmerSweep.Opacity = 1.0;
+                await AnimateDouble(ShimmerTranslate, TranslateTransform.XProperty, 0, 90, 350, AnimationEngine.CubicEaseInOut);
+                ShimmerSweep.Opacity = 0.0;
+                if (_isCompleted) return;
+
+                // PHASE 5: Show Skip prompt & progress sequence
+                _ = AnimateDouble(SkipLabel, OpacityProperty, 0.0, 0.8, 200, AnimationEngine.QuarticEaseOut);
+
                 // Stage 1: Core Engine Initialization (0% -> 25%)
                 SetStage("INITIALIZING CORE ENGINE...", 25);
-                await AnimateDouble(ProgressFill, WidthProperty, 0, 80, 260, new CubicEase { EasingMode = EasingMode.EaseOut });
+                await AnimateDouble(ProgressFill, WidthProperty, 0, 85, 240, AnimationEngine.QuarticEaseOut);
                 if (_isCompleted) return;
+                await Task.Delay(90);
+                if (_isCompleted) return;
+
+                // Stage 2: Hardware & Java Runtime Discovery (25% -> 55%)
+                SetStage("PROBING JAVA & HARDWARE PROFILES...", 55);
+                await AnimateDouble(ProgressFill, WidthProperty, 85, 187, 280, AnimationEngine.QuarticEaseOut);
+                if (_isCompleted) return;
+                await Task.Delay(90);
+                if (_isCompleted) return;
+
+                // Stage 3: Instance Manifest & Version Resolution (55% -> 80%)
+                SetStage("LOADING MINECRAFT INSTANCES...", 80);
+                await AnimateDouble(ProgressFill, WidthProperty, 187, 272, 260, AnimationEngine.QuarticEaseOut);
+                if (_isCompleted) return;
+                await Task.Delay(90);
+                if (_isCompleted) return;
+
+                // Stage 4: Profile Verification (80% -> 100%)
+                SetStage("AUTHENTICATING ACTIVE PROFILE...", 100);
+                await AnimateDouble(ProgressFill, WidthProperty, 272, 340, 220, AnimationEngine.QuarticEaseOut);
+                if (_isCompleted) return;
+
+                // PHASE 6: Complete
+                SetStage("READY FOR GAME EXECUTION", 100);
                 await Task.Delay(140);
-                if (_isCompleted) return;
-
-                // Stage 2: Java Runtime Discovery (25% -> 55%)
-                SetStage("PROBING JAVA ENVIRONMENTS...", 55);
-                await AnimateDouble(ProgressFill, WidthProperty, 80, 176, 320, new CubicEase { EasingMode = EasingMode.EaseOut });
-                if (_isCompleted) return;
-                await Task.Delay(140);
-                if (_isCompleted) return;
-
-                // Stage 3: Instance Discovery & Isolation (55% -> 80%)
-                SetStage("DISCOVERING MINECRAFT INSTANCES...", 80);
-                await AnimateDouble(ProgressFill, WidthProperty, 176, 256, 280, new CubicEase { EasingMode = EasingMode.EaseOut });
-                if (_isCompleted) return;
-                await Task.Delay(140);
-                if (_isCompleted) return;
-
-                // Stage 4: Profile Synchronization (80% -> 100%)
-                SetStage("SYNCING PLAYER PROFILES...", 100);
-                await AnimateDouble(ProgressFill, WidthProperty, 256, 320, 220, new CubicEase { EasingMode = EasingMode.EaseOut });
-                if (_isCompleted) return;
-
-                SetStage("LAUNCHER READY", 100);
-                await Task.Delay(160);
                 if (_isCompleted) return;
 
                 _isCompleted = true;
 
-                // Smooth cinematic dissolve into main window
-                await AnimateDouble(Root, OpacityProperty, 1.0, 0.0, 320, new CubicEase { EasingMode = EasingMode.EaseIn });
+                // PHASE 7: Dissolve into Main Launcher UI
+                await AnimateDouble(Root, OpacityProperty, 1.0, 0.0, 280, AnimationEngine.QuarticEaseOut);
 
                 Dispatcher.Invoke(() =>
                 {
@@ -118,12 +128,19 @@ namespace VayuClient.Views
             });
         }
 
-        private Task AnimateDouble(UIElement target, DependencyProperty property, double from, double to, int durationMs, IEasingFunction? easing = null)
+        private Task AnimateDouble(IAnimatable target, DependencyProperty property, double from, double to, int durationMs, IEasingFunction? easing = null)
         {
             var tcs = new TaskCompletionSource<bool>();
-            var anim = new DoubleAnimation(from, to, TimeSpan.FromMilliseconds(durationMs))
+            if (!AnimationEngine.IsAnimationEnabled)
             {
-                EasingFunction = easing ?? new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                if (target is DependencyObject d) d.SetValue(property, to);
+                tcs.TrySetResult(true);
+                return tcs.Task;
+            }
+
+            var anim = new DoubleAnimation(from, to, TimeSpan.FromMilliseconds(durationMs * AnimationEngine.GetDurationMultiplier()))
+            {
+                EasingFunction = easing ?? AnimationEngine.QuarticEaseOut
             };
             anim.Completed += (s, e) => tcs.TrySetResult(true);
             target.BeginAnimation(property, anim);
@@ -131,4 +148,3 @@ namespace VayuClient.Views
         }
     }
 }
-

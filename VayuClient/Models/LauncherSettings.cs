@@ -9,6 +9,7 @@ namespace VayuClient.Models
         public string AccentColor { get; set; } = "#2563EB";
         public string Language { get; set; } = "🇺🇸 English";
         public bool SmoothAnimations { get; set; } = true;
+        public string AnimationQuality { get; set; } = "Full"; // "Full", "Reduced", "Minimal", "Off"
 
         // Interface
         public string InstallationsSorting { get; set; } = "Sort installations by name";

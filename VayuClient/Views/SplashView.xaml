@@ -1,87 +1,122 @@
 <UserControl x:Class="VayuClient.Views.SplashView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:VayuClient.Core"
              Background="Transparent"
              IsHitTestVisible="True"
              Cursor="Arrow">
 
-    <Grid x:Name="Root" Background="#070B14" ClipToBounds="True">
-        <!-- Ambient Deep Dark Nebula Background -->
-        <Border Background="#070B14"/>
+    <Grid x:Name="Root" Background="#060912" ClipToBounds="True">
+        
+        <!-- Ambient Deep Dark Nebula Background & Light Rays -->
+        <Border x:Name="BackgroundLayer" Background="#060912" Opacity="0">
+            <Grid>
+                <!-- Central Glowing Cyan & Blue Radial Halo -->
+                <Ellipse Width="540" Height="540" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                            <GradientStop Color="#302563EB" Offset="0.0"/>
+                            <GradientStop Color="#150EA5E9" Offset="0.45"/>
+                            <GradientStop Color="#00060912" Offset="1.0"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
 
-        <!-- Central Glowing Aura -->
-        <Ellipse Width="360" Height="360" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-            <Ellipse.Fill>
-                <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
-                    <GradientStop Color="#252563EB" Offset="0.0"/>
-                    <GradientStop Color="#081E40AF" Offset="0.5"/>
-                    <GradientStop Color="#00070B14" Offset="1.0"/>
-                </RadialGradientBrush>
-            </Ellipse.Fill>
-        </Ellipse>
+                <!-- Top Light Ray Beam -->
+                <Polygon Points="200,0 380,0 480,780 100,780" HorizontalAlignment="Center" Opacity="0.03" Fill="#38BDF8"/>
+                <Polygon Points="500,0 680,0 780,780 400,780" HorizontalAlignment="Center" Opacity="0.02" Fill="#2563EB"/>
+
+                <!-- Subtle Minecraft-inspired ambient geometric particle canvas -->
+                <Canvas x:Name="ParticleCanvas" IsHitTestVisible="False" Opacity="0.6">
+                    <Rectangle Width="6" Height="6" Fill="#38BDF8" Opacity="0.4" Canvas.Left="220" Canvas.Top="180"/>
+                    <Rectangle Width="8" Height="8" Fill="#60A5FA" Opacity="0.3" Canvas.Left="340" Canvas.Top="480"/>
+                    <Rectangle Width="5" Height="5" Fill="#3B82F6" Opacity="0.5" Canvas.Left="820" Canvas.Top="240"/>
+                    <Rectangle Width="7" Height="7" Fill="#38BDF8" Opacity="0.35" Canvas.Left="960" Canvas.Top="520"/>
+                    <Rectangle Width="4" Height="4" Fill="#93C5FD" Opacity="0.6" Canvas.Left="640" Canvas.Top="140"/>
+                    <Rectangle Width="6" Height="6" Fill="#2563EB" Opacity="0.4" Canvas.Left="580" Canvas.Top="620"/>
+                </Canvas>
+            </Grid>
+        </Border>
 
         <!-- Central Launcher Branding -->
-        <StackPanel x:Name="MainContent" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <!-- Vayu Logo with Glowing Outer Halo -->
-            <Grid Width="96" Height="96" HorizontalAlignment="Center" Margin="0,0,0,20" RenderTransformOrigin="0.5,0.5">
-                <Grid.RenderTransform>
-                    <ScaleTransform x:Name="LogoScale" ScaleX="1" ScaleY="1"/>
-                </Grid.RenderTransform>
+        <StackPanel x:Name="MainContent" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0">
+            <StackPanel.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="LogoScale" ScaleX="0.90" ScaleY="0.90" CenterX="170" CenterY="100"/>
+                    <TranslateTransform x:Name="ContentTranslate" Y="16"/>
+                </TransformGroup>
+            </StackPanel.RenderTransform>
 
-                <!-- Glowing Outer Ring -->
-                <Border Width="92" Height="92" CornerRadius="46" Background="#0F172A" BorderBrush="#3B82F6" BorderThickness="1.5">
+            <!-- Vayu Logo with Glowing Outer Ring & Shimmer Sweep -->
+            <Grid Width="110" Height="110" HorizontalAlignment="Center" Margin="0,0,0,24">
+                
+                <!-- Outer Dynamic Pulse Glow -->
+                <Border Width="106" Height="106" CornerRadius="53" Background="#0B1220" BorderBrush="#38BDF8" BorderThickness="1.5">
                     <Border.Effect>
-                        <DropShadowEffect Color="#3B82F6" BlurRadius="24" ShadowDepth="0" Opacity="0.55"/>
+                        <DropShadowEffect Color="#38BDF8" BlurRadius="28" ShadowDepth="0" Opacity="0.6"/>
                     </Border.Effect>
                 </Border>
 
-                <!-- Inner Logo Container -->
-                <Border Width="76" Height="76" CornerRadius="38" Background="#152033" BorderBrush="#1E293B" BorderThickness="1">
-                    <Image Source="/Assets/Images/vayu_logo.png" Width="52" Height="52"
+                <!-- Inner Glassy Container -->
+                <Border Width="88" Height="88" CornerRadius="44" Background="#111B2E" BorderBrush="#1E293B" BorderThickness="1">
+                    <Image Source="/Assets/Images/vayu_logo.png" Width="60" Height="60"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Border>
+
+                <!-- Shimmer Sweep Line -->
+                <Border x:Name="ShimmerSweep" Width="6" Height="90" Background="#80FFFFFF" CornerRadius="3" Opacity="0"
+                        HorizontalAlignment="Left" Margin="10,0,0,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="ShimmerTranslate" X="0"/>
+                    </Border.RenderTransform>
+                    <Border.Effect>
+                        <DropShadowEffect Color="#FFFFFF" BlurRadius="12" ShadowDepth="0" Opacity="0.9"/>
+                    </Border.Effect>
+                </Border>
             </Grid>
 
-            <!-- App Title -->
+            <!-- App Title & Brand -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="VAYU" FontSize="26" FontWeight="Black" Foreground="#FFFFFF" TextAlignment="Center"/>
-                <TextBlock Text="CLIENT" FontSize="26" FontWeight="Black" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="6,0,0,0" TextAlignment="Center"/>
+                <TextBlock Text="VAYU" FontSize="30" FontWeight="Black" Foreground="#FFFFFF" TextAlignment="Center"/>
+                <TextBlock Text="CLIENT" FontSize="30" FontWeight="Black" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="8,0,0,0" TextAlignment="Center"/>
             </StackPanel>
 
-            <!-- Subtitle Badge -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,28">
-                <Border Background="#152033" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="8,3">
-                    <TextBlock Text="MODERN GAMING CLIENT • ANSH9BOSS" 
-                               FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource VayuBrightBlueBrush}" VerticalAlignment="Center"/>
+            <!-- Subtitle Badge with Authoritative Version -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,32">
+                <Border Background="#0F172A" BorderBrush="#2563EB" BorderThickness="1" CornerRadius="12" Padding="12,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="OFFICIAL RELEASE" FontSize="10" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,6,0"/>
+                        <TextBlock Text="•" FontSize="10" Foreground="#64748B" Margin="0,0,6,0"/>
+                        <TextBlock Text="{x:Static core:AppInfo.DisplayVersion}" FontSize="10.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    </StackPanel>
                 </Border>
             </StackPanel>
 
             <!-- Lunar-Style Glowing Progress Bar Track -->
-            <Border Width="320" Height="5" CornerRadius="2.5" 
-                    Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1"
+            <Border Width="340" Height="6" CornerRadius="3" 
+                    Background="#0B1324" BorderBrush="#1E293B" BorderThickness="1"
                     HorizontalAlignment="Center" ClipToBounds="True">
-                <Border x:Name="ProgressFill" Width="0" HorizontalAlignment="Left" CornerRadius="2.5"
+                <Border x:Name="ProgressFill" Width="0" HorizontalAlignment="Left" CornerRadius="3"
                         Background="{StaticResource VayuAccentGradient}">
                     <Border.Effect>
-                        <DropShadowEffect Color="#3B82F6" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                        <DropShadowEffect Color="#38BDF8" BlurRadius="10" ShadowDepth="0" Opacity="0.85"/>
                     </Border.Effect>
                 </Border>
             </Border>
 
             <!-- Real Loading Status & Percentage -->
-            <Grid Width="320" Margin="0,12,0,0">
-                <TextBlock x:Name="StatusLabel" Text="INITIALIZING VAYU CORE..." 
+            <Grid Width="340" Margin="0,14,0,0">
+                <TextBlock x:Name="StatusLabel" Text="INITIALIZING VAYU CORE SERVICES..." 
                            FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource VayuTextDimBrush}" HorizontalAlignment="Left"/>
                 <TextBlock x:Name="PercentLabel" Text="0%" 
                            FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource VayuBrightBlueBrush}" HorizontalAlignment="Right"/>
             </Grid>
         </StackPanel>
 
-        <!-- Bottom Hint -->
-        <TextBlock Text="Press any key or click to skip" 
-                   FontSize="10" Foreground="{StaticResource VayuTextMutedBrush}" 
-                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24"/>
+        <!-- Bottom Skip Prompt -->
+        <TextBlock x:Name="SkipLabel" Text="Click anywhere or press any key to skip" 
+                   FontSize="10" Foreground="#475569" 
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24" Opacity="0"/>
     </Grid>
 </UserControl>

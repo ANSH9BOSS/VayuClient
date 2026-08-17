@@ -174,6 +174,14 @@ namespace VayuClient.ViewModels
         private bool _smoothAnimations = true;
 
         [ObservableProperty]
+        private string _selectedAnimationQuality = "Full";
+
+        public ObservableCollection<string> AnimationQualities { get; } = new()
+        {
+            "Full", "Reduced", "Minimal", "Off"
+        };
+
+        [ObservableProperty]
         private string _selectedLanguage = "🇺🇸 English";
 
         public ObservableCollection<string> AvailableLanguages { get; } = new()
@@ -463,6 +471,7 @@ namespace VayuClient.ViewModels
             SelectedLanguage = s.Language;
             DarkTheme = (s.Theme == "Dark");
             SmoothAnimations = s.SmoothAnimations;
+            SelectedAnimationQuality = string.IsNullOrEmpty(s.AnimationQuality) ? "Full" : s.AnimationQuality;
             NativeTitleBar = s.NativeTitleBar;
             UseDedicatedGpu = s.UseDedicatedGpu;
             DiscordRichPresence = s.DiscordRichPresence;
@@ -530,6 +539,7 @@ namespace VayuClient.ViewModels
             s.Language = SelectedLanguage;
             s.Theme = DarkTheme ? "Dark" : "Light";
             s.SmoothAnimations = SmoothAnimations;
+            s.AnimationQuality = SelectedAnimationQuality;
             s.NativeTitleBar = NativeTitleBar;
             s.UseDedicatedGpu = UseDedicatedGpu;
             s.DiscordRichPresence = DiscordRichPresence;
