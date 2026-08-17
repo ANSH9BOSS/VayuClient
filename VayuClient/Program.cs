@@ -47,21 +47,41 @@ namespace VayuClient
                 return;
             }
 
-            StartupProfiler.Start();
-            CrashLogger.Initialize();
-            StartupProfiler.Record("Crash logger initialized");
+            try
+            {
+                StartupProfiler.Start();
+                CrashLogger.Initialize();
+                StartupProfiler.Record("Crash logger initialized");
 
-            ServiceLocator.Initialize();
-            StartupProfiler.Record("Dependency/service initialization");
+                ServiceLocator.Initialize();
+                StartupProfiler.Record("Dependency/service initialization");
 
-            var app = new App();
-            app.InitializeComponent();
-            StartupProfiler.Record("App & resource loading");
+                var app = new App();
+                app.InitializeComponent();
+                StartupProfiler.Record("App & resource loading");
 
-            var mainWindow = new Views.MainWindow();
-            StartupProfiler.Record("MainWindow created");
+                var mainWindow = new Views.MainWindow();
+                StartupProfiler.Record("MainWindow created");
 
-            app.Run(mainWindow);
+                app.Run(mainWindow);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("Startup.FatalException", ex);
+                try
+                {
+                    var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    var fatalLog = System.IO.Path.Combine(appData, "VayuClient", "logs", "fatal_startup_error.log");
+                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(fatalLog)!);
+                    System.IO.File.WriteAllText(fatalLog, ex.ToString());
+                    System.Windows.MessageBox.Show(
+                        $"VayuClient failed to start:\n\n{ex.Message}\n\nDetailed log saved to: {fatalLog}",
+                        "VayuClient Fatal Startup Error",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
+                catch { }
+            }
         }
     }
 }

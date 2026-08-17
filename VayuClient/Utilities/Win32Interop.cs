@@ -34,7 +34,7 @@ namespace VayuClient.Utilities
         private const int DWMWCP_ROUND = 2;
 
         /// <summary>
-        /// Apply Win11 dark mode, rounded corners, and Mica backdrop to a WPF window.
+        /// Apply Win11 dark mode and rounded corners to a WPF window safely.
         /// </summary>
         public static void ApplyWindowEffects(Window window)
         {
@@ -43,21 +43,13 @@ namespace VayuClient.Utilities
                 var hwnd = new WindowInteropHelper(window).Handle;
                 if (hwnd == IntPtr.Zero) return;
 
-                // Enable dark mode for title bar (even though hidden, affects system menus)
+                // Enable dark mode for window frame / system menus
                 int darkMode = 1;
                 DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
 
                 // Round corners
                 int cornerPref = DWMWCP_ROUND;
                 DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPref, sizeof(int));
-
-                // Apply Mica backdrop
-                int backdropType = DWMSBT_MAINWINDOW;
-                DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
-
-                // Extend frame for glass area
-                var margins = new MARGINS { Left = -1, Right = -1, Top = -1, Bottom = -1 };
-                DwmExtendFrameIntoClientArea(hwnd, ref margins);
             }
             catch
             {

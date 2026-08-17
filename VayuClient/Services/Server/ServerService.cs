@@ -146,8 +146,14 @@ namespace VayuClient.Services.Server
             {
                 using var tcp = new TcpClient { NoDelay = true };
                 var conn = tcp.ConnectAsync(host, port);
-                if (await Task.WhenAny(conn, Task.Delay(PingTimeoutMs, ct)) != conn || !tcp.Connected)
+                var delayTask = Task.Delay(PingTimeoutMs, ct);
+                if (await Task.WhenAny(conn, delayTask) != conn)
+                {
+                    // Suppress unobserved exception on timeout
+                    _ = conn.ContinueWith(t => { var _ = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
                     return null;
+                }
+                if (!tcp.Connected) return null;
 
                 using var ns = tcp.GetStream();
                 ns.ReadTimeout = PingTimeoutMs;
