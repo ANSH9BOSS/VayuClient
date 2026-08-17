@@ -14,4 +14,5 @@ public interface IClientUIAdapter {
     Screen createPauseScreen(Screen parent);
     void renderBackground(GuiGraphicsExtractor graphics, int width, int height, float delta);
     void renderGlassPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int bgColor, int borderColor);
+    void renderLoadingScreen(GuiGraphicsExtractor graphics, int width, int height, float progress, String statusMessage, float delta);
 }

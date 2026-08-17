@@ -10,16 +10,16 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 
-public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
+public class MinecraftUIAdapter_1_21 implements IClientUIAdapter {
 
     @Override
     public String getAdapterId() {
-        return "Minecraft_26_1_Adapter";
+        return "Minecraft_1_21_Modern";
     }
 
     @Override
     public String getSupportedVersion() {
-        return "26.1.x";
+        return "1.21.x";
     }
 
     @Override
@@ -29,7 +29,7 @@ public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
 
     @Override
     public void onInitialize(Minecraft client) {
-        System.out.println("[VayuClient UI] Initialized 26.1 UI Adapter");
+        System.out.println("[VayuClient UI] Initialized Modern 1.21.x UI Adapter");
     }
 
     @Override
@@ -52,7 +52,7 @@ public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
         graphics.fill(x, y, x + width, y + height, bgColor);
         graphics.fill(x, y, x + width, y + 1, borderColor);
         graphics.fill(x, y + height - 1, x + width, y + height, borderColor);
-        graphics.fill(x, y + 1, y + height, borderColor);
+        graphics.fill(x, y, x + 1, y + height, borderColor);
         graphics.fill(x + width - 1, y, x + width, y + height, borderColor);
     }
 
@@ -63,6 +63,7 @@ public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
         int centerX = width / 2;
         int centerY = height / 2;
 
+        // Centered Glass Loading Card
         int cardWidth = 320;
         int cardHeight = 120;
         int cardX = centerX - cardWidth / 2;
@@ -70,6 +71,7 @@ public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
 
         renderGlassPanel(graphics, cardX, cardY, cardWidth, cardHeight, 0xD0080D1A, 0x4400D2FF);
 
+        // Header Branding
         Font font = Minecraft.getInstance().font;
         if (font != null) {
             String title = "VAYUCLIENT";
@@ -81,6 +83,7 @@ public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
             graphics.text(font, status, centerX - statusWidth / 2, cardY + 44, 0x94A3B8);
         }
 
+        // Progress Bar
         int barWidth = 240;
         int barHeight = 4;
         int barX = centerX - barWidth / 2;

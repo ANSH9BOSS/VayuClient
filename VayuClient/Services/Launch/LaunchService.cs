@@ -309,6 +309,9 @@ namespace VayuClient.Services.Launch
                 // 8.7 Apply Instance Performance Settings (options.txt and mod configs)
                 await _performanceService.ApplyInstanceOptionsAsync(instance, _performanceService.CurrentSettings);
 
+                // 8.8 Auto-deploy version-compatible VayuClient In-Game UI Mod
+                EnsureVayuClientUiMod(instance);
+
                 // 9. Build Classpath (Deduplicating loader vs vanilla conflicting libraries)
                 SetState(LaunchState.Preparing, "Building classpath and launch arguments...");
                 Log("Resolving complete classpath with artifact deduplication...");
@@ -782,6 +785,39 @@ namespace VayuClient.Services.Launch
             catch (Exception ex)
             {
                 log($"[ModSanitizer] Failed to disable {Path.GetFileName(jarPath)}: {ex.Message}");
+            }
+        }
+
+        private void EnsureVayuClientUiMod(MinecraftInstance instance)
+        {
+            try
+            {
+                var modsDir = Path.Combine(instance.GameDirectory, "mods");
+                Directory.CreateDirectory(modsDir);
+
+                var appBase = AppDomain.CurrentDomain.BaseDirectory;
+                var sourceMod = Path.Combine(appBase, "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
+                if (!File.Exists(sourceMod))
+                {
+                    var altSource = Path.Combine(appBase, "..", "..", "..", "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
+                    if (File.Exists(altSource)) sourceMod = Path.GetFullPath(altSource);
+                }
+                if (!File.Exists(sourceMod))
+                {
+                    var distSource = Path.Combine(appBase, "vayuclient-ui-1.6.0.jar");
+                    if (File.Exists(distSource)) sourceMod = distSource;
+                }
+
+                if (File.Exists(sourceMod))
+                {
+                    var dest = Path.Combine(modsDir, "vayuclient-ui-1.6.0.jar");
+                    File.Copy(sourceMod, dest, true);
+                    CrashLogger.LogMessage($"[VayuUI] Deployed VayuClient In-Game UI mod to {dest}");
+                }
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogMessage($"[VayuUI] Warning: could not deploy in-game UI mod: {ex.Message}");
             }
         }
     }
