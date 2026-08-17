@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using VayuClient.Services.Account;
 using VayuClient.Services.Authentication;
+using VayuClient.Services.Backend;
 using VayuClient.Services.Download;
 using VayuClient.Services.Instance;
 using VayuClient.Services.Java;
@@ -124,6 +125,45 @@ namespace VayuClient.Core
             _ = Task.Run(() =>
             {
                 try { hardwareInfoService.GetHardwareProfile(forceRefresh: false); }
+                catch { }
+            });
+
+            // ─── PRODUCTION BACKEND SERVICES (offline-resilient) ─────────────────
+            // BackendApiClient: REST calls to vayu.rencloud.online
+            // SignalRClientService: Real-time WebSocket push events
+            // Both are registered immediately; SignalR connects asynchronously.
+            // If VPS is unreachable launcher continues normally — no exceptions bubble up.
+            var backendApi = new BackendApiClient();
+            Register<BackendApiClient>(backendApi);
+
+            var signalR = new SignalRClientService();
+            Register<SignalRClientService>(signalR);
+
+            // Connect SignalR in background — non-blocking, auto-retries on failure.
+            // Pass the current authenticated identity so presence is registered immediately
+            // on connect. Only username + accountType are sent — never tokens or secrets.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    Services.Backend.PresenceIdentity? identity = null;
+                    try
+                    {
+                        var acct = accountService.ActiveProfile;
+                        if (acct != null && !string.IsNullOrWhiteSpace(acct.Username))
+                        {
+                            identity = new Services.Backend.PresenceIdentity
+                            {
+                                Username    = acct.Username,
+                                AccountType = acct.AccountType == Models.AccountType.Microsoft
+                                    ? "microsoft" : "offline"
+                            };
+                        }
+                    }
+                    catch { }
+
+                    await signalR.StartAsync(identity);
+                }
                 catch { }
             });
         }

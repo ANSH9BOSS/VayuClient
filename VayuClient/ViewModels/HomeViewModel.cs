@@ -10,20 +10,25 @@ using CommunityToolkit.Mvvm.Input;
 using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Account;
+using VayuClient.Services.Backend;
 using VayuClient.Services.Instance;
 using VayuClient.Services.Java;
 using VayuClient.Services.Launch;
 
 namespace VayuClient.ViewModels
 {
-    public partial class HomeViewModel : ObservableObject
+    public partial class HomeViewModel : ObservableObject, ILifecycleViewModel
     {
         private readonly MainViewModel _main;
         private readonly ILaunchService _launchService;
         private readonly IAccountService _accountService;
         private readonly IInstanceService _instanceService;
         private readonly IJavaRuntimeService _javaService;
+        private readonly BackendApiClient? _backendApi;
+        private readonly SignalRClientService? _signalR;
         private CancellationTokenSource? _launchCts;
+        private bool _disposed;
+        private bool _isActivePage = true;
 
         [ObservableProperty]
         private string _activeInstanceName = "No Minecraft installations yet";
@@ -73,6 +78,17 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private string _playButtonSubText = "READY TO LAUNCH";
 
+        /// <summary>Latest VPS-sourced release tag (e.g. v1.5.1) — empty if backend unreachable</summary>
+        [ObservableProperty]
+        private string _latestReleaseTag = string.Empty;
+
+        /// <summary>Colour-coded backend connection indicator: "Connected" | "Offline" | "Connecting..."</summary>
+        [ObservableProperty]
+        private string _backendStatus = "Connecting...";
+
+        [ObservableProperty]
+        private bool _backendConnected;
+
         [ObservableProperty]
         private bool _isProgressVisible;
 
@@ -97,6 +113,14 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private bool _isConsoleExpanded = false;
 
+        partial void OnIsConsoleExpandedChanged(bool value)
+        {
+            if (value)
+            {
+                LauncherLogs = CrashLogger.GetLiveLogsText();
+            }
+        }
+
         public ObservableCollection<MinecraftInstance> Instances => _main.Instances;
 
         public string ProfileUsernameDisplay => ActiveProfile != null 
@@ -108,17 +132,23 @@ namespace VayuClient.ViewModels
         private static readonly string[] _availableWallpapers = new[]
         {
             "/Assets/Images/vayu_minecraft_hero.jpg",
-            "/Assets/Images/bg_cyber_nether.jpg",
-            "/Assets/Images/bg_cherry_grove.jpg",
             "/Assets/Images/bg_lush_caves.jpg",
             "/Assets/Images/bg_mountain_aurora.jpg",
-            "/Assets/Images/bg_fantasy_islands.jpg",
-            "/Assets/Images/bg_ocean_monument.jpg"
+            "/Assets/Images/bg_ocean_monument.jpg",
+            "/Assets/Images/bg_cherry_grove.jpg",
+            "/Assets/Images/bg_cyber_nether.jpg",
+            "/Assets/Images/bg_fantasy_islands.jpg"
         };
         private int _currentWallpaperIndex = 0;
 
         [ObservableProperty]
         private string _heroBackgroundPath = "/Assets/Images/vayu_minecraft_hero.jpg";
+
+        public string CurrentWallpaper
+        {
+            get => HeroBackgroundPath;
+            set => HeroBackgroundPath = value;
+        }
 
         [RelayCommand]
         public void CycleWallpaper()
@@ -139,21 +169,134 @@ namespace VayuClient.ViewModels
             _instanceService = ServiceLocator.Resolve<IInstanceService>();
             _javaService = ServiceLocator.Resolve<IJavaRuntimeService>();
 
+            // Backend services are optional — resolver never throws; services may be null if not registered
+            try { _backendApi = ServiceLocator.Resolve<BackendApiClient>(); } catch { }
+            try { _signalR = ServiceLocator.Resolve<SignalRClientService>(); } catch { }
+
             _launchService.StateChanged += OnLaunchStateChanged;
             _launchService.DownloadProgressChanged += OnDownloadProgressChanged;
             _accountService.ActiveProfileChanged += (p) => Dispatch(RefreshProfile);
             _instanceService.InstancesChanged += () => Dispatch(RefreshProfile);
 
-            LauncherLogs = CrashLogger.GetLiveLogsText();
+            // Subscribe to real-time backend push events
+            if (_signalR != null)
+            {
+                _signalR.ConnectionStateChanged += connected =>
+                {
+                    BackendConnected = connected;
+                    BackendStatus = connected ? "Connected" : "Reconnecting...";
+                };
+
+                _signalR.NewReleasePublished += tag =>
+                {
+                    LatestReleaseTag = tag;
+                    _main.ShowNotification("New Update Available", $"VayuClient {tag} is available!", NotificationType.Info);
+                };
+
+                _signalR.AnnouncementBroadcast += (title, msg, _) =>
+                    _main.ShowNotification(title, msg, NotificationType.Info);
+
+                _signalR.MaintenanceModeToggled += active =>
+                {
+                    if (active)
+                        _main.ShowNotification("Maintenance Mode", "VayuClient backend is entering maintenance mode.", NotificationType.Warning);
+                };
+            }
+
             CrashLogger.LogsUpdated += () =>
             {
-                Dispatch(() =>
+                if (_isActivePage && IsConsoleExpanded)
                 {
-                    LauncherLogs = CrashLogger.GetLiveLogsText();
-                });
+                    Dispatch(() =>
+                    {
+                        LauncherLogs = CrashLogger.GetLiveLogsText();
+                    });
+                }
             };
 
             RefreshProfile();
+        }
+
+        public Task InitializeAsync()
+        {
+            RefreshProfile();
+            return Task.CompletedTask;
+        }
+
+        public void Activate()
+        {
+            _isActivePage = true;
+            RefreshProfile();
+            if (IsConsoleExpanded)
+            {
+                LauncherLogs = CrashLogger.GetLiveLogsText();
+            }
+
+            // Fetch live backend data in background — non-blocking, offline-safe
+            _ = Task.Run(FetchBackendDataAsync);
+        }
+
+        public void Deactivate()
+        {
+            _isActivePage = false;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _isActivePage = false;
+        }
+
+        // ── Backend Integration ────────────────────────────────────────────────
+
+        private async Task FetchBackendDataAsync()
+        {
+            if (_backendApi == null) return;
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+
+                // Check liveness first
+                bool alive = await _backendApi.IsAliveAsync(cts.Token).ConfigureAwait(false);
+                Dispatch(() =>
+                {
+                    BackendConnected = alive;
+                    BackendStatus = alive ? "Connected" : "Offline";
+                });
+
+                if (!alive) return;
+
+                // Fetch latest release
+                var release = await _backendApi.GetLatestReleaseAsync(cts.Token).ConfigureAwait(false);
+                if (release != null)
+                {
+                    Dispatch(() => LatestReleaseTag = release.VersionTag);
+                }
+
+                // Fetch active announcements and surface the most critical one
+                var announcements = await _backendApi.GetAnnouncementsAsync(cts.Token).ConfigureAwait(false);
+                if (announcements != null && announcements.Count > 0)
+                {
+                    var first = announcements[0];
+                    var type = first.Level?.ToLower() switch
+                    {
+                        "warning"  => NotificationType.Warning,
+                        "error"    => NotificationType.Error,
+                        _          => NotificationType.Info
+                    };
+                    Dispatch(() => _main.ShowNotification(first.Title, first.Content, type));
+                }
+            }
+            catch
+            {
+                // VPS unreachable — degrade silently, launcher continues normally
+                Dispatch(() =>
+                {
+                    BackendConnected = false;
+                    BackendStatus = "Offline";
+                });
+            }
         }
 
         private static void Dispatch(Action action)
