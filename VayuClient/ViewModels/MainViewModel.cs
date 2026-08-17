@@ -353,6 +353,12 @@ namespace VayuClient.ViewModels
 
             try
             {
+                string previousPage = CurrentPage;
+                if (previousPage == "Servers" && page != "Servers" && _serverVM != null)
+                {
+                    _serverVM.OnNavigatedFrom();
+                }
+
                 CrashLogger.CurrentPage = page;
                 CurrentPage = page;
 
@@ -361,7 +367,7 @@ namespace VayuClient.ViewModels
                 else if (page == "Home") HomeVM.RefreshProfile();
                 else if (page == "InstallationManager") InstallationManagerVM.LoadInstallations();
                 else if (page == "Settings") SettingsVM.RefreshInstanceRam();
-                else if (page == "Servers") ServerVM.LoadServersCommand.Execute(null);
+                else if (page == "Servers") ServerVM.OnNavigatedTo();
 
                 CurrentPageViewModel = page switch
                 {

@@ -15,6 +15,8 @@
             <!-- Global Converters -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVis"/>
             <converters:EqualValueToVisibilityConverter x:Key="EqualValueToVis"/>
             <converters:EqualValueToBoolConverter x:Key="EqualValueToBool"/>
             <converters:EqualValueToBoolConverter x:Key="StringEqualConverter"/>

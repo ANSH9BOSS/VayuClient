@@ -33,6 +33,9 @@
         <DataTemplate DataType="{x:Type vm:VersionsViewModel}">
             <views:VersionsPage/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ServerViewModel}">
+            <views:ServerPage/>
+        </DataTemplate>
     </Window.Resources>
 
     <!-- Outer Window Frame with Dark Navy Background & Thin Border -->
@@ -119,7 +122,8 @@
                                          IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Servers', Mode=OneWay}"
                                          Command="{Binding NavigateToCommand}" CommandParameter="Servers" ToolTip="Server Manager — Real-time SLP Ping">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="🖥" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <Path Data="{StaticResource VayuIconServer}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="SERVERS" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </RadioButton>

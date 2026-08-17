@@ -12,10 +12,11 @@ using VayuClient.Services.Server;
 
 namespace VayuClient.ViewModels
 {
-    public partial class ServerViewModel : ObservableObject
+    public partial class ServerViewModel : ObservableObject, IDisposable
     {
         private readonly IServerService _serverService;
         private CancellationTokenSource? _pingCts;
+        private bool _disposed;
 
         // ─── Observable State ─────────────────────────────────────────────────
 
@@ -53,14 +54,63 @@ namespace VayuClient.ViewModels
             LoadServers();
         }
 
+        // ─── Navigation Lifecycle ─────────────────────────────────────────────
+
+        public void OnNavigatedTo()
+        {
+            LoadServers();
+        }
+
+        public void OnNavigatedFrom()
+        {
+            CancelActivePings();
+            IsAddingServer = false;
+        }
+
+        public void CancelActivePings()
+        {
+            try
+            {
+                if (_pingCts != null && !_pingCts.IsCancellationRequested)
+                {
+                    _pingCts.Cancel();
+                    _pingCts.Dispose();
+                    _pingCts = null;
+                }
+            }
+            catch { }
+            finally
+            {
+                IsPingingAll = false;
+            }
+        }
+
         // ─── Commands ─────────────────────────────────────────────────────────
 
         [RelayCommand]
-        private void LoadServers()
+        public void LoadServers()
         {
-            var list = _serverService.GetServers();
-            Servers = new ObservableCollection<ServerInfo>(
-                list.OrderByDescending(s => s.IsFavorite).ThenBy(s => s.Name));
+            try
+            {
+                var list = _serverService.GetServers();
+                var sorted = list.OrderByDescending(s => s.IsFavorite).ThenBy(s => s.Name).ToList();
+                Servers = new ObservableCollection<ServerInfo>(sorted);
+
+                if (Servers.Count == 0)
+                {
+                    StatusMessage = "No servers saved. Click '＋ Add Server' to add a Minecraft server.";
+                }
+                else
+                {
+                    StatusMessage = $"{Servers.Count} server(s) loaded.";
+                }
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("ServerViewModel.LoadServers", ex, "Servers");
+                Servers = new ObservableCollection<ServerInfo>();
+                StatusMessage = "Could not load saved servers.";
+            }
         }
 
         [RelayCommand]
@@ -73,49 +123,91 @@ namespace VayuClient.ViewModels
         }
 
         [RelayCommand]
-        private void CancelAddServer() => IsAddingServer = false;
+        private void CancelAddServer()
+        {
+            IsAddingServer = false;
+            NewServerName = "";
+            NewServerAddress = "";
+            NewServerPort = 25565;
+        }
 
         [RelayCommand]
         private async Task ConfirmAddServer()
         {
-            if (string.IsNullOrWhiteSpace(NewServerAddress))
+            var rawAddress = NewServerAddress?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(rawAddress))
             {
-                StatusMessage = "Address cannot be empty.";
+                StatusMessage = "Server address cannot be empty.";
                 return;
+            }
+
+            // Extract port if formatted as host:port
+            string host = rawAddress;
+            int port = NewServerPort is > 0 and <= 65535 ? NewServerPort : 25565;
+            if (rawAddress.Contains(':') && !rawAddress.StartsWith("["))
+            {
+                var parts = rawAddress.Split(':');
+                host = parts[0];
+                if (parts.Length > 1 && int.TryParse(parts[1], out int parsedPort) && parsedPort is > 0 and <= 65535)
+                {
+                    port = parsedPort;
+                }
             }
 
             var server = new ServerInfo
             {
-                Name    = string.IsNullOrWhiteSpace(NewServerName) ? NewServerAddress : NewServerName,
-                Address = NewServerAddress.Trim(),
-                Port    = NewServerPort is > 0 and <= 65535 ? NewServerPort : 25565
+                Name = string.IsNullOrWhiteSpace(NewServerName) ? host : NewServerName.Trim(),
+                Address = host,
+                Port = port,
+                Status = ServerPingStatus.Unknown,
+                PingMs = -1
             };
 
-            await _serverService.AddServerAsync(server);
-            IsAddingServer = false;
-            LoadServers();
-            StatusMessage = $"Server '{server.Name}' added.";
+            try
+            {
+                await _serverService.AddServerAsync(server);
+                IsAddingServer = false;
+                LoadServers();
+                StatusMessage = $"Server '{server.Name}' added.";
 
-            // Immediately ping the new server
-            _ = PingSingleAsync(server);
+                // Immediately ping the new server asynchronously
+                _ = PingSingleAsync(server);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("ServerViewModel.ConfirmAddServer", ex, "Servers");
+                StatusMessage = $"Error adding server: {ex.Message}";
+            }
         }
 
         [RelayCommand]
         private async Task RefreshAll()
         {
-            if (IsPingingAll) return;
+            if (IsPingingAll || Servers.Count == 0) return;
+
             IsPingingAll = true;
             StatusMessage = "Pinging all servers...";
-            _pingCts?.Cancel();
+            CancelActivePings();
             _pingCts = new CancellationTokenSource();
+
             try
             {
                 await _serverService.PingAllServersAsync(Servers, _pingCts.Token);
-                StatusMessage = $"Refreshed {Servers.Count} servers.";
+                StatusMessage = $"Refreshed {Servers.Count} server(s).";
             }
-            catch (OperationCanceledException) { StatusMessage = "Ping cancelled."; }
-            catch (Exception ex) { StatusMessage = $"Error: {ex.Message}"; }
-            finally { IsPingingAll = false; }
+            catch (OperationCanceledException)
+            {
+                StatusMessage = "Ping operation cancelled.";
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("ServerViewModel.RefreshAll", ex, "Servers");
+                StatusMessage = $"Ping error: {ex.Message}";
+            }
+            finally
+            {
+                IsPingingAll = false;
+            }
         }
 
         [RelayCommand]
@@ -127,27 +219,39 @@ namespace VayuClient.ViewModels
 
         private async Task PingSingleAsync(ServerInfo server)
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             try
             {
                 bool ok = await _serverService.PingServerAsync(server, cts.Token);
                 StatusMessage = ok
                     ? $"{server.Name} — {server.PingMs} ms, {server.OnlinePlayers}/{server.MaxPlayers} players"
-                    : $"{server.Name} — Offline";
+                    : $"{server.Name} — Offline / Unreachable";
             }
-            catch (OperationCanceledException) { StatusMessage = $"{server.Name} — Timed out."; }
-            catch (Exception ex) { StatusMessage = $"Ping error: {ex.Message}"; }
+            catch (OperationCanceledException)
+            {
+                StatusMessage = $"{server.Name} — Timed out.";
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("ServerViewModel.PingSingleAsync", ex, "Servers");
+                StatusMessage = $"Ping error: {ex.Message}";
+            }
         }
 
         [RelayCommand]
         private async Task ToggleFavorite(ServerInfo? server)
         {
             if (server == null) return;
-            server.IsFavorite = !server.IsFavorite;
-            await _serverService.UpdateServerAsync(server);
-            // Re-sort (favorites first)
-            var sorted = Servers.OrderByDescending(s => s.IsFavorite).ThenBy(s => s.Name).ToList();
-            Servers = new ObservableCollection<ServerInfo>(sorted);
+            try
+            {
+                server.IsFavorite = !server.IsFavorite;
+                await _serverService.UpdateServerAsync(server);
+                LoadServers();
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("ServerViewModel.ToggleFavorite", ex, "Servers");
+            }
         }
 
         [RelayCommand]
@@ -161,10 +265,18 @@ namespace VayuClient.ViewModels
                 MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes) return;
 
-            await _serverService.DeleteServerAsync(server.Id);
-            Servers.Remove(server);
-            if (SelectedServer?.Id == server.Id) SelectedServer = null;
-            StatusMessage = $"'{server.Name}' removed.";
+            try
+            {
+                await _serverService.DeleteServerAsync(server.Id);
+                Servers.Remove(server);
+                if (SelectedServer?.Id == server.Id) SelectedServer = null;
+                StatusMessage = $"'{server.Name}' removed.";
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("ServerViewModel.DeleteServer", ex, "Servers");
+                StatusMessage = $"Error removing server: {ex.Message}";
+            }
         }
 
         [RelayCommand]
@@ -176,7 +288,17 @@ namespace VayuClient.ViewModels
                 Clipboard.SetText(server.AddressDisplay);
                 StatusMessage = $"Copied: {server.AddressDisplay}";
             }
-            catch { }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Clipboard error: {ex.Message}";
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            CancelActivePings();
         }
     }
 }
