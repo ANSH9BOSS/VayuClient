@@ -15,13 +15,11 @@ namespace VayuClient.Services.Authentication
 {
     public class MicrosoftAuthService : IMicrosoftAuthService
     {
-        // Standard Multi-Tenant Microsoft OAuth Public Client ID for Minecraft Java Edition Launchers (Prism Launcher public client)
-        private const string PrismClientId = "c6031aa2-9442-430a-b44a-a4340d859e9e";
-        private const string Scope = "XboxLive.signin offline_access";
-        private const string DeviceCodeEndpointConsumers = "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode";
-        private const string DeviceCodeEndpointCommon = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode";
-        private const string TokenEndpointConsumers = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
-        private const string TokenEndpointCommon = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+        // Official Mojang / Minecraft Live OAuth Public Client ID
+        private const string MojangClientId = "00000000402b5328";
+        private const string LiveScope = "service::user.auth.xboxlive.com::MBI_SSL";
+        private const string DeviceCodeEndpoint = "https://login.live.com/oauth20_connect.srf";
+        private const string TokenEndpoint = "https://login.live.com/oauth20_token.srf";
 
         private const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
         private const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";
@@ -29,8 +27,8 @@ namespace VayuClient.Services.Authentication
         private const string MinecraftStoreEndpoint = "https://api.minecraftservices.com/entitlements/mcstore";
         private const string MinecraftProfileEndpoint = "https://api.minecraftservices.com/minecraft/profile";
 
-        private readonly string _activeClientId = PrismClientId;
-        private string _activeTokenEndpoint = TokenEndpointConsumers;
+        private readonly string _activeClientId = MojangClientId;
+        private string _activeTokenEndpoint = TokenEndpoint;
 
         private static readonly HttpClient _http = new()
         {
@@ -51,67 +49,37 @@ namespace VayuClient.Services.Authentication
             {
                 return (false, "Missing Microsoft Client ID configuration.");
             }
-            if (string.IsNullOrWhiteSpace(Scope))
-            {
-                return (false, "Missing Microsoft OAuth Scope configuration.");
-            }
             return (true, "Valid");
         }
 
         public async Task<DeviceCodeResponse> RequestDeviceCodeAsync(CancellationToken ct = default)
         {
-            var validation = ValidateConfiguration();
-            if (!validation.IsValid)
+            CrashLogger.LogMessage("[MicrosoftAuth] Starting Microsoft Live device code authentication flow");
+
+            var content = new FormUrlEncodedContent(new[]
             {
-                CrashLogger.LogMessage($"[MicrosoftAuth] Configuration validation failed: {validation.Message}");
-                throw new InvalidOperationException($"Microsoft Authentication Configuration: INVALID. Missing/invalid: {validation.Message}");
-            }
+                new KeyValuePair<string, string>("client_id", _activeClientId),
+                new KeyValuePair<string, string>("scope", LiveScope),
+                new KeyValuePair<string, string>("response_type", "device_code")
+            });
 
-            CrashLogger.LogMessage("[MicrosoftAuth] Starting device code authentication flow");
+            var response = await _http.PostAsync(DeviceCodeEndpoint, content, ct);
+            var json = await response.Content.ReadAsStringAsync(ct);
 
-            // Try consumers endpoint first, fallback to common
-            string[] endpoints = { DeviceCodeEndpointConsumers, DeviceCodeEndpointCommon };
-            string[] tokenEndpoints = { TokenEndpointConsumers, TokenEndpointCommon };
-
-            Exception? lastEx = null;
-
-            for (int i = 0; i < endpoints.Length; i++)
+            if (response.IsSuccessStatusCode)
             {
-                var endpoint = endpoints[i];
-                try
+                var deviceCode = JsonConvert.DeserializeObject<DeviceCodeResponse>(json);
+                if (deviceCode != null && !string.IsNullOrEmpty(deviceCode.DeviceCode) && !string.IsNullOrEmpty(deviceCode.UserCode))
                 {
-                    var content = new FormUrlEncodedContent(new[]
-                    {
-                        new KeyValuePair<string, string>("client_id", _activeClientId),
-                        new KeyValuePair<string, string>("scope", Scope)
-                    });
-
-                    var response = await _http.PostAsync(endpoint, content, ct);
-                    var json = await response.Content.ReadAsStringAsync(ct);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var deviceCode = JsonConvert.DeserializeObject<DeviceCodeResponse>(json);
-                        if (deviceCode != null && !string.IsNullOrEmpty(deviceCode.DeviceCode) && !string.IsNullOrEmpty(deviceCode.UserCode))
-                        {
-                            _activeTokenEndpoint = tokenEndpoints[i];
-                            CrashLogger.LogMessage($"[MicrosoftAuth] Device code generated. Code: {deviceCode.UserCode}, URL: {deviceCode.VerificationUri}");
-                            return deviceCode;
-                        }
-                    }
-                    else
-                    {
-                        string err = ParseOAuthError(json);
-                        lastEx = new InvalidOperationException(err);
-                    }
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    lastEx = ex;
+                    _activeTokenEndpoint = TokenEndpoint;
+                    CrashLogger.LogMessage($"[MicrosoftAuth] Device code generated successfully. User Code: {deviceCode.UserCode}, URL: {deviceCode.VerificationUri}");
+                    return deviceCode;
                 }
             }
 
-            throw lastEx ?? new InvalidOperationException("Failed to request Microsoft device authentication code. Please check your internet connection.");
+            string err = ParseOAuthError(json);
+            CrashLogger.LogMessage($"[MicrosoftAuth] Device code request failed: {err}");
+            throw new InvalidOperationException($"Microsoft device code request failed: {err}");
         }
 
         public async Task<UserProfile> PollForAuthenticationAsync(
@@ -127,7 +95,7 @@ namespace VayuClient.Services.Authentication
             int interval = Math.Max(5, deviceCode.Interval);
             var expiry = DateTime.UtcNow.AddSeconds(deviceCode.ExpiresIn > 0 ? deviceCode.ExpiresIn : 900);
 
-            status?.Report("Waiting for browser authorization (enter code)...");
+            status?.Report("Waiting for browser authorization (enter code at microsoft.com/link)...");
 
             while (DateTime.UtcNow < expiry && !ct.IsCancellationRequested)
             {
@@ -385,7 +353,7 @@ namespace VayuClient.Services.Authentication
                     new KeyValuePair<string, string>("client_id", _activeClientId),
                     new KeyValuePair<string, string>("grant_type", "refresh_token"),
                     new KeyValuePair<string, string>("refresh_token", profile.RefreshToken),
-                    new KeyValuePair<string, string>("scope", Scope)
+                    new KeyValuePair<string, string>("scope", LiveScope)
                 });
 
                 var response = await _http.PostAsync(_activeTokenEndpoint, content, ct);

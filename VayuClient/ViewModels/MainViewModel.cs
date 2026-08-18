@@ -632,10 +632,15 @@ namespace VayuClient.ViewModels
 
         public void FinishOnboarding()
         {
-            IsOnboardingVisible = false;
-            NavigateTo("Home");
-            HomeVM.RefreshProfile();
-            AccountsVM.LoadProfiles();
+            Dispatch(() =>
+            {
+                CrashLogger.LogMessage("[NAVIGATION] Finishing onboarding overlay and transitioning to Home dashboard.");
+                ActiveProfile = _accountService?.ActiveProfile;
+                IsOnboardingVisible = false;
+                NavigateTo("Home");
+                HomeVM.RefreshProfile();
+                AccountsVM.LoadProfiles();
+            });
         }
 
         public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info, string? tag = null, double autoDismissSeconds = 4.5)
