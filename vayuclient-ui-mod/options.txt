@@ -22,6 +22,7 @@ c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\m
 c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\core\VayuParticleEngine.java
 c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\core\VayuUIAdapterFactory.java
 c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\core\VayuUIDesignSystem.java
+c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\gui\VayuHomeRenderer.java
 c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\gui\VayuPauseScreen.java
 c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\gui\VayuScreen.java
 c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-ui-mod\src\main\java\com\vayuclient\ui\gui\VayuTitleScreen.java
