@@ -52,16 +52,12 @@ public class ModernScreenNavigationAdapter implements IScreenNavigationAdapter {
     public void disconnectToTitle() {
         Minecraft mc = Minecraft.getInstance();
         if (mc != null) {
-            if (mc.level != null) {
-                mc.level.disconnect();
-            }
-            mc.clearLevel();
             try {
                 Class<?> titleCls = Class.forName("com.vayuclient.ui.gui.VayuTitleScreen");
                 var screen = (Screen) titleCls.getDeclaredConstructor().newInstance();
-                mc.setScreenAndShow(screen);
+                mc.disconnect(screen, false);
             } catch (Throwable t) {
-                mc.setScreenAndShow(new net.minecraft.client.gui.screens.TitleScreen());
+                mc.disconnect(new net.minecraft.client.gui.screens.TitleScreen(), false);
             }
         }
     }

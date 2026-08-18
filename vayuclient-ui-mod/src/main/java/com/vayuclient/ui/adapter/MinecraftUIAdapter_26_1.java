@@ -52,7 +52,7 @@ public class MinecraftUIAdapter_26_1 implements IClientUIAdapter {
         graphics.fill(x, y, x + width, y + height, bgColor);
         graphics.fill(x, y, x + width, y + 1, borderColor);
         graphics.fill(x, y + height - 1, x + width, y + height, borderColor);
-        graphics.fill(x, y + 1, y + height, borderColor);
+        graphics.fill(x, y + 1, x + 1, y + height, borderColor);
         graphics.fill(x + width - 1, y, x + width, y + height, borderColor);
     }
 

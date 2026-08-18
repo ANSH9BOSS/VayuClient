@@ -51,7 +51,7 @@ public class ModernRenderBackend implements IRenderBackend {
         currentGraphics.fill(x, y, x + width, y + height, bgColor);
         currentGraphics.fill(x, y, x + width, y + 1, borderColor);
         currentGraphics.fill(x, y + height - 1, x + width, y + height, borderColor);
-        currentGraphics.fill(x, y + 1, y + height, borderColor);
+        currentGraphics.fill(x, y + 1, x + 1, y + height, borderColor);
         currentGraphics.fill(x + width - 1, y, x + width, y + height, borderColor);
     }
 

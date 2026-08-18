@@ -110,13 +110,13 @@ public class VayuTitleScreen extends VayuScreen {
 
         // ─── 1. TOP-LEFT: Player Account Card ────────────────────────────────
         String username = "ANSH9BOSS";
-        String accountType = "Microsoft Account";
+        String accountType = "Local Player";
         try {
             if (this.minecraft != null && this.minecraft.getUser() != null) {
                 String u = this.minecraft.getUser().getName();
                 if (u != null && !u.isEmpty()) username = u;
-                if (this.minecraft.getUser().getType() != null) {
-                    accountType = this.minecraft.getUser().getType().toString().equalsIgnoreCase("msa") ? "Microsoft Account" : "Offline / Local";
+                if (this.minecraft.getUser().getProfileId() != null) {
+                    accountType = "Active Profile";
                 }
             }
         } catch (Throwable ignored) {}

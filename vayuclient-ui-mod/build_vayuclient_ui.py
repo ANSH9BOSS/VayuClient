@@ -10,7 +10,7 @@ def main():
     print(" Building VayuClient Minecraft UI Mod v1.6.0 (ANSH9BOSS)")
     print("==========================================================")
 
-    root_dir = r"C:\Users\ANSH\.gemini\antigravity-ide\scratch\vayuclient-ui-mod"
+    root_dir = os.path.dirname(os.path.abspath(__file__))
     src_dir = os.path.join(root_dir, "src", "main", "java")
     res_dir = os.path.join(root_dir, "src", "main", "resources")
     build_dir = os.path.join(root_dir, "build", "classes")
@@ -58,8 +58,7 @@ def main():
 
     options_file = os.path.join(root_dir, "options.txt")
     with open(options_file, "w", encoding="utf-8") as f:
-        f.write("-source\n25\n")
-        f.write("-target\n25\n")
+        f.write("--release\n21\n")
         f.write("-proc:none\n")
         f.write("-encoding\nUTF-8\n")
         f.write("-cp\n")
@@ -70,7 +69,7 @@ def main():
             f.write(s + "\n")
 
     cmd = [javac, f"@{options_file}"]
-    print("Compiling Java classes with Java 25 javac...")
+    print("Compiling Java classes targeting Java 21 (class version 65.0)...")
     res = subprocess.run(cmd, capture_output=True, text=True)
 
     if res.returncode != 0:
@@ -102,18 +101,21 @@ def main():
 
     print(f"SUCCESSFULLY PACKAGED JAR: {out_jar}")
 
-    # Copy to all VayuClient instance mods folders & modpack mods folders
+    # Copy to all VayuClient instance mods folders & assets folders
     target_dirs = [
         r"C:\Users\ANSH\AppData\Roaming\VayuClient\Instances\Spunky Optimized 1.0.0\game\mods",
         r"C:\Users\ANSH\AppData\Roaming\VayuClient\Instances\Spunky Optimized\mods",
-        r"C:\Users\ANSH\AppData\Roaming\.minecraft\modpacks\881269a6-8c36-3215-905d-9d46a4602190\mods"
+        r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\Assets\Mods",
+        r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\dist\Assets\Mods",
+        r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\bin\Release\net8.0-windows\Assets\Mods",
+        r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\bin\Release\net8.0-windows\win-x64\Assets\Mods"
     ]
 
     for t in target_dirs:
-        if os.path.exists(t):
-            dest = os.path.join(t, "vayuclient-ui-1.6.0.jar")
-            shutil.copy2(out_jar, dest)
-            print(f"-> Installed to: {dest}")
+        os.makedirs(t, exist_ok=True)
+        dest = os.path.join(t, "vayuclient-ui-1.6.0.jar")
+        shutil.copy2(out_jar, dest)
+        print(f"-> Installed to: {dest}")
 
 if __name__ == "__main__":
     main()
