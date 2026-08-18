@@ -129,15 +129,39 @@ def main():
 
     # Copy to all VayuClient instance mods folders & assets folders
     target_dirs = [
-        r"C:\Users\ANSH\AppData\Roaming\VayuClient\Instances\Spunky Optimized 1.0.0\game\mods",
-        r"C:\Users\ANSH\AppData\Roaming\VayuClient\Instances\Spunky Optimized\mods",
         r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\Assets\Mods",
         r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\dist\Assets\Mods",
         r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\bin\Release\net8.0-windows\Assets\Mods",
         r"c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\bin\Release\net8.0-windows\win-x64\Assets\Mods"
     ]
 
-    for t in target_dirs:
+    # Dynamically scan all existing instances in APPDATA
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        instances_base = os.path.join(appdata, "VayuClient", "Instances")
+        if os.path.exists(instances_base):
+            for item in os.listdir(instances_base):
+                inst_path = os.path.join(instances_base, item)
+                if os.path.isdir(inst_path):
+                    # Check for game/mods or mods
+                    game_mods = os.path.join(inst_path, "game", "mods")
+                    root_mods = os.path.join(inst_path, "mods")
+                    if os.path.exists(game_mods) or os.path.exists(os.path.join(inst_path, "game")):
+                        target_dirs.append(game_mods)
+                    elif os.path.exists(root_mods):
+                        target_dirs.append(root_mods)
+                    
+                    # Clear stale .fabric cache
+                    for sub in [inst_path, os.path.join(inst_path, "game")]:
+                        fab_cache = os.path.join(sub, ".fabric")
+                        if os.path.exists(fab_cache):
+                            try:
+                                shutil.rmtree(fab_cache, ignore_errors=True)
+                                print(f"[CACHE CLEARED] Removed stale Fabric cache: {fab_cache}")
+                            except Exception:
+                                pass
+
+    for t in set(target_dirs):
         os.makedirs(t, exist_ok=True)
         dest = os.path.join(t, "vayuclient-ui-1.6.0.jar")
         shutil.copy2(out_jar, dest)
@@ -145,3 +169,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
