@@ -517,132 +517,34 @@ namespace VayuClient.ViewModels
             });
         }
 
-        // ─── Lunar-Style Content Population ────────────────────────────────────
+        public bool HasFeaturedCards => FeaturedCards.Count > 0;
+        public bool HasNewsCards => NewsCards.Count > 0;
+        public bool HasModHighlightCards => ModHighlightCards.Count > 0;
+        public bool HasPartneredServers => PartneredServers.Count > 0;
+
+        // ─── Real Content Sourced from Backend ─────────────────────────────────
 
         private void PopulateContentCards()
         {
             FeaturedCards.Clear();
-            FeaturedCards.Add(new HomeCardItem
-            {
-                Title = "VayuClient v1.6.0 Released — Next-Gen In-Game UI Overhaul",
-                Description = "Experience a completely redesigned high-FPS title screen, custom glass pause overlay, floating cyber dust particles, and dynamic Sodium shader pipeline.",
-                Category = "FEATURED RELEASE",
-                BadgeColor = "#00D2FF",
-                ImagePath = "/Assets/Images/vayu_minecraft_hero.jpg",
-                DateTag = "v1.6.0 Official",
-                ActionText = "Explore Mods",
-                NavigationTarget = "Mods"
-            });
-
             NewsCards.Clear();
-            NewsCards.Add(new HomeCardItem
-            {
-                Title = "Minecraft 26.2 Architecture Support",
-                Description = "Full capability engine support for Minecraft 26.2 with dynamic mappings, Java 25 compiler optimizations, and sub-millisecond input latency.",
-                Category = "MINECRAFT UPDATE",
-                BadgeColor = "#38BDF8",
-                ImagePath = "/Assets/Images/bg_mountain_aurora.jpg",
-                DateTag = "August 2026",
-                ActionText = "View Instances",
-                NavigationTarget = "InstallationManager"
-            });
-            NewsCards.Add(new HomeCardItem
-            {
-                Title = "Sodium & Iris Shader Pipeline",
-                Description = "Embedded multi-threaded shader caching delivering buttery smooth 240+ FPS with full RTX ray-tracing and volumetric lighting.",
-                Category = "GRAPHICS & FPS",
-                BadgeColor = "#10B981",
-                ImagePath = "/Assets/Images/bg_cherry_grove.jpg",
-                DateTag = "Performance",
-                ActionText = "Manage Mods",
-                NavigationTarget = "Mods"
-            });
-            NewsCards.Add(new HomeCardItem
-            {
-                Title = "LungeHelper v2.0 PvP Suite",
-                Description = "Advanced hit registration diagnostics, trajectory lines, cps counter, keystrokes, and clean crosshairs tailored for competitive Minecraft PvP.",
-                Category = "PVP ENHANCEMENTS",
-                BadgeColor = "#A78BFA",
-                ImagePath = "/Assets/Images/bg_pvp_arena.jpg",
-                DateTag = "PvP Ready",
-                ActionText = "Configure Addons",
-                NavigationTarget = "Mods"
-            });
-
             ModHighlightCards.Clear();
-            ModHighlightCards.Add(new HomeCardItem
-            {
-                Title = "ImmediatelyFast HUD Optimization",
-                Description = "Optimizes immediate-mode GUI rendering for ultra-low frame times during intense PvP fights.",
-                Category = "OPTIMIZATION",
-                BadgeColor = "#34D399",
-                ImagePath = "/Assets/Images/bg_cyber_nether.jpg",
-                DateTag = "Pre-Installed",
-                ActionText = "Open Mods",
-                NavigationTarget = "Mods"
-            });
-            ModHighlightCards.Add(new HomeCardItem
-            {
-                Title = "Vayu In-Game Cyber Presence",
-                Description = "Connect with friends and display real-time live Discord Rich Presence with rich animated in-game status.",
-                Category = "COMMUNITY",
-                BadgeColor = "#F59E0B",
-                ImagePath = "/Assets/Images/bg_fantasy_islands.jpg",
-                DateTag = "Discord RPC",
-                ActionText = "Settings",
-                NavigationTarget = "Settings"
-            });
+            OnPropertyChanged(nameof(HasFeaturedCards));
+            OnPropertyChanged(nameof(HasNewsCards));
+            OnPropertyChanged(nameof(HasModHighlightCards));
         }
 
         private void PopulatePartneredServers()
         {
             PartneredServers.Clear();
-            PartneredServers.Add(new PartneredServerCard
-            {
-                Name = "Vayu PvP Network",
-                Address = "pvp.vayuclient.net",
-                Description = "Official VayuClient Partner PvP Arena featuring Practice 1v1, BedWars, and zero hit-delay.",
-                VersionRange = "1.8.9 – 26.2",
-                IconPath = "/Assets/Images/vayu_logo.png",
-                PlayerCountDisplay = "Pinging...",
-                StatusDisplay = "Checking..."
-            });
-            PartneredServers.Add(new PartneredServerCard
-            {
-                Name = "Hypixel Network",
-                Address = "mc.hypixel.net",
-                Description = "The world's largest Minecraft minigame server with SkyWars, BedWars, and SkyBlock.",
-                VersionRange = "1.8.x – 26.2",
-                IconPath = "/Assets/Images/bg_pvp_arena.jpg",
-                PlayerCountDisplay = "Pinging...",
-                StatusDisplay = "Checking..."
-            });
-            PartneredServers.Add(new PartneredServerCard
-            {
-                Name = "PvP Land",
-                Address = "pvp.land",
-                Description = "Competitive Practice PvP network with bot duels, ranked matchmaking, and Elo leaderboards.",
-                VersionRange = "1.8.9 – 26.2",
-                IconPath = "/Assets/Images/bg_cyber_nether.jpg",
-                PlayerCountDisplay = "Pinging...",
-                StatusDisplay = "Checking..."
-            });
-            PartneredServers.Add(new PartneredServerCard
-            {
-                Name = "Vayu Survival SMP",
-                Address = "smp.vayuclient.net",
-                Description = "Official community Survival Multiplayer SMP with player economy, custom land claiming, and dungeons.",
-                VersionRange = "1.20.x – 26.2",
-                IconPath = "/Assets/Images/bg_lush_caves.jpg",
-                PlayerCountDisplay = "Pinging...",
-                StatusDisplay = "Checking..."
-            });
+            OnPropertyChanged(nameof(HasPartneredServers));
         }
 
         // ─── Real Server List Ping (SLP) for Partnered Servers ─────────────────
 
         private async Task PingPartneredServersAsync()
         {
+            if (PartneredServers.Count == 0) return;
             _partnerPingCts?.Cancel();
             _partnerPingCts = new CancellationTokenSource();
             var token = _partnerPingCts.Token;
@@ -729,7 +631,7 @@ namespace VayuClient.ViewModels
             catch { }
         }
 
-        // ─── Backend Health Liveness ──────────────────────────────────────────
+        // ─── Backend Data Synchronization ─────────────────────────────────────
 
         private async Task FetchBackendDataAsync()
         {
@@ -743,6 +645,70 @@ namespace VayuClient.ViewModels
                     BackendConnected = alive;
                     BackendStatus = alive ? "Connected" : "Offline";
                 });
+
+                if (alive)
+                {
+                    // 1. Fetch real partner servers from backend
+                    var servers = await _backendApi.GetServersAsync(cts.Token).ConfigureAwait(false);
+                    if (servers != null)
+                    {
+                        var featured = servers.Where(s => s.IsFeatured).ToList();
+                        Dispatch(() =>
+                        {
+                            PartneredServers.Clear();
+                            foreach (var s in featured)
+                            {
+                                PartneredServers.Add(new PartneredServerCard
+                                {
+                                    Name = s.Name,
+                                    Address = s.Address,
+                                    Description = s.Motd ?? "Official Partner Server",
+                                    VersionRange = s.Version ?? "1.8.x – 1.21.x",
+                                    IconPath = "/Assets/Images/vayu_logo.png",
+                                    PlayerCountDisplay = s.IsOnline ? $"{s.OnlinePlayers:N0} / {s.MaxPlayers:N0} Players" : "Pinging...",
+                                    StatusDisplay = s.IsOnline ? $"Online • {s.PingMs}ms" : "Checking..."
+                                });
+                            }
+                            OnPropertyChanged(nameof(HasPartneredServers));
+                        });
+
+                        if (featured.Count > 0)
+                        {
+                            _ = PingPartneredServersAsync();
+                        }
+                    }
+
+                    // 2. Fetch real announcements from backend
+                    var announcements = await _backendApi.GetAnnouncementsAsync(cts.Token).ConfigureAwait(false);
+                    if (announcements != null)
+                    {
+                        var active = announcements.Where(a => a.IsActive).ToList();
+                        Dispatch(() =>
+                        {
+                            NewsCards.Clear();
+                            foreach (var a in active)
+                            {
+                                NewsCards.Add(new HomeCardItem
+                                {
+                                    Title = a.Title,
+                                    Description = a.Content,
+                                    Category = a.Level.ToUpperInvariant(),
+                                    BadgeColor = a.Level.ToLowerInvariant() switch
+                                    {
+                                        "critical" => "#EF4444",
+                                        "warning" => "#F59E0B",
+                                        _ => "#38BDF8"
+                                    },
+                                    ImagePath = "/Assets/Images/bg_mountain_aurora.jpg",
+                                    DateTag = a.StartsAt.ToString("MMM yyyy"),
+                                    ActionText = !string.IsNullOrEmpty(a.ActionLabel) ? a.ActionLabel : "Learn More",
+                                    ActionUrl = a.ActionUrl ?? string.Empty
+                                });
+                            }
+                            OnPropertyChanged(nameof(HasNewsCards));
+                        });
+                    }
+                }
             }
             catch { }
         }

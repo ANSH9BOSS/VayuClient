@@ -413,7 +413,8 @@
             <StackPanel Margin="36,0,36,40">
                 
                 <!-- ─── SECTION 1: FEATURED RELEASE SPOTLIGHT BANNER ─── -->
-                <ItemsControl ItemsSource="{Binding FeaturedCards}">
+                <ItemsControl ItemsSource="{Binding FeaturedCards}"
+                              Visibility="{Binding HasFeaturedCards, Converter={StaticResource BoolToVis}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border CornerRadius="14" Background="#111B2E" BorderBrush="#1E293B" BorderThickness="1.5"
@@ -461,10 +462,12 @@
 
                 <!-- ─── SECTION 2: MINECRAFT & VAYUCLIENT UPDATES ─── -->
                 <Grid Margin="0,0,0,12">
-                    <TextBlock Text="UPDATES &amp; FEATURES" FontSize="12" FontWeight="Black" Foreground="#00D2FF" VerticalAlignment="Center"/>
+                    <TextBlock Text="UPDATES &amp; ANNOUNCEMENTS" FontSize="12" FontWeight="Black" Foreground="#00D2FF" VerticalAlignment="Center"/>
                 </Grid>
 
-                <ItemsControl ItemsSource="{Binding NewsCards}">
+                <!-- News Cards Grid (When Available) -->
+                <ItemsControl ItemsSource="{Binding NewsCards}"
+                              Visibility="{Binding HasNewsCards, Converter={StaticResource BoolToVis}}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="3"/>
@@ -506,6 +509,16 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- Honest Empty State for News & Announcements -->
+                <Border CornerRadius="12" Background="#0D1527" BorderBrush="#1E293B" BorderThickness="1.5"
+                        Padding="24,20" Margin="0,0,0,24"
+                        Visibility="{Binding HasNewsCards, Converter={StaticResource InverseBoolToVis}}">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="No announcements available" FontSize="13" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Official client updates and announcements from the backend will appear here." FontSize="11" Foreground="#475569" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- ─── SECTION 3: PARTNERED MINECRAFT SERVERS ─── -->
                 <Grid Margin="0,6,0,12">
                     <Grid.ColumnDefinitions>
@@ -519,7 +532,9 @@
                     </StackPanel>
                 </Grid>
 
-                <ItemsControl ItemsSource="{Binding PartneredServers}">
+                <!-- Partnered Servers Grid (When Available from Backend) -->
+                <ItemsControl ItemsSource="{Binding PartneredServers}"
+                              Visibility="{Binding HasPartneredServers, Converter={StaticResource BoolToVis}}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="2"/>
@@ -577,6 +592,16 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- Honest Empty State for Partnered Servers -->
+                <Border CornerRadius="12" Background="#0D1527" BorderBrush="#1E293B" BorderThickness="1.5"
+                        Padding="24,20" Margin="0,0,0,24"
+                        Visibility="{Binding HasPartneredServers, Converter={StaticResource InverseBoolToVis}}">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="No partnered servers available" FontSize="13" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Verified partner Minecraft servers will appear here when provided by the backend." FontSize="11" Foreground="#475569" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- ─── SECTION 4: COMMUNITY & DISCORD BANNER ─── -->
                 <Border CornerRadius="12" Background="#10172A" BorderBrush="#3B82F6" BorderThickness="1.5"
                         Padding="20,16" Margin="0,8,0,0">
@@ -588,9 +613,9 @@
 
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                                <TextBlock Text="💬  JOIN THE OFFICIAL VAYUCLIENT DISCORD" FontSize="13" FontWeight="Black" Foreground="#60A5FA"/>
+                                <TextBlock Text="💬  OFFICIAL VAYUCLIENT DISCORD" FontSize="13" FontWeight="Black" Foreground="#60A5FA"/>
                             </StackPanel>
-                            <TextBlock Text="Connect with over 15,000+ players, report bugs, request custom features, and participate in weekly Minecraft PvP tournaments."
+                            <TextBlock Text="Join the official VayuClient Discord community for client updates, support, feedback, and discussions."
                                        FontSize="11.5" Foreground="#94A3B8" TextWrapping="Wrap"/>
                         </StackPanel>
 

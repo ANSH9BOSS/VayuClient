@@ -49,29 +49,26 @@ namespace VayuClient.Core
             }
             catch { }
 
-            return "1.5.1";
+            return "1.6.1";
         }
 
         private static Version DetermineSemanticVersion(string verStr)
         {
             if (Version.TryParse(verStr, out var v)) return v;
-            return new Version(1, 5, 1);
+            return new Version(1, 6, 1);
         }
     }
 
     /// <summary>
     /// Centralized Microsoft Entra OAuth configuration for desktop authentication.
+    /// Registered Desktop Redirect URI: http://localhost
     /// </summary>
     public static class MicrosoftAuthConfig
     {
         public const string ClientId = "1390dea5-c274-4c1f-8fa6-a9d5fd33c70a";
-        public const string MojangClientId = "00000000402b5328";
         public const string Authority = "https://login.microsoftonline.com/common";
         public const string RedirectUri = "http://localhost";
         public static readonly string[] Scopes = { "XboxLive.signin", "offline_access" };
-
-        public const string LiveAuthorizeEndpoint = "https://login.live.com/oauth20_authorize.srf";
-        public const string LiveTokenEndpoint = "https://login.live.com/oauth20_token.srf";
 
         public const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
         public const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";

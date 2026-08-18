@@ -66,181 +66,43 @@ namespace VayuClient.Services.Authentication
         }
 
         /// <summary>
-        /// Interactive Microsoft login via system default browser and http://localhost loopback listener.
-        /// Automatically opens browser, catches the Microsoft redirect, serves a styled success page, and continues the Minecraft pipeline.
+        /// Interactive Microsoft login via MSAL.NET system default browser with registered Desktop redirect URI http://localhost.
+        /// Authenticates the user, acquires Microsoft access token, and completes the Minecraft authentication pipeline.
         /// </summary>
         public async Task<UserProfile> LoginInteractiveAsync(IProgress<string>? status = null, CancellationToken ct = default)
         {
-            CrashLogger.LogMessage("[AUTH] Starting browser loopback interactive OAuth authentication flow");
+            CrashLogger.LogMessage("[AUTH] Starting MSAL.NET Desktop Interactive OAuth authentication flow");
             status?.Report("Opening browser for Microsoft sign-in...");
 
-            int port = GetRandomUnusedPort();
-            string redirectUri = $"http://localhost:{port}/";
-            string state = Guid.NewGuid().ToString("N");
+            var app = GetMsalApp();
 
-            using var listener = new HttpListener();
+            AuthenticationResult authResult;
             try
             {
-                listener.Prefixes.Add(redirectUri);
-                listener.Start();
+                authResult = await app.AcquireTokenInteractive(MicrosoftAuthConfig.Scopes)
+                    .WithPrompt(Prompt.SelectAccount)
+                    .ExecuteAsync(ct);
             }
-            catch (Exception ex)
+            catch (MsalClientException ex) when (ex.ErrorCode == "authentication_canceled")
             {
-                CrashLogger.LogException("MicrosoftAuthService.HttpListener.Start", ex);
-                throw new InvalidOperationException($"Failed to start local browser listener on {redirectUri}: {ex.Message}", ex);
+                CrashLogger.LogMessage("[AUTH] Interactive Microsoft login cancelled by user.");
+                throw new OperationCanceledException("Microsoft sign-in was cancelled.", ex);
             }
-
-            string authUrl = $"https://login.live.com/oauth20_authorize.srf?client_id={MicrosoftAuthConfig.MojangClientId}&response_type=code&scope=service::user.auth.xboxlive.com::MBI_SSL&redirect_uri={Uri.EscapeDataString(redirectUri)}&state={state}";
-
-            try
+            catch (MsalException ex)
             {
-                Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
-            }
-            catch (Exception ex)
-            {
-                CrashLogger.LogException("MicrosoftAuthService.BrowserLaunch", ex);
-                throw new InvalidOperationException("Failed to launch system default browser for Microsoft authentication.", ex);
+                CrashLogger.LogException("MicrosoftAuthService.LoginInteractiveAsync", ex);
+                throw new InvalidOperationException($"Microsoft authentication error: {ex.Message}", ex);
             }
 
-            status?.Report("Waiting for you to complete sign-in in your browser...");
-
-            string? authCode = null;
-
-            using (ct.Register(() => { try { listener.Stop(); } catch { } }))
+            if (authResult == null || string.IsNullOrWhiteSpace(authResult.AccessToken))
             {
-                try
-                {
-                    var context = await listener.GetContextAsync();
-                    var req = context.Request;
-                    var res = context.Response;
-
-                    string? returnedState = req.QueryString["state"];
-                    authCode = req.QueryString["code"];
-                    string? error = req.QueryString["error"];
-                    string? errorDesc = req.QueryString["error_description"];
-
-                    byte[] responseBuffer;
-                    if (!string.IsNullOrEmpty(authCode))
-                    {
-                        string html = @"<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <title>VayuClient - Sign In Successful</title>
-    <style>
-        body { background: #0b0f19; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .card { background: rgba(18, 24, 38, 0.9); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 40px; text-align: center; max-width: 440px; box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(56, 189, 248, 0.2); }
-        h1 { color: #38bdf8; font-size: 24px; margin: 0 0 12px; }
-        p { color: #94a3b8; font-size: 15px; line-height: 1.6; margin: 0; }
-        .badge { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 13px; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <div class='card'>
-        <div class='badge'>✓ Connected to VayuClient</div>
-        <h1>Authentication Complete!</h1>
-        <p>You have signed in successfully. You can close this tab and return to <strong>VayuClient</strong>.</p>
-    </div>
-</body>
-</html>";
-                        responseBuffer = Encoding.UTF8.GetBytes(html);
-                        res.ContentType = "text/html; charset=utf-8";
-                        res.ContentLength64 = responseBuffer.Length;
-                        await res.OutputStream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
-                        res.OutputStream.Close();
-                    }
-                    else
-                    {
-                        string errHtml = $@"<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <title>VayuClient - Sign In Failed</title>
-    <style>
-        body {{ background: #0b0f19; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
-        .card {{ background: rgba(18, 24, 38, 0.9); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 40px; text-align: center; max-width: 440px; }}
-        h1 {{ color: #ef4444; font-size: 24px; margin: 0 0 12px; }}
-        p {{ color: #94a3b8; font-size: 15px; line-height: 1.6; margin: 0; }}
-    </style>
-</head>
-<body>
-    <div class='card'>
-        <h1>Sign In Failed</h1>
-        <p>{errorDesc ?? error ?? "Sign-in was cancelled or declined."}</p>
-    </div>
-</body>
-</html>";
-                        responseBuffer = Encoding.UTF8.GetBytes(errHtml);
-                        res.ContentType = "text/html; charset=utf-8";
-                        res.ContentLength64 = responseBuffer.Length;
-                        await res.OutputStream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
-                        res.OutputStream.Close();
-
-                        throw new InvalidOperationException($"Microsoft login failed: {errorDesc ?? error ?? "Cancelled in browser"}");
-                    }
-                }
-                catch (HttpListenerException) when (ct.IsCancellationRequested)
-                {
-                    throw new OperationCanceledException("Microsoft sign-in cancelled by user.");
-                }
-                finally
-                {
-                    try { listener.Stop(); } catch { }
-                }
+                throw new InvalidOperationException("Microsoft returned an empty access token.");
             }
 
-            if (string.IsNullOrWhiteSpace(authCode))
-            {
-                throw new InvalidOperationException("Did not receive authorization code from Microsoft.");
-            }
-
-            status?.Report("Exchanging authorization code for identity tokens...");
-            CrashLogger.LogMessage("[AUTH] Authorization code received from browser. Exchanging for tokens at login.live.com/oauth20_token.srf...");
-
-            var tokenContent = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("client_id", MicrosoftAuthConfig.MojangClientId),
-                new KeyValuePair<string, string>("grant_type", "authorization_code"),
-                new KeyValuePair<string, string>("code", authCode),
-                new KeyValuePair<string, string>("redirect_uri", redirectUri),
-                new KeyValuePair<string, string>("scope", "service::user.auth.xboxlive.com::MBI_SSL")
-            });
-
-            var tokenResponse = await _http.PostAsync(MicrosoftAuthConfig.LiveTokenEndpoint, tokenContent, ct);
-            var tokenJson = await tokenResponse.Content.ReadAsStringAsync(ct);
-
-            if (!tokenResponse.IsSuccessStatusCode)
-            {
-                string err = ParseOAuthError(tokenJson);
-                CrashLogger.LogMessage($"[AUTH] Token exchange failed: {err}");
-                throw new InvalidOperationException($"Microsoft token exchange failed: {err}");
-            }
-
-            var msaToken = JsonConvert.DeserializeObject<MsaTokenResponse>(tokenJson);
-            if (msaToken == null || string.IsNullOrWhiteSpace(msaToken.AccessToken))
-            {
-                throw new InvalidOperationException("Microsoft token response was empty or invalid.");
-            }
-
-            CrashLogger.LogMessage("[AUTH] Microsoft identity token acquired successfully. Continuing through Xbox Live pipeline...");
-            return await CompleteMinecraftAuthenticationAsync(msaToken.AccessToken, msaToken.RefreshToken, status, ct);
+            CrashLogger.LogMessage($"[AUTH] Microsoft identity token acquired successfully for account: {authResult.Account?.Username ?? "Microsoft User"}. Continuing through Xbox Live pipeline...");
+            return await CompleteMinecraftAuthenticationAsync(authResult.AccessToken, authResult.Account?.HomeAccountId?.Identifier, status, ct);
         }
 
-        private static int GetRandomUnusedPort()
-        {
-            try
-            {
-                var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
-                listener.Start();
-                int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
-                listener.Stop();
-                return port;
-            }
-            catch
-            {
-                return 28543;
-            }
-        }
 
         public async Task<DeviceCodeResponse> RequestDeviceCodeAsync(CancellationToken ct = default)
         {
