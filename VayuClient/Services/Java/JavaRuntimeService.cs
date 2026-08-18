@@ -592,5 +592,46 @@ namespace VayuClient.Services.Java
 
             await Task.WhenAll(downloadTasks);
         }
+
+        /// <summary>
+        /// Maps a Java runtime major version to the maximum supported Java class file bytecode version.
+        /// JVM supports class file versions up to 44 + Major (e.g. Java 8 = 52, Java 17 = 61, Java 21 = 65, Java 25 = 69).
+        /// </summary>
+        public static int GetMaxClassFileVersion(int javaMajor)
+        {
+            if (javaMajor <= 0) return 65; // Default assumption
+            if (javaMajor == 1) return 45;
+            return 44 + javaMajor;
+        }
+
+        /// <summary>
+        /// Determines the standard required Java major version for a given Minecraft version string.
+        /// </summary>
+        public static int GetRequiredJavaMajorForMinecraft(string minecraftVersion)
+        {
+            if (string.IsNullOrWhiteSpace(minecraftVersion)) return 21;
+            var clean = minecraftVersion.Trim();
+
+            // Modern versions (1.20.5+, 1.21.x, 26.x) require Java 21
+            if (clean.StartsWith("26.") || clean.StartsWith("1.21") || clean.StartsWith("1.20.5") || clean.StartsWith("1.20.6"))
+            {
+                return 21;
+            }
+
+            // 1.18 to 1.20.4 require Java 17
+            if (clean.StartsWith("1.18") || clean.StartsWith("1.19") || clean.StartsWith("1.20"))
+            {
+                return 17;
+            }
+
+            // 1.17 requires Java 16
+            if (clean.StartsWith("1.17"))
+            {
+                return 16;
+            }
+
+            // 1.16.5 and older run on Java 8
+            return 8;
+        }
     }
 }

@@ -34,6 +34,7 @@ namespace VayuClient.Services.Launch
         private readonly IModpackInstaller _modpackInstaller;
         private readonly IInstanceIntegrityService _integrityService;
         private readonly IPerformanceService _performanceService;
+        private readonly IVayuUiCompatibilityValidator _uiValidator;
 
         private Process? _activeGameProcess;
         private readonly string _logsDir;
@@ -56,7 +57,8 @@ namespace VayuClient.Services.Launch
             IModLoaderInstaller loaderInstaller,
             IModpackInstaller modpackInstaller,
             IInstanceIntegrityService integrityService,
-            IPerformanceService performanceService)
+            IPerformanceService performanceService,
+            IVayuUiCompatibilityValidator? uiValidator = null)
         {
             _instanceService = instanceService;
             _accountService = accountService;
@@ -68,6 +70,7 @@ namespace VayuClient.Services.Launch
             _modpackInstaller = modpackInstaller;
             _integrityService = integrityService;
             _performanceService = performanceService;
+            _uiValidator = uiValidator ?? new VayuUiCompatibilityValidator();
 
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             _logsDir = Path.Combine(appData, "VayuClient", "logs");
@@ -309,8 +312,8 @@ namespace VayuClient.Services.Launch
                 // 8.7 Apply Instance Performance Settings (options.txt and mod configs)
                 await _performanceService.ApplyInstanceOptionsAsync(instance, _performanceService.CurrentSettings);
 
-                // 8.8 Auto-deploy version-compatible VayuClient In-Game UI Mod
-                EnsureVayuClientUiMod(instance);
+                // 8.8 Auto-deploy and validate version-compatible VayuClient In-Game UI Mod
+                EnsureVayuClientUiMod(instance, javaRuntime, Log);
 
                 // 9. Build Classpath (Deduplicating loader vs vanilla conflicting libraries)
                 SetState(LaunchState.Preparing, "Building classpath and launch arguments...");
@@ -788,13 +791,17 @@ namespace VayuClient.Services.Launch
             }
         }
 
-        private void EnsureVayuClientUiMod(MinecraftInstance instance)
+        private void EnsureVayuClientUiMod(MinecraftInstance instance, JavaRuntimeInfo javaRuntime, Action<string>? log = null)
         {
             try
             {
                 var modsDir = Path.Combine(instance.GameDirectory, "mods");
                 Directory.CreateDirectory(modsDir);
 
+                // 1. Purge any stale or incompatible UI mod from instance directory
+                _uiValidator.PurgeIncompatibleUiMods(modsDir, javaRuntime.MajorVersion, instance.MinecraftVersion);
+
+                // 2. Resolve source candidate
                 var appBase = AppDomain.CurrentDomain.BaseDirectory;
                 var sourceMod = Path.Combine(appBase, "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
                 if (!File.Exists(sourceMod))
@@ -808,15 +815,41 @@ namespace VayuClient.Services.Launch
                     if (File.Exists(distSource)) sourceMod = distSource;
                 }
 
-                if (File.Exists(sourceMod))
+                if (!File.Exists(sourceMod))
                 {
-                    var dest = Path.Combine(modsDir, "vayuclient-ui-1.6.0.jar");
-                    File.Copy(sourceMod, dest, true);
-                    CrashLogger.LogMessage($"[VayuUI] Deployed VayuClient In-Game UI mod to {dest}");
+                    log?.Invoke($"[VayuUI] Notice: VayuClient UI artifact not found at {sourceMod}, launching in standard mode.");
+                    CrashLogger.LogMessage($"[VayuUI] Notice: VayuClient UI artifact not found at {sourceMod}");
+                    return;
                 }
+
+                // 3. Pre-launch Bytecode Compatibility Validation Gate
+                if (!_uiValidator.ValidateCompatibility(javaRuntime.MajorVersion, sourceMod, instance.MinecraftVersion, out string failureReason))
+                {
+                    log?.Invoke($"[VayuUI] CRITICAL COMPATIBILITY ERROR: {failureReason}");
+                    CrashLogger.LogMessage($"[VayuUI] CRITICAL COMPATIBILITY ERROR: {failureReason}");
+                    throw new InvalidOperationException(failureReason);
+                }
+
+                // 4. Deploy and assert integrity
+                var dest = Path.Combine(modsDir, "vayuclient-ui-1.6.0.jar");
+                File.Copy(sourceMod, dest, true);
+
+                var destInfo = _uiValidator.InspectArtifact(dest);
+                if (!destInfo.IsValid)
+                {
+                    throw new InvalidOperationException($"Deployed VayuClient UI artifact is invalid: {destInfo.ErrorMessage}");
+                }
+
+                log?.Invoke($"[VayuUI] Deployed and verified VayuClient UI mod (Java {javaRuntime.MajorVersion} / Bytecode {destInfo.BytecodeMajor}) to {dest}");
+                CrashLogger.LogMessage($"[VayuUI] Deployed VayuClient In-Game UI mod (Java {javaRuntime.MajorVersion} / Bytecode {destInfo.BytecodeMajor}) to {dest}");
+            }
+            catch (InvalidOperationException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
+                log?.Invoke($"[VayuUI] Warning: in-game UI deployment exception: {ex.Message}");
                 CrashLogger.LogMessage($"[VayuUI] Warning: could not deploy in-game UI mod: {ex.Message}");
             }
         }

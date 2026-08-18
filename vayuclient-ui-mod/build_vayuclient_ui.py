@@ -101,6 +101,32 @@ def main():
 
     print(f"SUCCESSFULLY PACKAGED JAR: {out_jar}")
 
+    # Bytecode Verification Gate: Read actual class file header from the generated JAR
+    with zipfile.ZipFile(out_jar, "r") as z:
+        class_entry = "com/vayuclient/ui/VayuClientUI.class"
+        if class_entry not in z.namelist():
+            raise RuntimeError(f"Entrypoint class {class_entry} missing from {out_jar}")
+        
+        class_bytes = z.read(class_entry)
+        if len(class_bytes) < 8:
+            raise RuntimeError("Corrupted class file: length < 8 bytes")
+        
+        magic = class_bytes[0:4]
+        if magic != b'\xca\xfe\xba\xbe':
+            raise RuntimeError(f"Invalid magic number in compiled class: {magic.hex()}")
+        
+        minor_ver = int.from_bytes(class_bytes[4:6], byteorder='big')
+        major_ver = int.from_bytes(class_bytes[6:8], byteorder='big')
+        
+        print(f"[BYTECODE VERIFIED] Class file major version: {major_ver} (minor: {minor_ver})")
+        if major_ver != 65:
+            raise RuntimeError(f"CRITICAL BYTECODE MISMATCH: Expected major version 65 (Java 21), got {major_ver}!")
+        
+        manifest_entry = "vayuclient-ui-manifest.json"
+        if manifest_entry not in z.namelist():
+            raise RuntimeError(f"Required artifact manifest {manifest_entry} missing from {out_jar}")
+        print(f"[MANIFEST VERIFIED] {manifest_entry} is present in archive.")
+
     # Copy to all VayuClient instance mods folders & assets folders
     target_dirs = [
         r"C:\Users\ANSH\AppData\Roaming\VayuClient\Instances\Spunky Optimized 1.0.0\game\mods",

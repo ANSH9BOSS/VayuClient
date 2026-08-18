@@ -28,3 +28,5 @@ VayuClientSetup/Resources/*.zip
 upload_to_github.ps1
 *.secret
 scratch/
+vayuclient-ui-mod/build/
+vayuclient-ui-mod/dist/

@@ -88,6 +88,9 @@ namespace VayuClient.Core
             var performanceService = new Services.Performance.PerformanceService(hardwareInfoService);
             Register<Services.Performance.IPerformanceService>(performanceService);
 
+            var uiCompatibilityValidator = new Services.Launch.VayuUiCompatibilityValidator();
+            Register<Services.Launch.IVayuUiCompatibilityValidator>(uiCompatibilityValidator);
+
             var launchService = new LaunchService(
                 instanceService,
                 accountService,
@@ -98,7 +101,8 @@ namespace VayuClient.Core
                 modLoaderInstaller,
                 modpackInstaller,
                 integrityService,
-                performanceService);
+                performanceService,
+                uiCompatibilityValidator);
             Register<ILaunchService>(launchService);
 
             Register<IMinecraftService>(new MinecraftService());
