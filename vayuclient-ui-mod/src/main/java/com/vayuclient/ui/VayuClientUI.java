@@ -1,8 +1,9 @@
 package com.vayuclient.ui;
 
-import com.vayuclient.ui.gui.VayuTitleScreen;
+import com.vayuclient.ui.core.EnvironmentResolver;
+import com.vayuclient.ui.core.VayuUIAdapterFactory;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.minecraft.client.Minecraft;
 
 public class VayuClientUI implements ClientModInitializer {
     public static final String MOD_ID = "vayuclient-ui";
@@ -17,21 +18,14 @@ public class VayuClientUI implements ClientModInitializer {
         System.out.println("==========================================================");
 
         try {
-            ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-                if (enabled && screen != null) {
-                    String className = screen.getClass().getName();
-                    if (className.contains("TitleScreen") || className.contains("class_442")) {
-                        if (!(screen instanceof VayuTitleScreen)) {
-                            if (client != null) {
-                                client.setScreenAndShow(new VayuTitleScreen());
-                            }
-                        }
-                    }
-                }
-            });
-            System.out.println("[VayuClient UI] ScreenEvents Hook Registered Successfully!");
+            EnvironmentResolver.resolveEnvironment(Minecraft.getInstance());
+            var adapter = VayuUIAdapterFactory.getActiveAdapter();
+            if (adapter != null) {
+                adapter.onInitialize(Minecraft.getInstance());
+                System.out.println("[VayuClient UI] System Initialized Successfully with " + adapter.getAdapterId());
+            }
         } catch (Throwable t) {
-            System.out.println("[VayuClient UI] ScreenEvents note: " + t.getMessage());
+            System.out.println("[VayuClient UI] Initialization note: " + t.getMessage());
         }
     }
 
