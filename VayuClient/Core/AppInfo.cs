@@ -65,9 +65,13 @@ namespace VayuClient.Core
     public static class MicrosoftAuthConfig
     {
         public const string ClientId = "1390dea5-c274-4c1f-8fa6-a9d5fd33c70a";
+        public const string MojangClientId = "00000000402b5328";
         public const string Authority = "https://login.microsoftonline.com/common";
         public const string RedirectUri = "http://localhost";
         public static readonly string[] Scopes = { "XboxLive.signin", "offline_access" };
+
+        public const string LiveAuthorizeEndpoint = "https://login.live.com/oauth20_authorize.srf";
+        public const string LiveTokenEndpoint = "https://login.live.com/oauth20_token.srf";
 
         public const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
         public const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";

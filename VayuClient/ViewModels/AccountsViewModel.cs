@@ -311,6 +311,23 @@ namespace VayuClient.ViewModels
                 _main.HomeVM.RefreshProfile();
                 IsLoggingInMicrosoft = false;
 
+                try
+                {
+                    Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        var win = Application.Current.MainWindow;
+                        if (win != null)
+                        {
+                            if (win.WindowState == WindowState.Minimized) win.WindowState = WindowState.Normal;
+                            win.Activate();
+                            win.Topmost = true;
+                            win.Topmost = false;
+                            win.Focus();
+                        }
+                    });
+                }
+                catch { }
+
                 _main.ShowNotification("Microsoft Login Successful", $"Signed in as {profile.Username}!", NotificationType.Success);
             }
             catch (OperationCanceledException)

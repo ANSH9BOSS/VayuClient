@@ -197,10 +197,28 @@ namespace VayuClient.ViewModels
 
                     _main.ShowNotification("Account Linked", $"Signed in as {profile.Username}", NotificationType.Success);
 
+                    // Automatically restore and focus the VayuClient application window after browser login
+                    try
+                    {
+                        Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            var win = Application.Current.MainWindow;
+                            if (win != null)
+                            {
+                                if (win.WindowState == WindowState.Minimized) win.WindowState = WindowState.Normal;
+                                win.Activate();
+                                win.Topmost = true;
+                                win.Topmost = false;
+                                win.Focus();
+                            }
+                        });
+                    }
+                    catch { }
+
                     LoadExistingProfiles();
                     SelectedExistingProfile = profile;
 
-                    await Task.Delay(1000);
+                    await Task.Delay(400);
                     CompleteOnboarding();
                 }
                 else
