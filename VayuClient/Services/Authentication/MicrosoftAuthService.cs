@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VayuClient.Core;
@@ -15,25 +16,12 @@ namespace VayuClient.Services.Authentication
 {
     public class MicrosoftAuthService : IMicrosoftAuthService
     {
-        // Official Mojang / Minecraft Live OAuth Public Client ID
-        private const string MojangClientId = "00000000402b5328";
-        private const string LiveScope = "service::user.auth.xboxlive.com::MBI_SSL";
-        private const string DeviceCodeEndpoint = "https://login.live.com/oauth20_connect.srf";
-        private const string TokenEndpoint = "https://login.live.com/oauth20_token.srf";
-
-        private const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
-        private const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";
-        private const string MinecraftLoginEndpoint = "https://api.minecraftservices.com/authentication/login_with_xbox";
-        private const string MinecraftStoreEndpoint = "https://api.minecraftservices.com/entitlements/mcstore";
-        private const string MinecraftProfileEndpoint = "https://api.minecraftservices.com/minecraft/profile";
-
-        private readonly string _activeClientId = MojangClientId;
-        private string _activeTokenEndpoint = TokenEndpoint;
-
         private static readonly HttpClient _http = new()
         {
             Timeout = TimeSpan.FromSeconds(25)
         };
+
+        private IPublicClientApplication? _msalApp;
 
         static MicrosoftAuthService()
         {
@@ -43,27 +31,87 @@ namespace VayuClient.Services.Authentication
             }
         }
 
+        private IPublicClientApplication GetMsalApp()
+        {
+            if (_msalApp == null)
+            {
+                _msalApp = PublicClientApplicationBuilder.Create(MicrosoftAuthConfig.ClientId)
+                    .WithAuthority(MicrosoftAuthConfig.Authority)
+                    .WithRedirectUri(MicrosoftAuthConfig.RedirectUri)
+                    .WithLogging((level, message, containsPii) =>
+                    {
+                        if (!containsPii && !string.IsNullOrWhiteSpace(message))
+                        {
+                            CrashLogger.LogMessage($"[MSAL] {message}");
+                        }
+                    }, LogLevel.Info, enablePiiLogging: false, enableDefaultPlatformLogging: false)
+                    .Build();
+            }
+            return _msalApp;
+        }
+
         public (bool IsValid, string Message) ValidateConfiguration()
         {
-            if (string.IsNullOrWhiteSpace(_activeClientId))
+            if (string.IsNullOrWhiteSpace(MicrosoftAuthConfig.ClientId))
             {
                 return (false, "Missing Microsoft Client ID configuration.");
+            }
+            if (string.IsNullOrWhiteSpace(MicrosoftAuthConfig.Authority))
+            {
+                return (false, "Missing Microsoft Authority configuration.");
             }
             return (true, "Valid");
         }
 
+        /// <summary>
+        /// Standard MSAL.NET desktop interactive login via system default browser and http://localhost loopback listener.
+        /// </summary>
+        public async Task<UserProfile> LoginInteractiveAsync(IProgress<string>? status = null, CancellationToken ct = default)
+        {
+            CrashLogger.LogMessage($"[AUTH] Initiating MSAL.NET desktop login (Client: {MicrosoftAuthConfig.ClientId}, Authority: {MicrosoftAuthConfig.Authority}, Redirect: {MicrosoftAuthConfig.RedirectUri})");
+            status?.Report("Opening browser for Microsoft sign-in...");
+
+            var app = GetMsalApp();
+            AuthenticationResult authResult;
+
+            try
+            {
+                authResult = await app.AcquireTokenInteractive(MicrosoftAuthConfig.Scopes)
+                    .WithPrompt(Prompt.SelectAccount)
+                    .ExecuteAsync(ct);
+            }
+            catch (MsalClientException mce) when (mce.ErrorCode == "authentication_canceled")
+            {
+                CrashLogger.LogMessage("[AUTH] Microsoft sign-in was cancelled by the user in browser.");
+                throw new OperationCanceledException("Microsoft sign-in was cancelled.", mce);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("MicrosoftAuthService.LoginInteractiveAsync", ex);
+                throw;
+            }
+
+            if (authResult == null || string.IsNullOrWhiteSpace(authResult.AccessToken))
+            {
+                throw new InvalidOperationException("Microsoft sign-in did not return a valid access token.");
+            }
+
+            CrashLogger.LogMessage("[AUTH] Microsoft Entra identity token acquired successfully. Continuing through Xbox Live pipeline...");
+            return await CompleteMinecraftAuthenticationAsync(authResult.AccessToken, authResult.Account?.HomeAccountId?.Identifier, status, ct);
+        }
+
         public async Task<DeviceCodeResponse> RequestDeviceCodeAsync(CancellationToken ct = default)
         {
-            CrashLogger.LogMessage("[MicrosoftAuth] Starting Microsoft Live device code authentication flow");
+            CrashLogger.LogMessage("[MicrosoftAuth] Starting Microsoft device code authentication flow");
 
             var content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("client_id", _activeClientId),
-                new KeyValuePair<string, string>("scope", LiveScope),
+                new KeyValuePair<string, string>("client_id", "00000000402b5328"),
+                new KeyValuePair<string, string>("scope", "service::user.auth.xboxlive.com::MBI_SSL"),
                 new KeyValuePair<string, string>("response_type", "device_code")
             });
 
-            var response = await _http.PostAsync(DeviceCodeEndpoint, content, ct);
+            var response = await _http.PostAsync("https://login.live.com/oauth20_connect.srf", content, ct);
             var json = await response.Content.ReadAsStringAsync(ct);
 
             if (response.IsSuccessStatusCode)
@@ -71,7 +119,6 @@ namespace VayuClient.Services.Authentication
                 var deviceCode = JsonConvert.DeserializeObject<DeviceCodeResponse>(json);
                 if (deviceCode != null && !string.IsNullOrEmpty(deviceCode.DeviceCode) && !string.IsNullOrEmpty(deviceCode.UserCode))
                 {
-                    _activeTokenEndpoint = TokenEndpoint;
                     CrashLogger.LogMessage($"[MicrosoftAuth] Device code generated successfully. User Code: {deviceCode.UserCode}, URL: {deviceCode.VerificationUri}");
                     return deviceCode;
                 }
@@ -103,7 +150,7 @@ namespace VayuClient.Services.Authentication
 
                 var content = new FormUrlEncodedContent(new[]
                 {
-                    new KeyValuePair<string, string>("client_id", _activeClientId),
+                    new KeyValuePair<string, string>("client_id", "00000000402b5328"),
                     new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
                     new KeyValuePair<string, string>("device_code", deviceCode.DeviceCode)
                 });
@@ -112,12 +159,12 @@ namespace VayuClient.Services.Authentication
                 string json;
                 try
                 {
-                    response = await _http.PostAsync(_activeTokenEndpoint, content, ct);
+                    response = await _http.PostAsync("https://login.live.com/oauth20_token.srf", content, ct);
                     json = await response.Content.ReadAsStringAsync(ct);
                 }
                 catch (HttpRequestException)
                 {
-                    continue; // Transient network retry
+                    continue;
                 }
 
                 if (response.IsSuccessStatusCode)
@@ -125,8 +172,8 @@ namespace VayuClient.Services.Authentication
                     var msaToken = JsonConvert.DeserializeObject<MsaTokenResponse>(json);
                     if (msaToken != null && !string.IsNullOrEmpty(msaToken.AccessToken))
                     {
-                        CrashLogger.LogMessage("[MicrosoftAuth] Microsoft identity token acquired successfully.");
-                        return await CompleteMinecraftAuthenticationAsync(msaToken, status, ct);
+                        CrashLogger.LogMessage("[MicrosoftAuth] Microsoft identity token acquired successfully via device code.");
+                        return await CompleteMinecraftAuthenticationAsync(msaToken.AccessToken, msaToken.RefreshToken, status, ct);
                     }
                 }
                 else
@@ -176,31 +223,35 @@ namespace VayuClient.Services.Authentication
         }
 
         private async Task<UserProfile> CompleteMinecraftAuthenticationAsync(
-            MsaTokenResponse msaToken,
+            string msAccessToken,
+            string? refreshTokenOrAccountId,
             IProgress<string>? status,
             CancellationToken ct)
         {
             // 1. Xbox Live User Authentication
             status?.Report("Authenticating with Xbox Live...");
+            CrashLogger.LogMessage("[AUTH] Requesting Xbox Live user token (user.auth.xboxlive.com)...");
+
             var xblPayload = new
             {
                 Properties = new
                 {
                     AuthMethod = "RPS",
                     SiteName = "user.auth.xboxlive.com",
-                    RpsTicket = $"d={msaToken.AccessToken}"
+                    RpsTicket = $"d={msAccessToken}"
                 },
                 RelyingParty = "http://auth.xboxlive.com",
                 TokenType = "JWT"
             };
 
             var xblReq = new StringContent(JsonConvert.SerializeObject(xblPayload), Encoding.UTF8, "application/json");
-            var xblRes = await _http.PostAsync(XboxAuthEndpoint, xblReq, ct);
+            var xblRes = await _http.PostAsync(MicrosoftAuthConfig.XboxAuthEndpoint, xblReq, ct);
             var xblJson = await xblRes.Content.ReadAsStringAsync(ct);
 
             if (!xblRes.IsSuccessStatusCode)
             {
                 string xblError = ParseXboxError(xblJson);
+                CrashLogger.LogMessage($"[AUTH] Xbox Live authentication failed: {xblError}");
                 throw new InvalidOperationException($"Xbox Live authentication failed: {xblError}");
             }
 
@@ -213,8 +264,12 @@ namespace VayuClient.Services.Authentication
                 throw new InvalidOperationException("Failed to acquire valid Xbox Live security credentials.");
             }
 
+            CrashLogger.LogMessage("[AUTH] Xbox Live user token acquired successfully.");
+
             // 2. XSTS Security Token
             status?.Report("Acquiring XSTS Security token...");
+            CrashLogger.LogMessage("[AUTH] Requesting XSTS security token for Minecraft Services (xsts.auth.xboxlive.com)...");
+
             var xstsPayload = new
             {
                 Properties = new
@@ -227,12 +282,13 @@ namespace VayuClient.Services.Authentication
             };
 
             var xstsReq = new StringContent(JsonConvert.SerializeObject(xstsPayload), Encoding.UTF8, "application/json");
-            var xstsRes = await _http.PostAsync(XstsAuthEndpoint, xstsReq, ct);
+            var xstsRes = await _http.PostAsync(MicrosoftAuthConfig.XstsAuthEndpoint, xstsReq, ct);
             var xstsJson = await xstsRes.Content.ReadAsStringAsync(ct);
 
             if (!xstsRes.IsSuccessStatusCode)
             {
                 string xstsError = ParseXstsError(xstsJson);
+                CrashLogger.LogMessage($"[AUTH] XSTS authentication failed: {xstsError}");
                 throw new InvalidOperationException(xstsError);
             }
 
@@ -244,19 +300,24 @@ namespace VayuClient.Services.Authentication
                 throw new InvalidOperationException("Failed to acquire XSTS authorization token from Xbox Live.");
             }
 
+            CrashLogger.LogMessage("[AUTH] XSTS security token acquired successfully.");
+
             // 3. Minecraft Services Login
             status?.Report("Authenticating with Minecraft Services...");
+            CrashLogger.LogMessage("[AUTH] Authenticating with Minecraft Services (api.minecraftservices.com)...");
+
             var mcLoginPayload = new
             {
                 identityToken = $"XBL3.0 x={uhs};{xstsToken}"
             };
 
             var mcLoginReq = new StringContent(JsonConvert.SerializeObject(mcLoginPayload), Encoding.UTF8, "application/json");
-            var mcLoginRes = await _http.PostAsync(MinecraftLoginEndpoint, mcLoginReq, ct);
+            var mcLoginRes = await _http.PostAsync(MicrosoftAuthConfig.MinecraftLoginEndpoint, mcLoginReq, ct);
             var mcLoginJson = await mcLoginRes.Content.ReadAsStringAsync(ct);
 
             if (!mcLoginRes.IsSuccessStatusCode)
             {
+                CrashLogger.LogMessage($"[AUTH] Minecraft Services authentication failed: {mcLoginJson}");
                 throw new InvalidOperationException($"Minecraft services authentication failed: {mcLoginJson}");
             }
 
@@ -266,13 +327,18 @@ namespace VayuClient.Services.Authentication
                 throw new InvalidOperationException("Minecraft Services did not return a valid session token.");
             }
 
+            CrashLogger.LogMessage("[AUTH] Minecraft Services session token acquired successfully.");
+
             // 4. Check Game Ownership Entitlement
             status?.Report("Verifying Minecraft ownership...");
             bool hasEntitlement = await VerifyGameOwnershipAsync(mcAuth.AccessToken, ct);
+            CrashLogger.LogMessage($"[AUTH] Minecraft game ownership verification: {(hasEntitlement ? "OWNED" : "UNCONFIRMED")}");
 
             // 5. Get Minecraft Profile
-            status?.Report("Fetching Minecraft profile from Mojang...");
-            using var profileReq = new HttpRequestMessage(HttpMethod.Get, MinecraftProfileEndpoint);
+            status?.Report("Fetching Minecraft Java profile from Mojang...");
+            CrashLogger.LogMessage("[AUTH] Fetching official Minecraft Java profile...");
+
+            using var profileReq = new HttpRequestMessage(HttpMethod.Get, MicrosoftAuthConfig.MinecraftProfileEndpoint);
             profileReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcAuth.AccessToken);
 
             var profileRes = await _http.SendAsync(profileReq, ct);
@@ -282,8 +348,10 @@ namespace VayuClient.Services.Authentication
             {
                 if (profileRes.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    throw new InvalidOperationException("Minecraft Java Edition profile not found on this Microsoft account. Please create your Minecraft Java profile at minecraft.net first.");
+                    CrashLogger.LogMessage("[AUTH] Minecraft Java Edition profile NOT FOUND (HTTP 404).");
+                    throw new InvalidOperationException("No Minecraft Java Edition profile found on this Microsoft account. Please verify that this account owns Minecraft Java Edition or create your player profile on minecraft.net first.");
                 }
+                CrashLogger.LogMessage($"[AUTH] Minecraft profile lookup failed: HTTP {(int)profileRes.StatusCode}");
                 throw new InvalidOperationException($"Failed to retrieve Minecraft profile: HTTP {(int)profileRes.StatusCode} - {profileJson}");
             }
 
@@ -296,7 +364,7 @@ namespace VayuClient.Services.Authentication
             string username = profileObj.Name;
             string uuid = profileObj.Id;
 
-            CrashLogger.LogMessage($"[Authentication] Microsoft account authenticated successfully (Player: {username}, UUID: {uuid})");
+            CrashLogger.LogMessage($"[AUTH] Official Minecraft Java profile resolved: Player={username}, UUID={uuid}");
             status?.Report($"Authenticated as {username}!");
 
             return new UserProfile
@@ -306,7 +374,7 @@ namespace VayuClient.Services.Authentication
                 UUID = uuid,
                 AccountType = AccountType.Microsoft,
                 AccessToken = mcAuth.AccessToken,
-                RefreshToken = msaToken.RefreshToken,
+                RefreshToken = refreshTokenOrAccountId ?? string.Empty,
                 TokenExpiresAt = DateTime.UtcNow.AddSeconds(mcAuth.ExpiresIn > 0 ? mcAuth.ExpiresIn : 86400),
                 HasEntitlement = hasEntitlement,
                 IsActive = true,
@@ -318,7 +386,7 @@ namespace VayuClient.Services.Authentication
         {
             try
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, MinecraftStoreEndpoint);
+                using var req = new HttpRequestMessage(HttpMethod.Get, MicrosoftAuthConfig.MinecraftStoreEndpoint);
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcAccessToken);
 
                 var res = await _http.SendAsync(req, ct);
@@ -334,46 +402,46 @@ namespace VayuClient.Services.Authentication
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("MicrosoftAuthService.VerifyGameOwnership", ex);
+            }
 
             return false;
         }
 
         public async Task<UserProfile?> RefreshTokenAsync(UserProfile profile, CancellationToken ct = default)
         {
-            if (profile.AccountType != AccountType.Microsoft || string.IsNullOrEmpty(profile.RefreshToken))
+            if (profile.AccountType != AccountType.Microsoft)
             {
                 return profile;
             }
 
             try
             {
-                var content = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("client_id", _activeClientId),
-                    new KeyValuePair<string, string>("grant_type", "refresh_token"),
-                    new KeyValuePair<string, string>("refresh_token", profile.RefreshToken),
-                    new KeyValuePair<string, string>("scope", LiveScope)
-                });
+                CrashLogger.LogMessage($"[AUTH] Refreshing session for player {profile.Username} via MSAL.NET...");
+                var app = GetMsalApp();
+                var accounts = await app.GetAccountsAsync();
+                var account = accounts.FirstOrDefault(a => a.HomeAccountId.Identifier == profile.RefreshToken) 
+                              ?? accounts.FirstOrDefault();
 
-                var response = await _http.PostAsync(_activeTokenEndpoint, content, ct);
-                var json = await response.Content.ReadAsStringAsync(ct);
-
-                if (response.IsSuccessStatusCode)
+                AuthenticationResult? authResult = null;
+                if (account != null)
                 {
-                    var msaToken = JsonConvert.DeserializeObject<MsaTokenResponse>(json);
-                    if (msaToken != null && !string.IsNullOrEmpty(msaToken.AccessToken))
-                    {
-                        var refreshed = await CompleteMinecraftAuthenticationAsync(msaToken, null, ct);
-                        refreshed.Id = profile.Id;
-                        refreshed.AvatarIndex = profile.AvatarIndex;
-                        return refreshed;
-                    }
+                    authResult = await app.AcquireTokenSilent(MicrosoftAuthConfig.Scopes, account).ExecuteAsync(ct);
+                }
+
+                if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
+                {
+                    var refreshed = await CompleteMinecraftAuthenticationAsync(authResult.AccessToken, authResult.Account?.HomeAccountId?.Identifier, null, ct);
+                    refreshed.Id = profile.Id;
+                    refreshed.AvatarIndex = profile.AvatarIndex;
+                    return refreshed;
                 }
             }
             catch (Exception ex)
             {
-                CrashLogger.LogMessage($"[MicrosoftAuth] Token refresh error: {ex.Message}");
+                CrashLogger.LogMessage($"[AUTH] Silent token refresh notice: {ex.Message}");
             }
 
             return profile;

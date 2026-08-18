@@ -22,6 +22,14 @@ namespace VayuClient.Services.Authentication
             _accountService = accountService;
         }
 
+        public async Task<UserProfile> LoginInteractiveAsync(IProgress<string>? progress = null, CancellationToken ct = default)
+        {
+            var profile = await _msAuth.LoginInteractiveAsync(progress, ct);
+            _profileService.AddOrUpdateProfile(profile);
+            _accountService.SetActiveProfile(profile.Id);
+            return profile;
+        }
+
         public async Task<DeviceCodeResponse> BeginDeviceCodeLoginAsync(CancellationToken ct = default)
         {
             return await _msAuth.RequestDeviceCodeAsync(ct);

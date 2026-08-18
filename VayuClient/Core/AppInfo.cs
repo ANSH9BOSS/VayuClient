@@ -58,4 +58,21 @@ namespace VayuClient.Core
             return new Version(1, 5, 1);
         }
     }
+
+    /// <summary>
+    /// Centralized Microsoft Entra OAuth configuration for desktop authentication.
+    /// </summary>
+    public static class MicrosoftAuthConfig
+    {
+        public const string ClientId = "1390dea5-c274-4c1f-8fa6-a9d5fd33c70a";
+        public const string Authority = "https://login.microsoftonline.com/common";
+        public const string RedirectUri = "http://localhost";
+        public static readonly string[] Scopes = { "XboxLive.signin", "offline_access" };
+
+        public const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
+        public const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";
+        public const string MinecraftLoginEndpoint = "https://api.minecraftservices.com/authentication/login_with_xbox";
+        public const string MinecraftStoreEndpoint = "https://api.minecraftservices.com/entitlements/mcstore";
+        public const string MinecraftProfileEndpoint = "https://api.minecraftservices.com/minecraft/profile";
+    }
 }

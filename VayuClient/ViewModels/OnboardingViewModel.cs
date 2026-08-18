@@ -173,41 +173,17 @@ namespace VayuClient.ViewModels
             _msAuthCts?.Dispose();
             _msAuthCts = new CancellationTokenSource();
 
-            CrashLogger.LogMessage("[AUTH] Microsoft login initiated via Welcome screen");
+            CrashLogger.LogMessage("[AUTH] Microsoft login initiated via MSAL.NET desktop application");
 
             try
             {
-                var deviceCodeRes = await _authService.BeginDeviceCodeLoginAsync(_msAuthCts.Token);
-                if (deviceCodeRes == null || string.IsNullOrWhiteSpace(deviceCodeRes.UserCode))
-                {
-                    throw new InvalidOperationException("Failed to obtain device authorization code from Microsoft.");
-                }
-
-                MicrosoftUserCode = deviceCodeRes.UserCode;
-                MicrosoftVerificationUri = !string.IsNullOrWhiteSpace(deviceCodeRes.VerificationUri) ? deviceCodeRes.VerificationUri : "https://microsoft.com/link";
-                MicrosoftAuthStatus = $"Code: {deviceCodeRes.UserCode} (Copied to Clipboard!)";
-
-                CrashLogger.LogMessage($"[AUTH] Microsoft Device Code obtained: {deviceCodeRes.UserCode}. Verification URL: {MicrosoftVerificationUri}");
-
-                try
-                {
-                    Clipboard.SetText(deviceCodeRes.UserCode);
-                }
-                catch { }
-
-                try
-                {
-                    Process.Start(new ProcessStartInfo(MicrosoftVerificationUri) { UseShellExecute = true });
-                }
-                catch { }
-
                 var progressReporter = new Progress<string>(msg =>
                 {
                     MicrosoftAuthStatus = msg;
-                    CrashLogger.LogMessage($"[AUTH] Microsoft auth progress: {msg}");
+                    CrashLogger.LogMessage($"[AUTH] {msg}");
                 });
 
-                var profile = await _authService.CompleteDeviceCodeLoginAsync(deviceCodeRes, progressReporter, _msAuthCts.Token);
+                var profile = await _authService.LoginInteractiveAsync(progressReporter, _msAuthCts.Token);
                 if (profile != null && !string.IsNullOrWhiteSpace(profile.Username))
                 {
                     AuthenticatedProfile = profile;
@@ -229,7 +205,7 @@ namespace VayuClient.ViewModels
                 }
                 else
                 {
-                    throw new InvalidOperationException("Minecraft profile could not be verified on this account.");
+                    throw new InvalidOperationException("No Minecraft Java Edition profile found on this Microsoft account.");
                 }
             }
             catch (OperationCanceledException)

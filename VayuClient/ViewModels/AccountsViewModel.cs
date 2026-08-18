@@ -297,33 +297,18 @@ namespace VayuClient.ViewModels
             _msAuthCts = new CancellationTokenSource();
 
             IsLoggingInMicrosoft = true;
-            MicrosoftAuthStatus = "Requesting device code from Microsoft...";
+            MicrosoftAuthStatus = "Opening browser for Microsoft sign-in...";
 
             try
             {
-                var devCode = await _authService.BeginDeviceCodeLoginAsync(_msAuthCts.Token);
-                MicrosoftUserCode = devCode.UserCode;
-                MicrosoftAuthStatus = $"Code copied! Opening {devCode.VerificationUri}...";
-
-                try
-                {
-                    Clipboard.SetText(devCode.UserCode);
-                }
-                catch { }
-
-                try
-                {
-                    Process.Start(new ProcessStartInfo(devCode.VerificationUri) { UseShellExecute = true });
-                }
-                catch { }
-
                 var progress = new Progress<string>(s =>
                 {
                     MicrosoftAuthStatus = s;
                 });
 
-                var profile = await _authService.CompleteDeviceCodeLoginAsync(devCode, progress, _msAuthCts.Token);
+                var profile = await _authService.LoginInteractiveAsync(progress, _msAuthCts.Token);
                 LoadProfiles();
+                _main.HomeVM.RefreshProfile();
                 IsLoggingInMicrosoft = false;
 
                 _main.ShowNotification("Microsoft Login Successful", $"Signed in as {profile.Username}!", NotificationType.Success);
