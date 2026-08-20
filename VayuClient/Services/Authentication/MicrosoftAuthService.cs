@@ -288,23 +288,46 @@ namespace VayuClient.Services.Authentication
             status?.Report("Authenticating with Xbox Live...");
             CrashLogger.LogMessage("[AUTH] Requesting Xbox Live user token (user.auth.xboxlive.com)...");
 
-            var xblPayload = new
+            string[] ticketFormats = msAccessToken.StartsWith("d=")
+                ? new[] { msAccessToken, msAccessToken.Substring(2) }
+                : new[] { $"d={msAccessToken}", msAccessToken, $"t={msAccessToken}" };
+
+            string xblJson = "";
+            bool xblSuccess = false;
+            HttpResponseMessage? lastXblRes = null;
+
+            foreach (var ticket in ticketFormats)
             {
-                Properties = new
+                var xblPayload = new
                 {
-                    AuthMethod = "RPS",
-                    SiteName = "user.auth.xboxlive.com",
-                    RpsTicket = $"d={msAccessToken}"
-                },
-                RelyingParty = "http://auth.xboxlive.com",
-                TokenType = "JWT"
-            };
+                    Properties = new
+                    {
+                        AuthMethod = "RPS",
+                        SiteName = "user.auth.xboxlive.com",
+                        RpsTicket = ticket
+                    },
+                    RelyingParty = "http://auth.xboxlive.com",
+                    TokenType = "JWT"
+                };
 
-            var xblReq = new StringContent(JsonConvert.SerializeObject(xblPayload), Encoding.UTF8, "application/json");
-            var xblRes = await _http.PostAsync(MicrosoftAuthConfig.XboxAuthEndpoint, xblReq, ct);
-            var xblJson = await xblRes.Content.ReadAsStringAsync(ct);
+                using var xblReq = new HttpRequestMessage(HttpMethod.Post, MicrosoftAuthConfig.XboxAuthEndpoint);
+                xblReq.Content = new StringContent(JsonConvert.SerializeObject(xblPayload), Encoding.UTF8, "application/json");
+                xblReq.Headers.Accept.Clear();
+                xblReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                xblReq.Headers.TryAddWithoutValidation("x-xbl-contract-version", "1");
 
-            if (!xblRes.IsSuccessStatusCode)
+                lastXblRes = await _http.SendAsync(xblReq, ct);
+                xblJson = await lastXblRes.Content.ReadAsStringAsync(ct);
+
+                if (lastXblRes.IsSuccessStatusCode)
+                {
+                    xblSuccess = true;
+                    break;
+                }
+                CrashLogger.LogMessage($"[AUTH] Xbox Live attempt format failed (HTTP {(int)lastXblRes.StatusCode}): {xblJson}");
+            }
+
+            if (!xblSuccess)
             {
                 string xblError = ParseXboxError(xblJson);
                 CrashLogger.LogMessage($"[AUTH] Xbox Live authentication failed: {xblError}");
@@ -337,8 +360,13 @@ namespace VayuClient.Services.Authentication
                 TokenType = "JWT"
             };
 
-            var xstsReq = new StringContent(JsonConvert.SerializeObject(xstsPayload), Encoding.UTF8, "application/json");
-            var xstsRes = await _http.PostAsync(MicrosoftAuthConfig.XstsAuthEndpoint, xstsReq, ct);
+            using var xstsReq = new HttpRequestMessage(HttpMethod.Post, MicrosoftAuthConfig.XstsAuthEndpoint);
+            xstsReq.Content = new StringContent(JsonConvert.SerializeObject(xstsPayload), Encoding.UTF8, "application/json");
+            xstsReq.Headers.Accept.Clear();
+            xstsReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            xstsReq.Headers.TryAddWithoutValidation("x-xbl-contract-version", "1");
+
+            var xstsRes = await _http.SendAsync(xstsReq, ct);
             var xstsJson = await xstsRes.Content.ReadAsStringAsync(ct);
 
             if (!xstsRes.IsSuccessStatusCode)
@@ -367,8 +395,12 @@ namespace VayuClient.Services.Authentication
                 identityToken = $"XBL3.0 x={uhs};{xstsToken}"
             };
 
-            var mcLoginReq = new StringContent(JsonConvert.SerializeObject(mcLoginPayload), Encoding.UTF8, "application/json");
-            var mcLoginRes = await _http.PostAsync(MicrosoftAuthConfig.MinecraftLoginEndpoint, mcLoginReq, ct);
+            using var mcLoginReq = new HttpRequestMessage(HttpMethod.Post, MicrosoftAuthConfig.MinecraftLoginEndpoint);
+            mcLoginReq.Content = new StringContent(JsonConvert.SerializeObject(mcLoginPayload), Encoding.UTF8, "application/json");
+            mcLoginReq.Headers.Accept.Clear();
+            mcLoginReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var mcLoginRes = await _http.SendAsync(mcLoginReq, ct);
             var mcLoginJson = await mcLoginRes.Content.ReadAsStringAsync(ct);
 
             if (!mcLoginRes.IsSuccessStatusCode)
@@ -521,13 +553,17 @@ namespace VayuClient.Services.Authentication
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(json)) return "Xbox Live rejected the security token (empty response). Please ensure your Microsoft account has an Xbox profile created on xbox.com.";
                 var obj = JObject.Parse(json);
                 var errCode = obj["XErr"]?.ToString();
-                if (errCode == "2148916233") return "This account does not have an Xbox profile. Please create an Xbox profile on xbox.com.";
-                if (errCode == "2148916238") return "This account is a child account and must be added to a Family Safety group by a parent.";
+                if (errCode == "2148916233") return "This Microsoft account does not have an Xbox gamer profile. Please sign in to https://xbox.com once to create your free gamer tag.";
+                if (errCode == "2148916235") return "Xbox Live is not available in your country/region.";
+                if (errCode == "2148916238") return "This account is a child account and requires adult parental permission added via Xbox Family Safety.";
+                var message = obj["Message"]?.ToString() ?? obj["error_description"]?.ToString() ?? obj["error"]?.ToString();
+                if (!string.IsNullOrEmpty(message)) return $"{message} (Code: {errCode})";
             }
             catch { }
-            return "Xbox Live user authentication failed.";
+            return string.IsNullOrWhiteSpace(json) ? "Xbox Live user authentication failed." : json;
         }
 
         private static string ParseXstsError(string json)
