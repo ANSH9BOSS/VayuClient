@@ -206,11 +206,13 @@ if ($setupExists -and $appExists) {
         if ($gitStatus) {
             git commit -m "release: v$activeVersion - Universal HUD & Launcher updates"
             git push origin main
-            Write-Host "-> Successfully updated and pushed build v$activeVersion to GitHub!" -ForegroundColor Green
         } else {
             git push origin main
-            Write-Host "-> Repository is up-to-date on GitHub!" -ForegroundColor Green
         }
+        # Tag release version for GitHub Releases badge and release tracking
+        git tag -a "v$activeVersion" -f -m "Release v$activeVersion - VayuClient Real Executable & Universal HUD"
+        git push origin "v$activeVersion" --force --tags
+        Write-Host "-> Successfully pushed release tag v$activeVersion to GitHub!" -ForegroundColor Green
     } catch {
         Write-Host "-> [GitHub Push Notice]: $($_.Exception.Message)" -ForegroundColor Yellow
     }
