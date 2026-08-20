@@ -159,26 +159,35 @@ def main():
             except Exception as e:
                 print(f"[Warning] Failed deleting asset: {e}", flush=True)
 
-        print(f"[GitHub] Uploading {filename} ({os.path.getsize(file_path)} bytes)...", flush=True)
-        upload_url = f"{upload_base}?name={urllib.parse.quote(filename)}"
-        
-        with open(file_path, "rb") as f:
-            file_data = f.read()
+        success = False
+        for attempt in range(1, 4):
+            print(f"[GitHub] Uploading {filename} ({os.path.getsize(file_path)} bytes, attempt {attempt}/3)...", flush=True)
+            upload_url = f"{upload_base}?name={urllib.parse.quote(filename)}"
+            
+            with open(file_path, "rb") as f:
+                file_data = f.read()
 
-        upload_headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/octet-stream",
-            "Content-Length": str(len(file_data)),
-            "User-Agent": "VayuClient-ReleaseBot"
-        }
+            upload_headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/octet-stream",
+                "Content-Length": str(len(file_data)),
+                "User-Agent": "VayuClient-ReleaseBot"
+            }
 
-        up_req = urllib.request.Request(upload_url, data=file_data, headers=upload_headers, method="POST")
-        try:
-            with urllib.request.urlopen(up_req) as resp:
-                asset_resp = json.loads(resp.read().decode())
-                print(f"[GitHub] Successfully uploaded {filename}! (Asset ID: {asset_resp.get('id')})", flush=True)
-        except Exception as e:
-            print(f"[Error] Failed uploading {filename}: {e}", flush=True)
+            up_req = urllib.request.Request(upload_url, data=file_data, headers=upload_headers, method="POST")
+            try:
+                with urllib.request.urlopen(up_req, timeout=300) as resp:
+                    asset_resp = json.loads(resp.read().decode())
+                    print(f"[GitHub] Successfully uploaded {filename}! (Asset ID: {asset_resp.get('id')})", flush=True)
+                    success = True
+                    break
+            except Exception as e:
+                print(f"[Warning] Attempt {attempt} failed uploading {filename}: {e}", flush=True)
+                import time
+                time.sleep(2)
+
+        if not success:
+            print(f"[Error] Failed uploading {filename} after 3 attempts.", flush=True)
 
     print("\n==========================================================", flush=True)
     print(f" SUCCESS: GitHub Release {VERSION_TAG} is now LIVE as LATEST!", flush=True)
