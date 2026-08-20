@@ -1,24 +1,14 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.gui.GuiGraphicsExtractor
- *  net.minecraft.client.input.MouseButtonEvent
- */
 package com.vayuclient.hud.gui.components;
 
 import java.util.function.Consumer;
 import com.vayuclient.hud.gui.VayuHUDUI;
 import com.vayuclient.hud.gui.VayuTheme;
-import com.vayuclient.hud.gui.components.UIComponent;
 import com.vayuclient.hud.render.AnimationUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 
-public class Dropdown
-extends UIComponent {
+public class Dropdown extends UIComponent {
     private final String label;
     private final String[] options;
     private int selectedIndex;
@@ -51,104 +41,104 @@ extends UIComponent {
         this.expandProgress = AnimationUtils.smoothDelta(this.expandProgress, this.expanded ? 1.0f : 0.0f, 0.4f, dt * 60.0f);
         this.hoverProgress = AnimationUtils.smoothDelta(this.hoverProgress, this.hovered ? 1.0f : 0.0f, 0.4f, dt * 60.0f);
         Minecraft mc = Minecraft.getInstance();
-        if (this.hoverProgress > 0.01f && !this.expanded) {
-            int bgAlpha = (int)(15.0f * this.hoverProgress);
-            VayuHUDUI.roundedRect(graphics, this.x, this.y, this.width, this.height, 4, VayuHUDUI.withAlpha(-266722777, bgAlpha));
-        }
+
+        // 1. Setting Label
         String displayLabel = VayuTheme.formatSettingName(this.label);
-        int labelColor = VayuHUDUI.blend(-7303024, -723724, this.hoverProgress);
+        int labelColor = VayuHUDUI.blend(0xFFCBD5E1, 0xFFFFFFFF, this.hoverProgress);
         this.drawUiText(graphics, mc, displayLabel, this.x + 12, this.centeredTextY(mc, this.y, this.height), labelColor);
-        int dropWidth = 100;
+
+        // 2. Dropdown Selector Button
+        int dropWidth = 120;
         int dropX = this.x + this.width - dropWidth - 12;
         int dropY = this.y + 2;
         int dropHeight = this.height - 4;
-        int btnColor = this.expanded ? -16723201 : (this.hovered ? -266722777 : -435153640);
-        VayuHUDUI.roundedRect(graphics, dropX, dropY, dropWidth, dropHeight, 4, btnColor);
-        int borderColor = this.expanded ? -13058312 : 1143616571;
-        VayuHUDUI.outline(graphics, dropX, dropY, dropWidth, dropHeight, borderColor);
+
+        int btnBg = this.expanded ? 0xE6142338 : (this.hovered ? 0xD0111D2E : 0xC00B1320);
+        int btnBorder = this.expanded ? 0xFF38BDF8 : (this.hovered ? 0x8838BDF8 : 0x3338BDF8);
+
+        VayuHUDUI.roundedRect(graphics, dropX, dropY, dropWidth, dropHeight, 6, btnBg);
+        VayuHUDUI.roundedOutline(graphics, dropX, dropY, dropWidth, dropHeight, 6, btnBorder);
+
         String selectedText = this.options[this.selectedIndex];
-        int textX = dropX + (dropWidth - this.uiTextWidth(mc, selectedText)) / 2 - 6;
-        this.drawUiText(graphics, mc, selectedText, textX, this.centeredTextY(mc, dropY, dropHeight), -723724);
-        String arrow = this.expanded ? "\u25b2" : "\u25bc";
-        this.drawUiText(graphics, mc, arrow, dropX + dropWidth - 14, this.centeredTextY(mc, dropY, dropHeight), -7303024);
+        int textX = dropX + 10;
+        this.drawUiText(graphics, mc, selectedText, textX, this.centeredTextY(mc, dropY, dropHeight), 0xFF38BDF8);
+
+        String arrow = this.expanded ? "▲" : "▼";
+        this.drawUiText(graphics, mc, arrow, dropX + dropWidth - 16, this.centeredTextY(mc, dropY, dropHeight), 0xFF94A3B8);
+
+        // 3. Expanded Popup Menu
         if (this.expandProgress > 0.01f) {
-            int optY;
-            int i;
-            int optionHeight = this.height;
+            int optionHeight = 24;
             int totalOptionsHeight = (int)((float)(this.options.length * optionHeight) * this.expandProgress);
-            int optionsY = this.y + this.height + 2;
-            VayuHUDUI.roundedRect(graphics, dropX, optionsY, dropWidth, totalOptionsHeight, 4, -435219433);
-            VayuHUDUI.outline(graphics, dropX, optionsY, dropWidth, totalOptionsHeight, 1143616571);
+            int optionsY = this.y + this.height + 4;
+
+            VayuHUDUI.roundedRect(graphics, dropX, optionsY, dropWidth, totalOptionsHeight, 6, 0xF5060D17);
+            VayuHUDUI.roundedOutline(graphics, dropX, optionsY, dropWidth, totalOptionsHeight, 6, 0x6638BDF8);
+
             this.hoveredOption = -1;
-            if (this.expandProgress > 0.9f) {
-                for (i = 0; i < this.options.length; ++i) {
-                    optY = optionsY + i * optionHeight;
-                    if (mouseX < dropX || mouseX > dropX + dropWidth || mouseY < optY || mouseY >= optY + optionHeight) continue;
-                    this.hoveredOption = i;
-                    break;
+            if (this.expandProgress > 0.85f) {
+                for (int i = 0; i < this.options.length; ++i) {
+                    int optY = optionsY + i * optionHeight;
+                    if (mouseX >= dropX && mouseX <= dropX + dropWidth && mouseY >= optY && mouseY < optY + optionHeight) {
+                        this.hoveredOption = i;
+                        break;
+                    }
                 }
             }
-            for (i = 0; i < this.options.length; ++i) {
-                optY = optionsY + i * optionHeight;
-                if (optY + optionHeight <= optionsY || optY >= optionsY + totalOptionsHeight) continue;
-                int optBgColor = i == this.selectedIndex ? VayuHUDUI.withAlpha(-16723201, 60) : (i == this.hoveredOption ? -266722777 : -435153640);
-                graphics.fill(dropX + 1, optY, dropX + dropWidth - 1, optY + optionHeight, optBgColor);
-                if (i == this.selectedIndex) {
-                    this.drawUiText(graphics, mc, "\u2713", dropX + 6, this.centeredTextY(mc, optY, optionHeight), -16723201);
+
+            if (this.expandProgress > 0.5f) {
+                for (int i = 0; i < this.options.length; ++i) {
+                    int optY = optionsY + i * optionHeight;
+                    if (optY + optionHeight > optionsY + totalOptionsHeight) break;
+
+                    boolean isSelected = i == this.selectedIndex;
+                    boolean isHover = i == this.hoveredOption;
+
+                    if (isHover) {
+                        VayuHUDUI.roundedRect(graphics, dropX + 2, optY + 2, dropWidth - 4, optionHeight - 4, 4, 0xFF0284C7);
+                    }
+
+                    int optTextColor = isHover ? 0xFFFFFFFF : (isSelected ? 0xFF38BDF8 : 0xFFCBD5E1);
+                    this.drawUiText(graphics, mc, this.options[i], dropX + 8, this.centeredTextY(mc, optY, optionHeight), optTextColor);
+
+                    if (isSelected) {
+                        this.drawUiText(graphics, mc, "✓", dropX + dropWidth - 14, this.centeredTextY(mc, optY, optionHeight), isHover ? 0xFFFFFFFF : 0xFF38BDF8);
+                    }
                 }
-                int optTextX = dropX + (i == this.selectedIndex ? 18 : 8);
-                int optTextColor = i == this.selectedIndex ? -16723201 : -723724;
-                this.drawUiText(graphics, mc, this.options[i], optTextX, this.centeredTextY(mc, optY, optionHeight), optTextColor);
             }
         }
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
-        if (event.button() != 0) {
-            return false;
-        }
-        double mouseX = event.x();
-        double mouseY = event.y();
-        int dropWidth = 100;
+        int dropWidth = 120;
         int dropX = this.x + this.width - dropWidth - 12;
-        if (this.expanded && this.expandProgress > 0.9f) {
-            int optionHeight = this.height;
-            int optionsY = this.y + this.height + 2;
-            for (int i = 0; i < this.options.length; ++i) {
-                int optY = optionsY + i * optionHeight;
-                if (!(mouseX >= (double)dropX) || !(mouseX <= (double)(dropX + dropWidth)) || !(mouseY >= (double)optY) || !(mouseY < (double)(optY + optionHeight))) continue;
-                this.selectedIndex = i;
-                if (this.onChange != null) {
-                    this.onChange.accept(this.options[this.selectedIndex]);
-                }
-                this.expanded = false;
-                return true;
-            }
-            this.expanded = false;
-            return true;
-        }
-        if (mouseX >= (double)dropX && mouseX <= (double)(dropX + dropWidth) && mouseY >= (double)this.y && mouseY <= (double)(this.y + this.height)) {
+        int dropY = this.y + 2;
+        int dropHeight = this.height - 4;
+
+        if (event.x() >= (double)dropX && event.x() <= (double)(dropX + dropWidth) && event.y() >= (double)dropY && event.y() <= (double)(dropY + dropHeight)) {
             this.expanded = !this.expanded;
             return true;
         }
-        return false;
-    }
 
-    public String getSelected() {
-        return this.options[this.selectedIndex];
+        if (this.expanded && this.hoveredOption >= 0 && this.hoveredOption < this.options.length) {
+            this.selectedIndex = this.hoveredOption;
+            this.expanded = false;
+            if (this.onChange != null) {
+                this.onChange.accept(this.options[this.selectedIndex]);
+            }
+            return true;
+        }
+
+        if (this.expanded) {
+            this.expanded = false;
+            return true;
+        }
+
+        return false;
     }
 
     public boolean isExpanded() {
         return this.expanded;
     }
-
-    @Override
-    public int getHeight() {
-        if (this.expanded && this.expandProgress > 0.5f) {
-            return this.height + this.options.length * this.height + 4;
-        }
-        return this.height;
-    }
 }
-
