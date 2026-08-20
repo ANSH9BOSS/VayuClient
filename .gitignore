@@ -30,3 +30,6 @@ upload_to_github.ps1
 scratch/
 vayuclient-ui-mod/build/
 vayuclient-ui-mod/dist/
+vayuclient-hud-mod/build/
+vayuclient-hud-mod/dist/
+vayu-hud-decompiled/

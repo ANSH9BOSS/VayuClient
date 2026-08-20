@@ -605,7 +605,7 @@
 
                                                 <!-- Install Action Button -->
                                                 <Button Grid.Column="2" Content="Install" 
-                                                        Command="{Binding DataContext.OpenModpackModalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.InstallProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource VayuAccentButton}" Padding="16,8" VerticalAlignment="Center"/>
                                             </Grid>
@@ -688,6 +688,91 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Cancel" Command="{Binding CancelEditCommand}" Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,8,0"/>
                         <Button Content="Save Changes" Command="{Binding SaveInstanceEditCommand}" Style="{StaticResource VayuAccentButton}" Padding="18,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 6. MODPACK CREATION / INSTALLATION MODAL                        -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Visibility="{Binding IsModpackModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
+            <Border Width="500" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Data="{StaticResource VayuIconDownload}" Fill="#38BDF8" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Install Modpack Instance" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
+                        </StackPanel>
+                        <Button Command="{Binding CancelModpackInstallCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
+                            <Path Data="{StaticResource VayuIconClose}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center"/>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="NEW INSTANCE NAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
+                        <TextBox Text="{Binding ModpackInstanceName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
+                    </Border>
+
+                    <TextBlock Text="MINECRAFT VERSION" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding ModpackVersions}" SelectedItem="{Binding SelectedModpackVersion}" Style="{StaticResource VayuComboBox}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="MOD LOADER" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding ModpackLoaders}" SelectedItem="{Binding SelectedModpackLoader}" Style="{StaticResource VayuComboBox}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="{Binding ModpackRamMB, StringFormat='ALLOCATED RAM: {0} MB'}" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <Slider Minimum="2048" Maximum="16384" SmallChange="1024" LargeChange="2048" TickFrequency="1024" IsSnapToTickEnabled="True"
+                            Value="{Binding ModpackRamMB}" Margin="0,0,0,20"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Command="{Binding CancelModpackInstallCommand}" Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,8,0"/>
+                        <Button Content="Create &amp; Install" Command="{Binding ConfirmModpackInstallCommand}" Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 7. TARGET INSTANCE SELECTOR MODAL (MODS, SHADERS, PACKS)         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Visibility="{Binding IsTargetInstanceModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
+            <Border Width="500" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Data="{StaticResource VayuIconMods}" Fill="#38BDF8" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding TargetContentType, StringFormat='Install {0}'}" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
+                        </StackPanel>
+                        <Button Command="{Binding CancelTargetInstanceCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
+                            <Path Data="{StaticResource VayuIconClose}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center"/>
+                        </Button>
+                    </Grid>
+
+                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="{Binding PendingContentProject.Title}" FontSize="15" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,0,3"/>
+                            <TextBlock Text="{Binding PendingContentProject.Description}" FontSize="11.5" Foreground="#94A3B8" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="SELECT TARGET INSTANCE" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding Installations}" SelectedItem="{Binding SelectedTargetInstance}" Style="{StaticResource VayuComboBox}" Margin="0,0,0,20">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="{Binding Loader, StringFormat=' ({0}'}" Foreground="#38BDF8" Margin="4,0,0,0"/>
+                                    <TextBlock Text="{Binding MinecraftVersion, StringFormat=' {0})'}" Foreground="#94A3B8"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Command="{Binding CancelTargetInstanceCommand}" Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,8,0"/>
+                        <Button Content="Install Now" Command="{Binding ConfirmTargetInstanceCommand}" Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

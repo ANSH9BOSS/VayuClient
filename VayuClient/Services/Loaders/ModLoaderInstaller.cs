@@ -290,6 +290,18 @@ namespace VayuClient.Services.Loaders
                         throw new InvalidOperationException($"Failed to download Fabric libraries: {string.Join(", ", batchResult.Errors.Take(2))}");
                     }
                 }
+                else
+                {
+                    progress?.Report(new DownloadProgressInfo
+                    {
+                        CurrentFileName = "Fabric Libraries",
+                        CurrentOperation = "Fabric loader libraries verified and up to date.",
+                        CompletedFiles = 1,
+                        TotalFiles = 1,
+                        BytesReceived = 1,
+                        TotalBytes = 1
+                    });
+                }
             }
 
             return result;

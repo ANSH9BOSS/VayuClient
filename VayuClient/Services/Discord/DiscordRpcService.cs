@@ -15,7 +15,7 @@ namespace VayuClient.Services.Discord
     public class DiscordRpcService : IDiscordRpcService
     {
         // Registered Discord Application Client ID for VayuClient
-        private const string DefaultClientId = "1338504622652661830";
+        private const string DefaultClientId = "1538504622652661830";
         private const int HandshakeOpcode = 0;
         private const int FrameOpcode = 1;
         private const int CloseOpcode = 2;
@@ -295,23 +295,8 @@ namespace VayuClient.Services.Discord
                     {
                         if (!IsConnected)
                         {
-                            // Fast check: verify Discord desktop process is active before probing named pipes
-                            bool isDiscordProcessRunning = false;
-                            try
-                            {
-                                isDiscordProcessRunning = Process.GetProcessesByName("Discord").Length > 0 ||
-                                                         Process.GetProcessesByName("DiscordCanary").Length > 0 ||
-                                                         Process.GetProcessesByName("DiscordPTB").Length > 0;
-                            }
-                            catch { }
-
-                            if (isDiscordProcessRunning)
-                            {
-                                TryConnect();
-                            }
-
-                            // If not connected or Discord isn't open, wait 25 seconds before next check
-                            await Task.Delay(TimeSpan.FromSeconds(IsConnected ? 10 : 25), ct);
+                            TryConnect();
+                            await Task.Delay(TimeSpan.FromSeconds(IsConnected ? 10 : 15), ct);
                         }
                         else
                         {
@@ -334,7 +319,7 @@ namespace VayuClient.Services.Discord
                 }
                 catch
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(25), ct);
+                    await Task.Delay(TimeSpan.FromSeconds(15), ct);
                 }
             }
         }
@@ -352,7 +337,7 @@ namespace VayuClient.Services.Discord
                     {
                         var pipeName = $"discord-ipc-{i}";
                         pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-                        pipe.Connect(80);
+                        pipe.Connect(250);
 
                         if (pipe.IsConnected)
                         {

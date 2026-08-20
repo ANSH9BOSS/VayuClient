@@ -4,6 +4,44 @@
              xmlns:converters="clr-namespace:VayuClient.Converters"
              Background="#070B14">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+            <converters:WebImageConverter x:Key="WebImage"/>
+            <converters:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
+
+            <!-- Modern Cyber-Aero Toggle Switch Style for CheckBox -->
+            <Style x:Key="VayuToggleSwitch" TargetType="CheckBox">
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CheckBox">
+                            <Grid Width="38" Height="20" Background="Transparent">
+                                <Border x:Name="Track" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="10">
+                                    <Ellipse x:Name="Thumb" Width="14" Height="14" Fill="#94A3B8" HorizontalAlignment="Left" Margin="2,0,0,0"/>
+                                </Border>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Track" Property="Background" Value="#0284C7"/>
+                                    <Setter TargetName="Track" Property="BorderBrush" Value="#38BDF8"/>
+                                    <Setter TargetName="Thumb" Property="Fill" Value="#FFFFFF"/>
+                                    <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                    <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Track" Property="BorderBrush" Value="#38BDF8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
         <!-- ═══ AMBIENT LUSH CAVES BACKGROUND ═══ -->
         <Image Source="/Assets/Images/bg_lush_caves.jpg" 
@@ -138,20 +176,29 @@
                             <DataTemplate>
                                 <RadioButton Content="{Binding}" 
                                              GroupName="ModCategoryFilters"
+                                             Command="{Binding Path=DataContext.SelectCategoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                             CommandParameter="{Binding}"
                                              FontSize="11" FontWeight="Bold" Margin="0,0,6,0"
                                              Cursor="Hand">
+                                    <RadioButton.IsChecked>
+                                        <MultiBinding Converter="{StaticResource EqualityMultiConverter}" Mode="OneWay">
+                                            <Binding Path="DataContext.SelectedCategory" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                            <Binding Path="."/>
+                                        </MultiBinding>
+                                    </RadioButton.IsChecked>
                                     <RadioButton.Style>
                                         <Style TargetType="RadioButton">
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="RadioButton">
                                                         <Border x:Name="ChipBorder" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="10,4">
-                                                            <TextBlock Text="{TemplateBinding Content}" FontSize="11" FontWeight="Bold" Foreground="#94A3B8"/>
+                                                            <TextBlock x:Name="ChipText" Text="{TemplateBinding Content}" FontSize="11" FontWeight="Bold" Foreground="#94A3B8"/>
                                                         </Border>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsChecked" Value="True">
                                                                 <Setter TargetName="ChipBorder" Property="Background" Value="#1E3A8A"/>
                                                                 <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                                                <Setter TargetName="ChipText" Property="Foreground" Value="#FFFFFF"/>
                                                             </Trigger>
                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                 <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#2563EB"/>
@@ -233,7 +280,7 @@
 
                                         <!-- Mod Icon -->
                                         <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="36" Height="36" CornerRadius="6" Background="#162238" VerticalAlignment="Top" ClipToBounds="True">
-                                            <Image Source="{Binding IconPath}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <Image Source="{Binding IconPath, Converter={StaticResource WebImage}}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Border>
 
                                         <!-- Mod Header & Category -->
@@ -242,6 +289,9 @@
                                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                                 <Border Background="#152238" CornerRadius="4" Padding="5,1.5" Margin="0,0,6,0">
                                                     <TextBlock Text="{Binding Category}" FontSize="9.5" FontWeight="Black" Foreground="{Binding CategoryBadgeColor}"/>
+                                                </Border>
+                                                <Border Background="#0F172A" BorderBrush="{Binding CompatibilityColor}" BorderThickness="0.8" CornerRadius="4" Padding="4,1" Margin="0,0,6,0">
+                                                    <TextBlock Text="{Binding CompatibilityText}" FontSize="8.5" FontWeight="Bold" Foreground="{Binding CompatibilityColor}"/>
                                                 </Border>
                                                 <TextBlock Text="{Binding Version, StringFormat='v{0}'}" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -265,8 +315,11 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <!-- File Size / Author Info -->
-                                                <TextBlock Grid.Column="0" Text="{Binding FileSizeFormatted, StringFormat='Size: {0}'}" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                <!-- File Size / Loader Info -->
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ModLoader}" FontSize="10" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="{Binding FileSizeFormatted, StringFormat='Size: {0}'}" FontSize="10.5" Foreground="#64748B"/>
+                                                </StackPanel>
 
                                                 <!-- Actions: Remove Mod -->
                                                 <Button Grid.Column="1" Content="Remove" 

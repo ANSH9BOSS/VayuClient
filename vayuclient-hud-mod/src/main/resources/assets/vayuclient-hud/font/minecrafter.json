@@ -1,0 +1,11 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "vayuclient-hud:minecrafter.ttf",
+      "size": 13.0,
+      "oversample": 4.0,
+      "shift": [0.0, 0.0]
+    }
+  ]
+}

@@ -472,6 +472,8 @@ namespace VayuClient.ViewModels
                 switch (state)
                 {
                     case LaunchState.Preparing:
+                        ProgressDetail = message;
+                        ProgressSpeed = string.Empty;
                         PlayButtonText = "PREPARING...";
                         PlayButtonSubText = "CHECKING FILES";
                         break;
@@ -480,10 +482,15 @@ namespace VayuClient.ViewModels
                         PlayButtonSubText = "FETCHING ASSETS";
                         break;
                     case LaunchState.Installing:
+                        ProgressDetail = message;
+                        ProgressSpeed = string.Empty;
                         PlayButtonText = "INSTALLING...";
                         PlayButtonSubText = "CONFIGURING JVM";
                         break;
                     case LaunchState.Launching:
+                        ProgressDetail = "Spawning Minecraft Java process...";
+                        ProgressPercentage = 100;
+                        ProgressSpeed = string.Empty;
                         PlayButtonText = "IGNITION...";
                         PlayButtonSubText = "LAUNCHING PROCESS";
                         break;
@@ -500,6 +507,7 @@ namespace VayuClient.ViewModels
                         IsPlaying = false;
                         IsBusy = false;
                         IsProgressVisible = false;
+                        ProgressSpeed = string.Empty;
                         PlayButtonText = "PLAY";
                         PlayButtonSubText = "READY TO LAUNCH";
                         break;
@@ -529,6 +537,40 @@ namespace VayuClient.ViewModels
             FeaturedCards.Clear();
             NewsCards.Clear();
             ModHighlightCards.Clear();
+
+            NewsCards.Add(new HomeCardItem
+            {
+                Category = "UPDATE",
+                DateTag = "v1.8.3 Active",
+                Title = "VayuClient Engine & HUD Rebuild",
+                Description = "All-new overhead player hearts, combat damage indicator telemetry, and ultra-high FPS pipeline.",
+                ImagePath = "/Assets/Images/bg_mountain_aurora.jpg",
+                ActionText = "Open Mods Library",
+                NavigationTarget = "Mods"
+            });
+
+            NewsCards.Add(new HomeCardItem
+            {
+                Category = "PERFORMANCE",
+                DateTag = "FPS Engine",
+                Title = "1000+ FPS Performance Pipeline",
+                Description = "Fine-tuned memory allocation, zero-latency HUD rendering, and optimal chunk loading speeds.",
+                ImagePath = "/Assets/Images/bg_cherry_grove.jpg",
+                ActionText = "Configure Settings",
+                NavigationTarget = "Settings"
+            });
+
+            NewsCards.Add(new HomeCardItem
+            {
+                Category = "COMMUNITY",
+                DateTag = "Discord Community",
+                Title = "Join Official VayuClient Discord",
+                Description = "Chat with developers, report bugs, get live notifications, and join exclusive community events.",
+                ImagePath = "/Assets/Images/bg_cyber_nether.jpg",
+                ActionText = "Join Server",
+                ActionUrl = "https://discord.gg/vayuclient"
+            });
+
             OnPropertyChanged(nameof(HasFeaturedCards));
             OnPropertyChanged(nameof(HasNewsCards));
             OnPropertyChanged(nameof(HasModHighlightCards));

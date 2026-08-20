@@ -46,13 +46,13 @@ namespace VayuClientSetup.Services
             }
             catch { }
 
-            return "1.5.1";
+            return "1.7.0";
         }
 
         private static Version DetermineSemanticVersion(string verStr)
         {
             if (Version.TryParse(verStr, out var v)) return v;
-            return new Version(1, 5, 1);
+            return new Version(1, 7, 0);
         }
     }
 }

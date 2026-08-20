@@ -228,7 +228,7 @@ namespace VayuClient.ViewModels
         private bool _discordRichPresence = true;
 
         [ObservableProperty]
-        private string _discordClientId = "356875570916753438";
+        private string _discordClientId = "1538504622652661830";
 
         [ObservableProperty]
         private bool _isCheckingUpdates = false;
@@ -528,7 +528,7 @@ namespace VayuClient.ViewModels
             NativeTitleBar = s.NativeTitleBar;
             UseDedicatedGpu = s.UseDedicatedGpu;
             DiscordRichPresence = s.DiscordRichPresence;
-            DiscordClientId = !string.IsNullOrWhiteSpace(s.DiscordClientId) ? s.DiscordClientId : "356875570916753438";
+            DiscordClientId = (!string.IsNullOrWhiteSpace(s.DiscordClientId) && s.DiscordClientId != "356875570916753438" && s.DiscordClientId != "1338504622652661830") ? s.DiscordClientId : "1538504622652661830";
             DnsOverride = s.DnsOverride;
             ForceLanOfflineMode = s.ForceLanOfflineMode;
             ModernForgeInstaller = s.ModernForgeInstaller;

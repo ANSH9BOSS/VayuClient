@@ -6,16 +6,12 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>VayuClient</RootNamespace>
     <AssemblyName>VayuClient</AssemblyName>
-    <Description>VayuClient ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Premium Minecraft Launcher by ANSH9BOSS</Description>
+    <Description>VayuClient ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Premium Minecraft Launcher by ANSH9BOSS</Description>
     <Company>ANSH9BOSS</Company>
     <Product>VayuClient</Product>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>VayuClient.Program</StartupObject>
-    <Version>1.6.2</Version>
-    <FileVersion>1.6.2</FileVersion>
-    <AssemblyVersion>1.6.2</AssemblyVersion>
-    <InformationalVersion>1.6.1</InformationalVersion>
     <ApplicationIcon>Assets\Images\vayu_logo.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -47,6 +43,22 @@
   </ItemGroup>
 
 </Project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

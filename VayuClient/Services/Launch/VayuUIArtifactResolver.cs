@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Java;
@@ -20,80 +21,217 @@ namespace VayuClient.Services.Launch
 
         public async Task<string?> ResolveAndDeployAsync(MinecraftInstance instance, JavaRuntimeInfo javaRuntime)
         {
+            await Task.Yield();
             if (instance == null) return null;
 
             string mcVersion = instance.MinecraftVersion ?? "1.21.4";
             string loader = instance.Loader?.ToString() ?? "Fabric";
             int jvmMajor = javaRuntime?.MajorVersion ?? 21;
 
-            CrashLogger.LogMessage($"[VayuUI Resolver] Resolving UI artifact for Minecraft {mcVersion}, Loader {loader}, JVM Java {jvmMajor}...");
+            CrashLogger.LogMessage($"[VayuHUD Resolver] Dynamic resolution requested for Minecraft {mcVersion}, Loader {loader}, JVM Java {jvmMajor}...");
 
             // 1. Locate instance mods directory
             string instPath = instance.GameDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VayuClient", "Instances", instance.Name ?? "Default");
             string modsDir = Path.Combine(instPath, "mods");
             Directory.CreateDirectory(modsDir);
 
-            // 2. Locate master source UI artifacts
+            // 2. Clean any stale or obsolete UI/HUD mods first
+            _validator.PurgeIncompatibleUiMods(modsDir, jvmMajor, mcVersion, loader);
+
+            // 3. Search asset stores for artifacts and manifest
             string appBase = AppDomain.CurrentDomain.BaseDirectory;
-            string assetsModsDir = Path.Combine(appBase, "Assets", "Mods");
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var searchDirs = new List<string>
+            {
+                Path.Combine(appBase, "Assets", "Mods"),
+                Path.Combine(appBase, "..", "..", "..", "Assets", "Mods"),
+                Path.Combine(appBase, "dist", "Assets", "Mods"),
+                Path.Combine(localAppData, "Programs", "VayuClient", "Assets", "Mods"),
+                Path.Combine(appData, "VayuClient", "Assets", "Mods"),
+                appBase
+            };
 
-            // Look for candidate UI JAR
-            string candidateJar = Path.Combine(assetsModsDir, "vayuclient-ui-1.6.0.jar");
-            if (!File.Exists(candidateJar))
+            string? matchedSource = null;
+            VayuUiArtifactInfo? matchedInfo = null;
+
+            // 4. Try Manifest-Driven Dynamic Resolution
+            foreach (var dir in searchDirs)
             {
-                string fallback = Path.Combine(appBase, "..", "..", "..", "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
-                if (File.Exists(fallback)) candidateJar = Path.GetFullPath(fallback);
-            }
-            if (!File.Exists(candidateJar))
-            {
-                string distFallback = Path.Combine(appBase, "vayuclient-ui-1.6.0.jar");
-                if (File.Exists(distFallback)) candidateJar = distFallback;
+                if (!Directory.Exists(dir)) continue;
+                string manifestPath = Path.Combine(dir, "vayu_hud_manifest.json");
+                if (File.Exists(manifestPath))
+                {
+                    try
+                    {
+                        var json = File.ReadAllText(manifestPath);
+                        var doc = JObject.Parse(json);
+                        var artifacts = doc["artifacts"] as JArray;
+                        if (artifacts != null)
+                        {
+                            foreach (var art in artifacts)
+                            {
+                                string? fileName = art["artifactFilename"]?.ToString();
+                                if (string.IsNullOrEmpty(fileName)) continue;
+
+                                string candidatePath = Path.Combine(dir, fileName);
+                                if (!File.Exists(candidatePath)) continue;
+
+                                // Check supported loader
+                                var loaders = art["supportedLoaders"]?.ToObject<List<string>>() ?? new List<string>();
+                                if (loaders.Count > 0 && !loaders.Any(l => string.Equals(l, loader, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    continue;
+                                }
+
+                                // Check Minecraft version list or range
+                                var supportedVersions = art["supportedVersions"]?.ToObject<List<string>>() ?? new List<string>();
+                                string compatibilityRange = art["minecraftCompatibilityRange"]?.ToString() ?? string.Empty;
+
+                                bool isVersionMatch = supportedVersions.Any(v => string.Equals(v, mcVersion, StringComparison.OrdinalIgnoreCase));
+                                if (!isVersionMatch && !string.IsNullOrEmpty(compatibilityRange))
+                                {
+                                    isVersionMatch = IsVersionInRange(mcVersion, compatibilityRange);
+                                }
+
+                                if (isVersionMatch)
+                                {
+                                    if (_validator.ValidateCompatibility(jvmMajor, candidatePath, mcVersion, loader, out string failureReason))
+                                    {
+                                        matchedSource = candidatePath;
+                                        matchedInfo = _validator.InspectArtifact(candidatePath);
+                                        CrashLogger.LogMessage($"[VayuHUD Resolver] Selected manifest-matched artifact '{fileName}' for Minecraft {mcVersion} ({loader}).");
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        CrashLogger.LogMessage($"[VayuHUD Resolver] Candidate '{fileName}' failed validation: {failureReason}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CrashLogger.LogMessage($"[VayuHUD Resolver] Error reading manifest at {manifestPath}: {ex.Message}");
+                    }
+                }
+                if (matchedSource != null) break;
             }
 
-            if (!File.Exists(candidateJar))
+            // 5. Fallback: Heuristic file search
+            if (matchedSource == null)
             {
-                CrashLogger.LogMessage($"[VayuUI Resolver] Notice: No Vayu UI artifact found at {candidateJar}. Native fallback active.");
+                var candidatePatterns = new List<string>
+                {
+                    $"*mc{mcVersion}*.jar",
+                    $"*mc{GetMajorMinor(mcVersion)}*.jar",
+                    "*vayuclient-hud*.jar"
+                };
+
+                foreach (var pattern in candidatePatterns)
+                {
+                    foreach (var dir in searchDirs)
+                    {
+                        if (!Directory.Exists(dir)) continue;
+                        var files = Directory.GetFiles(dir, pattern, SearchOption.TopDirectoryOnly);
+                        foreach (var file in files)
+                        {
+                            if (_validator.ValidateCompatibility(jvmMajor, file, mcVersion, loader, out string failureReason))
+                            {
+                                matchedSource = file;
+                                matchedInfo = _validator.InspectArtifact(file);
+                                break;
+                            }
+                        }
+                        if (matchedSource != null) break;
+                    }
+                    if (matchedSource != null) break;
+                }
+            }
+
+            // 6. Graceful handling if no compatible artifact exists
+            if (matchedSource == null)
+            {
+                CrashLogger.LogMessage($"[VayuHUD Resolver] Notice: Vayu HUD is unavailable for Minecraft {mcVersion} on loader '{loader}'. Launching native/standard Minecraft.");
                 return null;
             }
 
-            // 3. Inspect Candidate Bytecode and Compatibility
-            var info = _validator.InspectArtifact(candidateJar);
-            if (!_validator.ValidateCompatibility(jvmMajor, candidateJar, mcVersion, out string failureReason))
-            {
-                CrashLogger.LogMessage($"[VayuUI Resolver] Incompatible artifact ({failureReason}). Safely falling back to native Minecraft screens.");
-                PurgeStaleUiMods(modsDir);
-                return null;
-            }
+            // 7. Deploy Matched Artifact cleanly
+            string targetFileName = Path.GetFileName(matchedSource);
+            string targetJar = Path.Combine(modsDir, targetFileName);
 
-            // 4. Clean Stale UI Mods & Deploy Matched Artifact
-            PurgeStaleUiMods(modsDir);
-
-            string targetJar = Path.Combine(modsDir, "vayuclient-ui-1.6.0.jar");
             try
             {
-                await Task.Run(() => File.Copy(candidateJar, targetJar, true));
-                CrashLogger.LogMessage($"[VayuUI Resolver] Successfully deployed compatible UI artifact (Bytecode {info.BytecodeMajor}) to {targetJar}");
+                File.Copy(matchedSource, targetJar, true);
+                CrashLogger.LogMessage($"[VayuHUD Resolver] Successfully deployed universal HUD artifact '{targetFileName}' (Bytecode {matchedInfo?.BytecodeMajor}) to {targetJar}");
                 return targetJar;
             }
             catch (Exception ex)
             {
-                CrashLogger.LogMessage($"[VayuUI Resolver] Warning: Could not deploy artifact: {ex.Message}. Falling back to native.");
+                CrashLogger.LogMessage($"[VayuHUD Resolver] Warning: Could not deploy artifact: {ex.Message}. Falling back to native.");
                 return null;
             }
         }
 
-        private static void PurgeStaleUiMods(string modsDir)
+        private static bool IsVersionInRange(string version, string rangeSpec)
         {
-            if (!Directory.Exists(modsDir)) return;
+            if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(rangeSpec)) return false;
+
             try
             {
-                var stale = Directory.GetFiles(modsDir, "*vayuclient-ui*.jar", SearchOption.TopDirectoryOnly);
-                foreach (var f in stale)
+                // Handles specs like ">=1.21 <=1.21.11" or "=1.21.4" or ">=26.1 <=26.2"
+                var tokens = rangeSpec.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var token in tokens)
                 {
-                    try { File.Delete(f); } catch { }
+                    if (token.StartsWith(">="))
+                    {
+                        var minVer = token.Substring(2).Trim();
+                        if (CompareVersions(version, minVer) < 0) return false;
+                    }
+                    else if (token.StartsWith("<="))
+                    {
+                        var maxVer = token.Substring(2).Trim();
+                        if (CompareVersions(version, maxVer) > 0) return false;
+                    }
+                    else if (token.StartsWith("="))
+                    {
+                        var exact = token.Substring(1).Trim();
+                        if (!string.Equals(version, exact, StringComparison.OrdinalIgnoreCase)) return false;
+                    }
                 }
+                return true;
             }
-            catch { }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static int CompareVersions(string v1, string v2)
+        {
+            var p1 = v1.Split('.').Select(s => int.TryParse(s, out int n) ? n : 0).ToArray();
+            var p2 = v2.Split('.').Select(s => int.TryParse(s, out int n) ? n : 0).ToArray();
+
+            int len = Math.Max(p1.Length, p2.Length);
+            for (int i = 0; i < len; i++)
+            {
+                int num1 = i < p1.Length ? p1[i] : 0;
+                int num2 = i < p2.Length ? p2[i] : 0;
+                if (num1 != num2) return num1.CompareTo(num2);
+            }
+            return 0;
+        }
+
+        private static string GetMajorMinor(string version)
+        {
+            if (string.IsNullOrWhiteSpace(version)) return version;
+            var parts = version.Split('.');
+            if (parts.Length >= 2)
+            {
+                return $"{parts[0]}.{parts[1]}";
+            }
+            return version;
         }
     }
 }

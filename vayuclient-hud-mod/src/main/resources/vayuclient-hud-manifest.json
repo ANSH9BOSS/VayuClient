@@ -1,0 +1,13 @@
+{
+  "vayuHUDVersion": "1.8.0",
+  "minecraftCompatibility": "26.2",
+  "supportedLoaders": [
+    "Fabric",
+    "Quilt"
+  ],
+  "requiredJavaMajor": 21,
+  "bytecodeMajor": 65,
+  "artifactId": "vayuclient-hud-1.8.0-mc26.2-fabric",
+  "buildTimestamp": "2026-08-19T13:30:00Z",
+  "buildCommit": "v1.8.0-release"
+}

@@ -12,10 +12,6 @@
     <Product>VayuClient Setup</Product>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.6.2</Version>
-    <FileVersion>1.6.2</FileVersion>
-    <AssemblyVersion>1.6.2</AssemblyVersion>
-    <InformationalVersion>1.6.1</InformationalVersion>
     <ApplicationIcon>Assets\Images\vayu_logo.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -29,6 +25,22 @@
   </ItemGroup>
 
 </Project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

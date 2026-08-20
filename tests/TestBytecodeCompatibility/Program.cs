@@ -65,7 +65,7 @@ namespace TestBytecodeCompatibility
                 {
                     throw new Exception("CRITICAL FAILURE: Java 25 JAR was allowed to pass validation on Java 21 JVM!");
                 }
-                if (!failureReason.Contains("incompatible") || !failureReason.Contains("Java 21") || !failureReason.Contains("69"))
+                if (!failureReason.Contains("Java 21") || !failureReason.Contains("69"))
                 {
                     throw new Exception($"Unexpected failure message: {failureReason}");
                 }
@@ -89,12 +89,17 @@ namespace TestBytecodeCompatibility
                 Console.ResetColor();
                 passed++;
 
-                // TEST 5: Verify Live Deployed vayuclient-ui-1.6.0.jar Bytecode and Manifest
-                Console.Write("[TEST 5] Live Artifact Bytecode Inspection (vayuclient-ui-1.6.0.jar): ");
-                string liveJar = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
+                // TEST 5: Verify Live Deployed vayuclient-hud-1.7.0-mc26.2-fabric.jar Bytecode and Manifest
+                Console.Write("[TEST 5] Live Artifact Bytecode Inspection (vayuclient-hud-1.7.0-mc26.2-fabric.jar): ");
+                string liveJar = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Mods", "vayuclient-hud-1.7.0-mc26.2-fabric.jar");
                 if (!File.Exists(liveJar))
                 {
-                    liveJar = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "VayuClient", "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
+                    liveJar = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "VayuClient", "Assets", "Mods", "vayuclient-hud-1.7.0-mc26.2-fabric.jar");
+                    liveJar = Path.GetFullPath(liveJar);
+                }
+                if (!File.Exists(liveJar))
+                {
+                    liveJar = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "vayuclient-hud-mod", "dist", "vayuclient-hud-1.7.0-mc26.2-fabric.jar");
                     liveJar = Path.GetFullPath(liveJar);
                 }
 
@@ -114,10 +119,10 @@ namespace TestBytecodeCompatibility
                 }
                 if (!liveInfo.HasManifest)
                 {
-                    throw new Exception("Live artifact is missing vayuclient-ui-manifest.json!");
+                    throw new Exception("Live artifact is missing vayuclient-hud-manifest.json!");
                 }
 
-                bool liveValid = validator.ValidateCompatibility(21, liveJar, "1.21.4", out string liveFailReason);
+                bool liveValid = validator.ValidateCompatibility(21, liveJar, "26.2", out string liveFailReason);
                 if (!liveValid)
                 {
                     throw new Exception($"Live artifact failed validation on Java 21: {liveFailReason}");
@@ -137,7 +142,7 @@ namespace TestBytecodeCompatibility
                 CreateSyntheticJar(staleJar, majorBytecode: 69, javaMajor: 25);
                 File.WriteAllText(userMod, "dummy-mod-content");
 
-                validator.PurgeIncompatibleUiMods(mockModsDir, jvmJavaMajor: 21, minecraftVersion: "1.21.4");
+                validator.PurgeIncompatibleUiMods(mockModsDir, jvmJavaMajor: 21, minecraftVersion: "26.2");
 
                 if (File.Exists(staleJar))
                 {

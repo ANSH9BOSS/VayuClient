@@ -225,6 +225,12 @@ namespace VayuClient.ViewModels
             try
             {
                 ActiveInstanceName = $"{instance.Name} ({instance.Loader} {instance.MinecraftVersion})";
+                if (string.IsNullOrEmpty(instance.GameDirectory))
+                {
+                    _allMods.Clear();
+                    ApplyFilter();
+                    return;
+                }
                 var modsDir = Path.Combine(instance.GameDirectory, "mods");
                 Directory.CreateDirectory(modsDir);
 
@@ -235,9 +241,13 @@ namespace VayuClient.ViewModels
                 var list = new List<ModInfo>();
                 foreach (var filePath in jarFiles)
                 {
-                    bool isEnabled = !filePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase);
-                    var mod = ParseModJar(filePath, isEnabled, instance.MinecraftVersion);
-                    list.Add(mod);
+                    try
+                    {
+                        bool isEnabled = !filePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase);
+                        var mod = ParseModJar(filePath, isEnabled, instance.MinecraftVersion ?? "1.21");
+                        list.Add(mod);
+                    }
+                    catch { }
                 }
 
                 _allMods.Clear();
@@ -248,6 +258,15 @@ namespace VayuClient.ViewModels
             catch (Exception ex)
             {
                 _main.ShowNotification("Mods Error", ex.Message, NotificationType.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void SelectCategory(string? category)
+        {
+            if (!string.IsNullOrEmpty(category))
+            {
+                SelectedCategory = category;
             }
         }
 
@@ -377,13 +396,15 @@ namespace VayuClient.ViewModels
                     }
                     else
                     {
+                        var neoforgeEntry = zip.GetEntry("META-INF/neoforge.mods.toml");
                         var forgeEntry = zip.GetEntry("META-INF/mods.toml");
-                        if (forgeEntry != null)
+                        if (neoforgeEntry != null || forgeEntry != null)
                         {
-                            using var s = forgeEntry.Open();
+                            var targetEntry = neoforgeEntry ?? forgeEntry;
+                            using var s = targetEntry!.Open();
                             using var r = new StreamReader(s);
                             string toml = r.ReadToEnd();
-                            loader = "Forge";
+                            loader = neoforgeEntry != null ? "NeoForge" : "Forge";
                             var nameMatch = System.Text.RegularExpressions.Regex.Match(toml, @"displayName\s*=\s*""([^""]+)""");
                             if (nameMatch.Success) cleanName = nameMatch.Groups[1].Value;
                             var verMatch = System.Text.RegularExpressions.Regex.Match(toml, @"version\s*=\s*""([^""]+)""");
@@ -415,6 +436,29 @@ namespace VayuClient.ViewModels
 
             var category = DetectCategory(cleanName, modId ?? "", description);
 
+            // Dynamic Compatibility Evaluation
+            var compatState = ModCompatibilityState.Compatible;
+            string compatReason = string.Empty;
+
+            if (SelectedInstance != null)
+            {
+                string instLoader = SelectedInstance.Loader?.ToString() ?? "Fabric";
+                string instMc = SelectedInstance.MinecraftVersion ?? mcVersion;
+
+                if (!string.Equals(loader, "Universal", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool loaderMatches = string.Equals(loader, instLoader, StringComparison.OrdinalIgnoreCase)
+                        || (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase) && instLoader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
+                        || (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase) && instLoader.Equals("Fabric", StringComparison.OrdinalIgnoreCase));
+
+                    if (!loaderMatches)
+                    {
+                        compatState = ModCompatibilityState.UnsupportedLoader;
+                        compatReason = $"Mod requires {loader}, instance is {instLoader}";
+                    }
+                }
+            }
+
             var modInfo = new ModInfo
             {
                 Id = filePath,
@@ -429,7 +473,9 @@ namespace VayuClient.ViewModels
                 FileSizeFormatted = fileSize,
                 ModLoader = loader,
                 IsEnabled = isEnabled,
-                IconPath = iconPath
+                IconPath = iconPath,
+                Compatibility = compatState,
+                CompatibilityReason = compatReason
             };
 
             // If no embedded icon found, resolve asynchronously from Modrinth CDN
@@ -495,78 +541,89 @@ namespace VayuClient.ViewModels
         [RelayCommand]
         private void ToggleMod(object? modIdObj)
         {
-            var modId = modIdObj?.ToString();
-            if (string.IsNullOrEmpty(modId)) return;
-
-            var mod = Mods.FirstOrDefault(m => m.Name == modId || m.Id == modId);
-            if (mod != null)
+            if (modIdObj == null) return;
+            ModInfo? mod = modIdObj as ModInfo;
+            if (mod == null && modIdObj is string modIdStr)
             {
-                if (File.Exists(mod.Id))
-                {
-                    try
-                    {
-                        if (mod.IsEnabled)
-                        {
-                            // Disable -> rename to .disabled
-                            var disabledPath = mod.Id + ".disabled";
-                            if (File.Exists(disabledPath)) File.Delete(disabledPath);
-                            File.Move(mod.Id, disabledPath);
-                            mod.Id = disabledPath;
-                            mod.IsEnabled = false;
-                        }
-                        else
-                        {
-                            // Enable -> rename to .jar
-                            var enabledPath = mod.Id.Replace(".jar.disabled", ".jar");
-                            if (File.Exists(enabledPath)) File.Delete(enabledPath);
-                            File.Move(mod.Id, enabledPath);
-                            mod.Id = enabledPath;
-                            mod.IsEnabled = true;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _main.ShowNotification("Mod Toggle Failed", ex.Message, NotificationType.Error);
-                        return;
-                    }
-                }
-                else
-                {
-                    mod.IsEnabled = !mod.IsEnabled;
-                }
-
-                OnPropertyChanged(nameof(Mods));
-                _main.ShowNotification(
-                    mod.IsEnabled ? "Mod Enabled" : "Mod Disabled",
-                    $"{mod.Name} is now {(mod.IsEnabled ? "enabled" : "disabled")}.",
-                    mod.IsEnabled ? NotificationType.Success : NotificationType.Info);
+                mod = Mods.FirstOrDefault(m => m.Name == modIdStr || m.Id == modIdStr || m.FilePath == modIdStr);
             }
+            if (mod == null) return;
+
+            if (!string.IsNullOrEmpty(mod.FilePath) && File.Exists(mod.FilePath))
+            {
+                try
+                {
+                    if (mod.IsEnabled)
+                    {
+                        // Disable -> rename to .disabled
+                        var disabledPath = mod.FilePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                            ? mod.FilePath
+                            : mod.FilePath + ".disabled";
+                        if (File.Exists(disabledPath)) File.Delete(disabledPath);
+                        File.Move(mod.FilePath, disabledPath);
+                        mod.FilePath = disabledPath;
+                        mod.Id = disabledPath;
+                        mod.IsEnabled = false;
+                    }
+                    else
+                    {
+                        // Enable -> rename to .jar
+                        var enabledPath = mod.FilePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                            ? mod.FilePath.Substring(0, mod.FilePath.Length - ".disabled".Length)
+                            : mod.FilePath;
+                        if (File.Exists(enabledPath)) File.Delete(enabledPath);
+                        File.Move(mod.FilePath, enabledPath);
+                        mod.FilePath = enabledPath;
+                        mod.Id = enabledPath;
+                        mod.IsEnabled = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _main.ShowNotification("Mod Toggle Failed", ex.Message, NotificationType.Error);
+                    return;
+                }
+            }
+            else
+            {
+                mod.IsEnabled = !mod.IsEnabled;
+            }
+
+            TotalModCount = _allMods.Count;
+            EnabledModCount = _allMods.Count(m => m.IsEnabled);
+            _main.ShowNotification(
+                mod.IsEnabled ? "Mod Enabled" : "Mod Disabled",
+                $"{mod.Name} is now {(mod.IsEnabled ? "enabled" : "disabled")}.",
+                mod.IsEnabled ? NotificationType.Success : NotificationType.Info);
         }
 
         [RelayCommand]
         private void DeleteMod(object? modIdObj)
         {
-            var modId = modIdObj?.ToString();
-            if (string.IsNullOrEmpty(modId)) return;
-
-            var mod = Mods.FirstOrDefault(m => m.Name == modId || m.Id == modId);
-            if (mod != null)
+            if (modIdObj == null) return;
+            ModInfo? mod = modIdObj as ModInfo;
+            if (mod == null && modIdObj is string modIdStr)
             {
-                try
+                mod = Mods.FirstOrDefault(m => m.Name == modIdStr || m.Id == modIdStr || m.FilePath == modIdStr);
+            }
+            if (mod == null) return;
+
+            try
+            {
+                if (!string.IsNullOrEmpty(mod.FilePath) && File.Exists(mod.FilePath))
                 {
-                    if (File.Exists(mod.Id))
-                    {
-                        File.Delete(mod.Id);
-                    }
-                    _allMods.RemoveAll(m => m.Id == mod.Id || m.Name == mod.Name);
-                    Mods.Remove(mod);
-                    HasMods = Mods.Count > 0;
-                    _main.ShowNotification("Mod Removed", $"Deleted {mod.Name} from instance.", NotificationType.Info);
+                    File.Delete(mod.FilePath);
                 }
-                catch (Exception ex)
-                {
-                    _main.ShowNotification("Delete Failed", ex.Message, NotificationType.Error);
-                }
+                _allMods.RemoveAll(m => m.FilePath == mod.FilePath || m.Name == mod.Name);
+                Mods.Remove(mod);
+                HasMods = Mods.Count > 0;
+                TotalModCount = _allMods.Count;
+                EnabledModCount = _allMods.Count(m => m.IsEnabled);
+                _main.ShowNotification("Mod Removed", $"Deleted {mod.Name} from instance.", NotificationType.Info);
+            }
+            catch (Exception ex)
+            {
+                _main.ShowNotification("Delete Failed", ex.Message, NotificationType.Error);
             }
         }
 

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "vayuclient-hud",
+  "version": "1.9.0",
+  "name": "VayuClient HUD",
+  "description": "Premium Glassmorphic HUD & Visual Enhancement System for VayuClient.",
+  "authors": [
+    "ANSH9BOSS",
+    "VayuClient Team"
+  ],
+  "contact": {
+    "homepage": "https://github.com/ANSH9BOSS/VayuClient",
+    "sources": "https://github.com/ANSH9BOSS/VayuClient"
+  },
+  "license": "All-Rights-Reserved",
+  "icon": "assets/vayuclient-hud/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.vayuclient.hud.VayuHUD"
+    ],
+    "client": [
+      "com.vayuclient.hud.VayuHUDClient"
+    ],
+    "modmenu": [
+      "com.vayuclient.hud.integration.VayuModMenuIntegration"
+    ]
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["client"],
+      "links": {
+        "modmenu.discord": "https://discord.gg/RGzATq3v7J"
+      }
+    }
+  },
+  "accessWidener": "vayuclient-hud.accesswidener",
+  "mixins": [
+    "vayuclient-hud.mixins.json",
+    {
+      "config": "vayuclient-hud.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "=26.2",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

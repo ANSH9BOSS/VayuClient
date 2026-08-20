@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace VayuClient.Services.Launch
@@ -9,7 +9,7 @@ namespace VayuClient.Services.Launch
         public int BytecodeMajor { get; set; }
         public int BytecodeMinor { get; set; }
         public int RequiredJavaMajor { get; set; }
-        public string VayuUiVersion { get; set; } = "1.6.1";
+        public string VayuUiVersion { get; set; } = "1.7.0";
         public string MinecraftCompatibility { get; set; } = string.Empty;
         public List<string> SupportedLoaders { get; set; } = new();
         public bool HasManifest { get; set; }
@@ -21,6 +21,7 @@ namespace VayuClient.Services.Launch
     {
         VayuUiArtifactInfo InspectArtifact(string jarPath);
         bool ValidateCompatibility(int jvmJavaMajor, string jarPath, string minecraftVersion, out string failureReason);
-        void PurgeIncompatibleUiMods(string modsDirectory, int jvmJavaMajor, string minecraftVersion);
+        bool ValidateCompatibility(int jvmJavaMajor, string jarPath, string minecraftVersion, string loader, out string failureReason);
+        void PurgeIncompatibleUiMods(string modsDirectory, int jvmJavaMajor, string minecraftVersion, string? loader = null);
     }
 }

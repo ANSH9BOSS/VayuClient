@@ -7,10 +7,10 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
 
     <!-- 1. Global Font Families (Pack URI embedded + Clean Fallback Chain) -->
-    <FontFamily x:Key="VayuFontFamily">pack://application:,,,/Assets/Fonts/#Inter, pack://application:,,,/Assets/Fonts/#Inter Variable, Segoe UI Variable, Segoe UI, -apple-system, system-ui, Arial, sans-serif</FontFamily>
-    <FontFamily x:Key="VayuFontPrimary">pack://application:,,,/Assets/Fonts/#Inter, pack://application:,,,/Assets/Fonts/#Inter Variable, Segoe UI Variable, Segoe UI, -apple-system, system-ui, Arial, sans-serif</FontFamily>
-    <FontFamily x:Key="VayuFontDisplay">pack://application:,,,/Assets/Fonts/#Inter Display, pack://application:,,,/Assets/Fonts/#Inter, Segoe UI Variable Display, Segoe UI, Arial, sans-serif</FontFamily>
-    <FontFamily x:Key="VayuFontMono">pack://application:,,,/Assets/Fonts/#JetBrains Mono, Cascadia Code, Consolas, Courier New, monospace</FontFamily>
+    <FontFamily x:Key="VayuFontFamily">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontPrimary">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontDisplay">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontMono">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#JetBrains Mono, Cascadia Code, Consolas, Courier New, monospace</FontFamily>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- 2. Typography Styles Hierarchy                                  -->
@@ -19,7 +19,7 @@
     <!-- Display Text (Hero titles, splash headlines, large banners) -->
     <Style x:Key="VayuDisplayText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontDisplay}"/>
-        <Setter Property="FontSize" Value="30"/>
+        <Setter Property="FontSize" Value="32"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -29,7 +29,7 @@
     <!-- Title Text (Page titles, primary section headers) -->
     <Style x:Key="VayuTitleText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontDisplay}"/>
-        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -39,7 +39,7 @@
     <!-- Heading Text (Card headers, modal titles, section dividers) -->
     <Style x:Key="VayuHeadingText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontPrimary}"/>
-        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -49,10 +49,10 @@
     <!-- Body Text (Standard content, descriptions, general readable copy) -->
     <Style x:Key="VayuBodyText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontPrimary}"/>
-        <Setter Property="FontSize" Value="13.5"/>
+        <Setter Property="FontSize" Value="15"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
-        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="LineHeight" Value="22"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
     </Style>
@@ -60,12 +60,13 @@
     <!-- Secondary Text (Subtitles, muted secondary descriptions) -->
     <Style x:Key="VayuSecondaryText" TargetType="TextBlock" BasedOn="{StaticResource VayuBodyText}">
         <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
 
     <!-- Caption Text (Small metadata, timestamps, badge labels) -->
     <Style x:Key="VayuCaptionText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontPrimary}"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -75,7 +76,7 @@
     <!-- Button Text (Action buttons, interactive trigger labels) -->
     <Style x:Key="VayuButtonText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontPrimary}"/>
-        <Setter Property="FontSize" Value="13.5"/>
+        <Setter Property="FontSize" Value="15"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -85,7 +86,7 @@
     <!-- Navigation Text (Sidebar tabs, top bar navigation buttons) -->
     <Style x:Key="VayuNavigationText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontPrimary}"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -95,7 +96,7 @@
     <!-- Monospace Text (Logs, crash reports, CLI arguments, stack traces) -->
     <Style x:Key="VayuMonoText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontMono}"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{StaticResource VayuSecondaryBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
@@ -109,14 +110,14 @@
     <Style x:Key="VayuH2" TargetType="TextBlock" BasedOn="{StaticResource VayuTitleText}"/>
     <Style x:Key="VayuH3" TargetType="TextBlock" BasedOn="{StaticResource VayuHeadingText}"/>
     <Style x:Key="VayuSubtitle" TargetType="TextBlock" BasedOn="{StaticResource VayuHeadingText}">
-        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
     <Style x:Key="VayuBody" TargetType="TextBlock" BasedOn="{StaticResource VayuBodyText}"/>
     <Style x:Key="VayuBodyDim" TargetType="TextBlock" BasedOn="{StaticResource VayuSecondaryText}"/>
     <Style x:Key="VayuCaption" TargetType="TextBlock" BasedOn="{StaticResource VayuCaptionText}"/>
     <Style x:Key="VayuLabel" TargetType="TextBlock" BasedOn="{StaticResource VayuCaptionText}">
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
     <Style x:Key="VayuMono" TargetType="TextBlock" BasedOn="{StaticResource VayuMonoText}"/>

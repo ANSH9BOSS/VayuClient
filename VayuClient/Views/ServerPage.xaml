@@ -40,9 +40,9 @@
                     <StackPanel Orientation="Horizontal">
                         <Path Data="{StaticResource VayuIconServer}" Fill="{StaticResource VayuBrightBlueBrush}"
                               Width="18" Height="18" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="PARTNERED SERVERS" FontSize="20" FontWeight="Black" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                        <TextBlock Text="MINECRAFT SERVERS" FontSize="20" FontWeight="Black" Foreground="#FFFFFF" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock Text="Live status for official and partnered community Minecraft servers supported by VayuClient."
+                    <TextBlock Text="Ping status and direct connection for your saved Minecraft multiplayer servers."
                                FontSize="12" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

@@ -30,6 +30,7 @@
             <converters:NonZeroToVisibilityConverter x:Key="NonZeroToVis"/>
             <converters:PingToColorBrushConverter x:Key="PingToColorBrush"/>
             <converters:BoolToStringConverter x:Key="BoolToString"/>
+            <converters:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
 
             <!-- Implicit View-to-ViewModel Navigation DataTemplates -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">

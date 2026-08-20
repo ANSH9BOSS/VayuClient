@@ -612,6 +612,12 @@ namespace VayuClient.ViewModels
         }
 
         [RelayCommand]
+        private void OpenModpackModal(ModpackInfo? project)
+        {
+            InstallProject(project);
+        }
+
+        [RelayCommand]
         private void InstallProject(ModpackInfo? project)
         {
             if (project == null) return;

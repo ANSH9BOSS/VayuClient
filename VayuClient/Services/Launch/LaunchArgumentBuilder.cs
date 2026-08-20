@@ -69,18 +69,30 @@ namespace VayuClient.Services.Launch
                 jvmArgs.Add($"-Xmx{ramMB}M");
             }
 
-            // ─── CLIENT HIGH-FPS G1GC TUNING (Optimized for 600-1000 FPS & Zero Stutter) ───
-            // Tuned for client rendering (Sodium/Iris/Fabric/Vanilla) — avoids server-only pause overhead
+            // ─── CLIENT HIGH-FPS G1GC & SHADER TUNING (Optimized for Ultra-High FPS & Zero Stutter) ───
+            // Tuned for client rendering (Sodium/Iris/Fabric/Vanilla/Shaders)
             jvmArgs.Add("-XX:+UseG1GC");
             jvmArgs.Add("-XX:+ParallelRefProcEnabled");
-            jvmArgs.Add("-XX:MaxGCPauseMillis=37");
+            jvmArgs.Add("-XX:MaxGCPauseMillis=10");
             jvmArgs.Add("-XX:+UnlockExperimentalVMOptions");
             jvmArgs.Add("-XX:+AlwaysPreTouch");
-            jvmArgs.Add("-XX:G1NewSizePercent=20");
-            jvmArgs.Add("-XX:G1MaxNewSizePercent=30");
-            jvmArgs.Add("-XX:G1ReservePercent=20");
+            jvmArgs.Add("-XX:G1NewSizePercent=30");
+            jvmArgs.Add("-XX:G1MaxNewSizePercent=50");
+            jvmArgs.Add("-XX:G1ReservePercent=15");
             jvmArgs.Add("-XX:G1HeapRegionSize=32M");
+            jvmArgs.Add("-XX:G1MixedGCCountTarget=4");
+            jvmArgs.Add("-XX:InitiatingHeapOccupancyPercent=15");
+            jvmArgs.Add("-XX:G1MixedGCLiveThresholdPercent=90");
+            jvmArgs.Add("-XX:G1RSetUpdatingPauseTimePercent=5");
+            jvmArgs.Add("-XX:SurvivorRatio=32");
             jvmArgs.Add("-XX:+PerfDisableSharedMem");
+            jvmArgs.Add("-XX:+UseStringDeduplication");
+            jvmArgs.Add("-XX:ReservedCodeCacheSize=512M");
+            jvmArgs.Add("-XX:InitialCodeCacheSize=128M");
+
+            // Allocate direct memory for Iris/Sodium shader vertex and shadow buffers
+            int directMemoryMB = Math.Max(4096, ramMB);
+            jvmArgs.Add($"-XX:MaxDirectMemorySize={directMemoryMB}M");
 
             // Hardware-optimized GC thread allocation
             int logicalCores = Math.Max(2, Environment.ProcessorCount);
@@ -90,13 +102,16 @@ namespace VayuClient.Services.Launch
             jvmArgs.Add($"-XX:ParallelGCThreads={parallelGcThreads}");
             jvmArgs.Add($"-XX:ConcGCThreads={concGcThreads}");
 
-            // Standard JVM properties
+            // Standard JVM properties & native allocator boost
             if (parameters.VersionPackage.Arguments?.Jvm == null || parameters.VersionPackage.Arguments.Jvm.Count == 0)
             {
                 jvmArgs.Add($"-Djava.library.path={parameters.InstanceNativesDir}");
                 jvmArgs.Add($"-Djna.tmpdir={parameters.InstanceNativesDir}");
                 jvmArgs.Add($"-Dorg.lwjgl.system.SharedLibraryExtractPath={parameters.InstanceNativesDir}");
             }
+            jvmArgs.Add("-Dorg.lwjgl.system.allocator=system");
+            jvmArgs.Add("-Dsun.java2d.noddraw=true");
+            jvmArgs.Add("-Dorg.lwjgl.opengl.Display.enableHighDPI=true");
             jvmArgs.Add("-Dminecraft.launcher.brand=VayuClient");
             jvmArgs.Add($"-Dminecraft.launcher.version={Core.AppInfo.VersionString}");
 

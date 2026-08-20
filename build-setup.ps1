@@ -102,7 +102,7 @@ if ($cert) {
     } catch { }
 
     # Sign all executables and dlls inside tempPublish before zipping
-    Get-ChildItem -Path $tempPublish -Include *.exe,*.dll -Recurse | ForEach-Object {
+    Get-ChildItem -Path $tempPublish -File -Recurse | Where-Object { $_.Extension -eq ".exe" -or $_.Extension -eq ".dll" } | ForEach-Object {
         try {
             Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop *>$null
         } catch {
@@ -127,6 +127,13 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory($tempPublish, $payloadZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
 Write-Host "-> Successfully created VayuClientPayload.zip!" -ForegroundColor Green
 
+# Copy full application payload to dist folder
+Copy-Item (Join-Path $tempPublish "*") -Destination $distDir -Recurse -Force
+Write-Host "-> Preserved full application distribution in: $distDir" -ForegroundColor Green
+
+# Clean up temp publish
+if (Test-Path $tempPublish) { Remove-Item $tempPublish -Recurse -Force }
+
 # 6. Build and publish standalone VayuClientSetup installer
 Write-Host "`n[4/4] Building and signing standalone VayuClientSetup.exe installer (v$activeVersion)..." -ForegroundColor Yellow
 & $dotnetExe publish $setupProj `
@@ -143,13 +150,6 @@ Write-Host "`n[4/4] Building and signing standalone VayuClientSetup.exe installe
     -p:FileVersion=$activeVersion.0 `
     -p:InformationalVersion=$activeVersion `
     -o $distDir
-
-# Copy full application payload to dist folder
-Copy-Item (Join-Path $tempPublish "*") -Destination $distDir -Recurse -Force
-Write-Host "-> Preserved full application distribution in: $distDir" -ForegroundColor Green
-
-# Clean up temp publish
-if (Test-Path $tempPublish) { Remove-Item $tempPublish -Recurse -Force }
 
 # Copy to Discord server manager distribution folder if present
 $discordFolder = "C:\Users\ANSH\.gemini\antigravity-ide\scratch\DiscordServerManager"
@@ -179,8 +179,10 @@ if ($cert) {
     # Also update installed binary in AppData if present
     $localInstalledExe = "C:\Users\ANSH\AppData\Local\Programs\VayuClient\VayuClient.exe"
     if (Test-Path $localInstalledExe) {
-        Copy-Item -Path $finalAppExe -Destination $localInstalledExe -Force -ErrorAction SilentlyContinue
-        Unblock-File -Path $localInstalledExe -ErrorAction SilentlyContinue
+        try {
+            Copy-Item -Path $finalAppExe -Destination $localInstalledExe -Force -ErrorAction SilentlyContinue
+            Unblock-File -Path $localInstalledExe -ErrorAction SilentlyContinue
+        } catch { }
     }
 }
 
@@ -195,6 +197,23 @@ if ($setupExists -and $appExists) {
     Write-Host " Installer Executable:   $finalSetupExe" -ForegroundColor Yellow
     Write-Host " Version:                v$activeVersion" -ForegroundColor Yellow
     Write-Host "==========================================================" -ForegroundColor Green
+
+    # Automatic GitHub Sync & Release Commit
+    try {
+        Write-Host "`n[GITHUB] Automatically syncing build v$activeVersion to GitHub..." -ForegroundColor Cyan
+        git add -A
+        $gitStatus = git status --porcelain
+        if ($gitStatus) {
+            git commit -m "release: v$activeVersion - Universal HUD & Launcher updates"
+            git push origin main
+            Write-Host "-> Successfully updated and pushed build v$activeVersion to GitHub!" -ForegroundColor Green
+        } else {
+            git push origin main
+            Write-Host "-> Repository is up-to-date on GitHub!" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "-> [GitHub Push Notice]: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 } elseif ($setupExists) {
     Write-Host "`n==========================================================" -ForegroundColor Green
     Write-Host " SUCCESS: REAL WINDOWS INSTALLER CREATED!" -ForegroundColor Green

@@ -89,6 +89,21 @@ namespace VayuClient.Services.Backend
         /// </summary>
         public event Action<string>? PlayerOffline;            // (username)
 
+        /// <summary>Received a friend request: fromUsername</summary>
+        public event Action<string>? FriendRequestReceived;
+
+        /// <summary>A friend request was accepted: byUsername</summary>
+        public event Action<string>? FriendRequestAccepted;
+
+        /// <summary>A friend request was declined: byUsername</summary>
+        public event Action<string>? FriendRequestDeclined;
+
+        /// <summary>Friend status or current server changed: (username, isOnline, currentServer)</summary>
+        public event Action<string, bool, string?>? FriendStatusChanged;
+
+        /// <summary>Received a server invite: (fromUsername, serverIp, serverName, timestamp)</summary>
+        public event Action<string, string, string, long>? ServerInviteReceived;
+
         /// <summary>
         /// Full presence snapshot pushed by the server after any state change.
         /// Contains the real current list of connected users.
@@ -183,6 +198,22 @@ namespace VayuClient.Services.Backend
 
             _connection.On<string>("PlayerOffline", username =>
                 Dispatch(() => PlayerOffline?.Invoke(username)));
+
+            // ── Friend handlers ──────────────────────────────────────────────
+            _connection.On<string>("FriendRequestReceived", from =>
+                Dispatch(() => FriendRequestReceived?.Invoke(from)));
+
+            _connection.On<string>("FriendRequestAccepted", by =>
+                Dispatch(() => FriendRequestAccepted?.Invoke(by)));
+
+            _connection.On<string>("FriendRequestDeclined", by =>
+                Dispatch(() => FriendRequestDeclined?.Invoke(by)));
+
+            _connection.On<string, bool, string?>("FriendStatusChanged", (user, online, srv) =>
+                Dispatch(() => FriendStatusChanged?.Invoke(user, online, srv)));
+
+            _connection.On<string, string, string, long>("ServerInviteReceived", (from, ip, name, time) =>
+                Dispatch(() => ServerInviteReceived?.Invoke(from, ip, name, time)));
 
             _connection.On<System.Text.Json.JsonElement>("PresenceSnapshot", raw =>
             {

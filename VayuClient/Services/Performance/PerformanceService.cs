@@ -94,12 +94,20 @@ namespace VayuClient.Services.Performance
                     }
                 }
 
-                // Apply real configuration values
+                // Apply real configuration values and uncap FPS limits
                 optionsMap["entityDistanceScaling"] = settings.MobRenderDistanceScale.ToString("0.0#", CultureInfo.InvariantCulture);
                 optionsMap["particles"] = settings.ParticleQuality.ToString();
                 optionsMap["renderDistance"] = settings.RenderDistanceChunks.ToString();
                 optionsMap["simulationDistance"] = settings.SimulationDistanceChunks.ToString();
                 optionsMap["enableVsync"] = settings.EnableVsync ? "true" : "false";
+
+                // Uncap framerate to Unlimited (260 in MC 1.20+) and disable background/AFK throttles
+                optionsMap["maxFps"] = "260";
+                optionsMap["inactivityFpsLimit"] = "\"none\"";
+                optionsMap["chunkSectionFadeInTime"] = "0.0";
+                optionsMap["renderClouds"] = "\"false\"";
+                optionsMap["entityShadows"] = "false";
+                optionsMap["biomeBlendRadius"] = "0";
 
                 var outLines = new List<string>();
                 foreach (var kvp in optionsMap)
@@ -109,21 +117,62 @@ namespace VayuClient.Services.Performance
 
                 await File.WriteAllLinesAsync(optionsPath, outLines);
 
-                // Write Entity Culling mod configuration if config directory exists
                 var configDir = Path.Combine(gameDir, "config");
-                if (Directory.Exists(configDir))
-                {
-                    var entityCullingConfig = Path.Combine(configDir, "entityculling.json");
-                    var ecJson = JsonConvert.SerializeObject(new
-                    {
-                        enabled = settings.EnableEntityCulling,
-                        skipMarkerArmorStands = true,
-                        cullTiles = true
-                    }, Formatting.Indented);
-                    await File.WriteAllTextAsync(entityCullingConfig, ecJson);
-                }
+                Directory.CreateDirectory(configDir);
 
-                CrashLogger.LogMessage($"[PerformanceService]: Applied real performance settings to '{instance.Name}' (Options: RenderDistance={settings.RenderDistanceChunks}, EntityScale={settings.MobRenderDistanceScale}, Particles={settings.ParticleQuality})");
+                // Write Entity Culling mod configuration
+                var entityCullingConfig = Path.Combine(configDir, "entityculling.json");
+                var ecJson = JsonConvert.SerializeObject(new
+                {
+                    enabled = settings.EnableEntityCulling,
+                    skipMarkerArmorStands = true,
+                    cullTiles = true
+                }, Formatting.Indented);
+                await File.WriteAllTextAsync(entityCullingConfig, ecJson);
+
+                // Write Sodium Max-Performance Configuration (Uncaps rendering pipeline)
+                var sodiumConfig = Path.Combine(configDir, "sodium-options.json");
+                var sodiumJson = JsonConvert.SerializeObject(new
+                {
+                    quality = new
+                    {
+                        hidden_fluid_culling = true,
+                        improved_fluid_shaping = false,
+                        use_closest_point_entity_sort = false,
+                        pixel_filtering_mode = "NEAREST"
+                    },
+                    performance = new
+                    {
+                        chunk_builder_threads = 0,
+                        chunk_build_defer_mode = "ALWAYS",
+                        animate_only_visible_textures = true,
+                        use_entity_culling = true,
+                        use_fog_occlusion = true,
+                        use_block_face_culling = true,
+                        use_no_error_g_l_context = true,
+                        quad_splitting_mode = "SAFE",
+                        cpu_render_ahead_limit = 0
+                    },
+                    advanced = new
+                    {
+                        enable_memory_tracing = false,
+                        allow_direct_memory_access = true,
+                        use_advanced_staging_buffers = true
+                    },
+                    debug = new
+                    {
+                        terrain_sorting_enabled = false
+                    },
+                    notifications = new
+                    {
+                        has_cleared_donation_button = true,
+                        has_seen_donation_prompt = true,
+                        has_edited_fullscreen_option = true
+                    }
+                }, Formatting.Indented);
+                await File.WriteAllTextAsync(sodiumConfig, sodiumJson);
+
+                CrashLogger.LogMessage($"[PerformanceService]: Applied real performance settings to '{instance.Name}' (Options: RenderDistance={settings.RenderDistanceChunks}, EntityScale={settings.MobRenderDistanceScale}, Particles={settings.ParticleQuality}, MaxFPS=Unlimited)");
             }
             catch (Exception ex)
             {

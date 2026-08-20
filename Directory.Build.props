@@ -1,12 +1,12 @@
-﻿<Project>
+<Project>
   <PropertyGroup>
-    <Version>1.6.2</Version>
-    <FileVersion>1.6.2.0</FileVersion>
-    <AssemblyVersion>1.6.2.0</AssemblyVersion>
-    <InformationalVersion>1.6.2</InformationalVersion>
+    <Version>1.9.0</Version>
+    <FileVersion>1.9.0.0</FileVersion>
+    <AssemblyVersion>1.9.0.0</AssemblyVersion>
+    <InformationalVersion>1.9.0</InformationalVersion>
     <Authors>ANSH9BOSS</Authors>
     <Company>ANSH9BOSS</Company>
     <Product>VayuClient</Product>
-    <Copyright>Copyright Â© 2026 ANSH9BOSS</Copyright>
+    <Copyright>Copyright © 2026 ANSH9BOSS</Copyright>
   </PropertyGroup>
 </Project>

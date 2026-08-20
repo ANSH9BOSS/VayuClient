@@ -35,6 +35,7 @@ namespace VayuClient.Services.Launch
         private readonly IInstanceIntegrityService _integrityService;
         private readonly IPerformanceService _performanceService;
         private readonly IVayuUiCompatibilityValidator _uiValidator;
+        private readonly IVayuUIArtifactResolver _uiResolver;
 
         private Process? _activeGameProcess;
         private readonly string _logsDir;
@@ -58,7 +59,8 @@ namespace VayuClient.Services.Launch
             IModpackInstaller modpackInstaller,
             IInstanceIntegrityService integrityService,
             IPerformanceService performanceService,
-            IVayuUiCompatibilityValidator? uiValidator = null)
+            IVayuUiCompatibilityValidator? uiValidator = null,
+            IVayuUIArtifactResolver? uiResolver = null)
         {
             _instanceService = instanceService;
             _accountService = accountService;
@@ -71,6 +73,7 @@ namespace VayuClient.Services.Launch
             _integrityService = integrityService;
             _performanceService = performanceService;
             _uiValidator = uiValidator ?? new VayuUiCompatibilityValidator();
+            _uiResolver = uiResolver ?? new VayuUIArtifactResolver(_uiValidator);
 
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             _logsDir = Path.Combine(appData, "VayuClient", "logs");
@@ -313,7 +316,7 @@ namespace VayuClient.Services.Launch
                 await _performanceService.ApplyInstanceOptionsAsync(instance, _performanceService.CurrentSettings);
 
                 // 8.8 Auto-deploy and validate version-compatible VayuClient In-Game UI Mod
-                EnsureVayuClientUiMod(instance, javaRuntime, Log);
+                await EnsureVayuClientUiModAsync(instance, javaRuntime, Log).ConfigureAwait(false);
 
                 // 9. Build Classpath (Deduplicating loader vs vanilla conflicting libraries)
                 SetState(LaunchState.Preparing, "Building classpath and launch arguments...");
@@ -379,62 +382,28 @@ namespace VayuClient.Services.Launch
                     }
                 }
 
-                // Build JVM and game command line with safe Windows quoting
-                var sbArgs = new StringBuilder();
+                // Build argument list for safe Win32 process execution via ProcessStartInfo.ArgumentList
+                var allArgumentsList = new List<string>();
                 foreach (var jvmArg in argsResult.JvmArguments)
                 {
-                    if (string.IsNullOrWhiteSpace(jvmArg)) continue;
-                    if (jvmArg.StartsWith("-D", StringComparison.OrdinalIgnoreCase) && jvmArg.Contains('='))
+                    if (!string.IsNullOrWhiteSpace(jvmArg))
                     {
-                        int eqIndex = jvmArg.IndexOf('=');
-                        string key = jvmArg.Substring(0, eqIndex);
-                        string val = jvmArg.Substring(eqIndex + 1);
-                        if (val.StartsWith("\"") && val.EndsWith("\""))
-                        {
-                            sbArgs.Append($"{key}={val} ");
-                        }
-                        else if (val.Contains(' '))
-                        {
-                            sbArgs.Append($"{key}=\"{val}\" ");
-                        }
-                        else
-                        {
-                            sbArgs.Append($"{key}={val} ");
-                        }
-                    }
-                    else if (jvmArg == "-cp" || jvmArg == "-classpath")
-                    {
-                        sbArgs.Append($"{jvmArg} ");
-                    }
-                    else
-                    {
-                        if (jvmArg.Contains(' ') && !jvmArg.StartsWith("\""))
-                        {
-                            sbArgs.Append($"\"{jvmArg}\" ");
-                        }
-                        else
-                        {
-                            sbArgs.Append($"{jvmArg} ");
-                        }
+                        allArgumentsList.Add(jvmArg.Trim());
                     }
                 }
 
-                sbArgs.Append($"{argsResult.MainClass} ");
+                if (!string.IsNullOrWhiteSpace(argsResult.MainClass))
+                {
+                    allArgumentsList.Add(argsResult.MainClass.Trim());
+                }
 
                 foreach (var gameArg in argsResult.GameArguments)
                 {
-                    if (string.IsNullOrWhiteSpace(gameArg)) continue;
-                    if (gameArg.Contains(' ') && !gameArg.StartsWith("\""))
+                    if (!string.IsNullOrWhiteSpace(gameArg))
                     {
-                        sbArgs.Append($"\"{gameArg}\" ");
-                    }
-                    else
-                    {
-                        sbArgs.Append($"{gameArg} ");
+                        allArgumentsList.Add(gameArg.Trim());
                     }
                 }
-
-                string finalArguments = sbArgs.ToString().TrimEnd();
 
                 Exception? lastLaunchEx = null;
                 foreach (var javaPath in javaCandidates)
@@ -446,7 +415,6 @@ namespace VayuClient.Services.Launch
                         var startInfo = new ProcessStartInfo
                         {
                             FileName = javaPath,
-                            Arguments = finalArguments,
                             WorkingDirectory = instance.GameDirectory,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
@@ -454,14 +422,23 @@ namespace VayuClient.Services.Launch
                             CreateNoWindow = true
                         };
 
-                        // Enforce dedicated GPU execution on Windows dual-GPU systems (NVIDIA RTX 5050 / AMD Radeon)
+                        foreach (var arg in allArgumentsList)
+                        {
+                            startInfo.ArgumentList.Add(arg);
+                        }
+
+                        // Enforce dedicated GPU execution on Windows dual-GPU systems (NVIDIA RTX / AMD Radeon)
                         try
                         {
                             startInfo.EnvironmentVariables["__NV_PRIME_RENDER_OFFLOAD"] = "1";
                             startInfo.EnvironmentVariables["__GLX_VENDOR_LIBRARY_NAME"] = "nvidia";
-                            startInfo.EnvironmentVariables["SHIM_MCCOMPAT"] = "0x800000001";
                             startInfo.EnvironmentVariables["CUDA_VISIBLE_DEVICES"] = "0";
                             startInfo.EnvironmentVariables["GPU_DEVICE_ORDINAL"] = "0";
+
+                            // Uncap driver framerate and enable NVIDIA multithreaded command dispatch
+                            startInfo.EnvironmentVariables["__GL_THREADED_OPTIMIZATIONS"] = "1";
+                            startInfo.EnvironmentVariables["__GL_SYNC_TO_VBLANK"] = "0";
+                            startInfo.EnvironmentVariables["__GL_YIELD"] = "NOTHING";
 
                             // Set Windows DirectX high-performance GPU preference for this javaw executable
                             using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\DirectX\UserGpuPreferences");
@@ -500,7 +477,12 @@ namespace VayuClient.Services.Launch
                         if (p.Start())
                         {
                             process = p;
-                            Log($"Started Java process successfully on high-performance GPU with: {javaPath} (PID: {p.Id})");
+                            try
+                            {
+                                process.PriorityClass = ProcessPriorityClass.High;
+                            }
+                            catch { }
+                            Log($"Started Java process successfully on high-performance GPU with: {javaPath} (PID: {p.Id}, Priority: High)");
                             break;
                         }
                     }
@@ -543,6 +525,25 @@ namespace VayuClient.Services.Launch
 
                 SetState(LaunchState.Playing, $"Playing Minecraft {instance.MinecraftVersion} ({instance.Name})");
                 Log($"Minecraft process running with PID: {process.Id}");
+
+                // Open custom Glassmorphic Live Game Output Menu
+                try
+                {
+                    string liveLogDir = Path.Combine(instance.GameDirectory, "logs");
+                    Directory.CreateDirectory(liveLogDir);
+                    string liveLogFile = Path.Combine(liveLogDir, "latest.log");
+                    if (!File.Exists(liveLogFile))
+                    {
+                        File.WriteAllText(liveLogFile, $"[{DateTime.Now:HH:mm:ss}] [VayuClient v1.9.0] Starting Minecraft {instance.MinecraftVersion} ({instance.Name})...\n");
+                    }
+
+                    // Open custom live log menu inside the launcher
+                    Views.GameLogsDialog.ShowDialogSafe(instance.Name, liveLogFile);
+                }
+                catch (Exception ex)
+                {
+                    Log($"[Game Logs]: {ex.Message}");
+                }
 
                 // 12. Asynchronous Process Lifecycle Monitoring (Non-blocking)
                 _ = Task.Run(async () =>
@@ -791,66 +792,26 @@ namespace VayuClient.Services.Launch
             }
         }
 
-        private void EnsureVayuClientUiMod(MinecraftInstance instance, JavaRuntimeInfo javaRuntime, Action<string>? log = null)
+        private async Task EnsureVayuClientUiModAsync(MinecraftInstance instance, JavaRuntimeInfo javaRuntime, Action<string>? log = null)
         {
             try
             {
-                var modsDir = Path.Combine(instance.GameDirectory, "mods");
-                Directory.CreateDirectory(modsDir);
-
-                // 1. Purge any stale or incompatible UI mod from instance directory
-                _uiValidator.PurgeIncompatibleUiMods(modsDir, javaRuntime.MajorVersion, instance.MinecraftVersion);
-
-                // 2. Resolve source candidate
-                var appBase = AppDomain.CurrentDomain.BaseDirectory;
-                var sourceMod = Path.Combine(appBase, "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
-                if (!File.Exists(sourceMod))
+                var deployedPath = await _uiResolver.ResolveAndDeployAsync(instance, javaRuntime).ConfigureAwait(false);
+                if (deployedPath != null)
                 {
-                    var altSource = Path.Combine(appBase, "..", "..", "..", "Assets", "Mods", "vayuclient-ui-1.6.0.jar");
-                    if (File.Exists(altSource)) sourceMod = Path.GetFullPath(altSource);
+                    var destInfo = _uiValidator.InspectArtifact(deployedPath);
+                    log?.Invoke($"[VayuHUD] Deployed and verified VayuClient HUD mod (Java {javaRuntime.MajorVersion} / Bytecode {destInfo.BytecodeMajor}) to {deployedPath}");
+                    CrashLogger.LogMessage($"[VayuHUD] Deployed VayuClient In-Game HUD mod (Java {javaRuntime.MajorVersion} / Bytecode {destInfo.BytecodeMajor}) to {deployedPath}");
                 }
-                if (!File.Exists(sourceMod))
+                else
                 {
-                    var distSource = Path.Combine(appBase, "vayuclient-ui-1.6.0.jar");
-                    if (File.Exists(distSource)) sourceMod = distSource;
+                    log?.Invoke($"[VayuHUD] Notice: No compatible HUD artifact for {instance.MinecraftVersion} ({instance.Loader}). Running in standard/native mode.");
                 }
-
-                if (!File.Exists(sourceMod))
-                {
-                    log?.Invoke($"[VayuUI] Notice: VayuClient UI artifact not found at {sourceMod}, launching in standard mode.");
-                    CrashLogger.LogMessage($"[VayuUI] Notice: VayuClient UI artifact not found at {sourceMod}");
-                    return;
-                }
-
-                // 3. Pre-launch Bytecode Compatibility Validation Gate
-                if (!_uiValidator.ValidateCompatibility(javaRuntime.MajorVersion, sourceMod, instance.MinecraftVersion, out string failureReason))
-                {
-                    log?.Invoke($"[VayuUI] CRITICAL COMPATIBILITY ERROR: {failureReason}");
-                    CrashLogger.LogMessage($"[VayuUI] CRITICAL COMPATIBILITY ERROR: {failureReason}");
-                    throw new InvalidOperationException(failureReason);
-                }
-
-                // 4. Deploy and assert integrity
-                var dest = Path.Combine(modsDir, "vayuclient-ui-1.6.0.jar");
-                File.Copy(sourceMod, dest, true);
-
-                var destInfo = _uiValidator.InspectArtifact(dest);
-                if (!destInfo.IsValid)
-                {
-                    throw new InvalidOperationException($"Deployed VayuClient UI artifact is invalid: {destInfo.ErrorMessage}");
-                }
-
-                log?.Invoke($"[VayuUI] Deployed and verified VayuClient UI mod (Java {javaRuntime.MajorVersion} / Bytecode {destInfo.BytecodeMajor}) to {dest}");
-                CrashLogger.LogMessage($"[VayuUI] Deployed VayuClient In-Game UI mod (Java {javaRuntime.MajorVersion} / Bytecode {destInfo.BytecodeMajor}) to {dest}");
-            }
-            catch (InvalidOperationException)
-            {
-                throw;
             }
             catch (Exception ex)
             {
-                log?.Invoke($"[VayuUI] Warning: in-game UI deployment exception: {ex.Message}");
-                CrashLogger.LogMessage($"[VayuUI] Warning: could not deploy in-game UI mod: {ex.Message}");
+                log?.Invoke($"[VayuHUD] Warning: in-game HUD deployment exception: {ex.Message}");
+                CrashLogger.LogMessage($"[VayuHUD] Warning: could not deploy in-game HUD mod: {ex.Message}");
             }
         }
     }

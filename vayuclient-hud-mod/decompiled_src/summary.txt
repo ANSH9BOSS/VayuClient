@@ -1,0 +1,9 @@
+Summary for C:\Users\ANSH\Videos\fastclient-hud-26.2-latest.jar
+Decompiled with CFR 0.152
+
+
+net.fastclient.hud.appearance.PlayerAppearanceCache
+----------------------------
+
+fetchHttp(java.lang.String )
+  Exception : org.benf.cfr.reader.util.ConfusedCFRException: Tried to end blocks [3[TRYBLOCK]], but top level block is 20[WHILELOOP]

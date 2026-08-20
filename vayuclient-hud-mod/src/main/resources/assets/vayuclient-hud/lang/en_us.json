@@ -1,0 +1,7 @@
+{
+  "key.vayuclient-hud.zoom": "Vayu Zoom",
+  "key.vayuclient-hud.fps_toggle": "Toggle FPS Counter",
+  "key.vayuclient-hud.fullbright_toggle": "Toggle Fullbright",
+  "key.vayuclient-hud.click_gui": "Open Vayu HUD Overlay",
+  "category.vayuclient-hud": "VayuClient HUD"
+}

@@ -59,6 +59,28 @@ namespace VayuClient.Services.Backend
         [property: JsonPropertyName("maintenanceMode")] bool MaintenanceMode,
         [property: JsonPropertyName("enableCloudSlp")]  bool EnableCloudSlp);
 
+    public sealed record FriendEntryDto(
+        [property: JsonPropertyName("username")]             string   Username,
+        [property: JsonPropertyName("isOnline")]             bool     IsOnline,
+        [property: JsonPropertyName("currentServerAddress")] string?  CurrentServerAddress,
+        [property: JsonPropertyName("currentServerName")]    string?  CurrentServerName,
+        [property: JsonPropertyName("accountType")]          string   AccountType,
+        [property: JsonPropertyName("friendsSince")]         DateTime FriendsSince);
+
+    public sealed record FriendsListResponse(
+        [property: JsonPropertyName("friends")] List<FriendEntryDto> Friends,
+        [property: JsonPropertyName("count")]   int Count);
+
+    public sealed record FriendRequestEntryDto(
+        [property: JsonPropertyName("id")]           Guid     Id,
+        [property: JsonPropertyName("fromUsername")] string   FromUsername,
+        [property: JsonPropertyName("toUsername")]   string   ToUsername,
+        [property: JsonPropertyName("createdAt")]    DateTime CreatedAt);
+
+    public sealed record FriendRequestsResponse(
+        [property: JsonPropertyName("incoming")] List<FriendRequestEntryDto> Incoming,
+        [property: JsonPropertyName("outgoing")] List<FriendRequestEntryDto> Outgoing);
+
     // ─── API Client ───────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -86,7 +108,7 @@ namespace VayuClient.Services.Backend
                 BaseAddress = new Uri(BaseUrl),
                 Timeout = TimeSpan.FromSeconds(10)
             };
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("VayuClient/1.5 (+https://github.com/ANSH9BOSS/VayuClient)");
+            _http.DefaultRequestHeaders.UserAgent.ParseAdd("VayuClient/1.8 (+https://github.com/ANSH9BOSS/VayuClient)");
             _http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         }
 
@@ -113,6 +135,51 @@ namespace VayuClient.Services.Backend
 
         public Task<FeatureFlagsDto?> GetFeatureFlagsAsync(CancellationToken ct = default) =>
             SafeGetAsync(() => GetJsonAsync<FeatureFlagsDto>("/api/v1/config/flags", ct));
+
+        public Task<FriendsListResponse?> GetFriendsAsync(string username, CancellationToken ct = default) =>
+            SafeGetAsync(() => GetJsonAsync<FriendsListResponse>($"/api/v1/friends?username={Uri.EscapeDataString(username)}", ct));
+
+        public Task<FriendRequestsResponse?> GetFriendRequestsAsync(string username, CancellationToken ct = default) =>
+            SafeGetAsync(() => GetJsonAsync<FriendRequestsResponse>($"/api/v1/friends/requests?username={Uri.EscapeDataString(username)}", ct));
+
+        public Task<List<string>?> GetActiveUsersAsync(CancellationToken ct = default) =>
+            SafeGetAsync(() => GetJsonAsync<List<string>>("/api/v1/presence/active-users", ct));
+
+        public async Task<bool> SendFriendRequestAsync(string requester, string addressee, CancellationToken ct = default)
+        {
+            try
+            {
+                var payload = new { requester, addressee };
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                var resp = await _http.PostAsync("/api/v1/friends/request", content, ct).ConfigureAwait(false);
+                return resp.IsSuccessStatusCode;
+            }
+            catch { return false; }
+        }
+
+        public async Task<bool> RespondFriendRequestAsync(string addressee, string requester, bool accept, CancellationToken ct = default)
+        {
+            try
+            {
+                var payload = new { addressee, requester, accept };
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                var resp = await _http.PostAsync("/api/v1/friends/respond", content, ct).ConfigureAwait(false);
+                return resp.IsSuccessStatusCode;
+            }
+            catch { return false; }
+        }
+
+        public async Task<bool> RemoveFriendAsync(string userA, string userB, CancellationToken ct = default)
+        {
+            try
+            {
+                var payload = new { userA, userB };
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                var resp = await _http.PostAsync("/api/v1/friends/remove", content, ct).ConfigureAwait(false);
+                return resp.IsSuccessStatusCode;
+            }
+            catch { return false; }
+        }
 
         // ── Helpers ────────────────────────────────────────────────────────────
 
