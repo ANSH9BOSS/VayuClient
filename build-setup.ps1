@@ -213,6 +213,13 @@ if ($setupExists -and $appExists) {
         git tag -a "v$activeVersion" -f -m "Release v$activeVersion - VayuClient Real Executable & Universal HUD"
         git push origin "v$activeVersion" --force --tags
         Write-Host "-> Successfully pushed release tag v$activeVersion to GitHub!" -ForegroundColor Green
+
+        # Publish official GitHub Release as LATEST and upload assets
+        $pubScript = Join-Path $scriptDir "publish_github_release.py"
+        if (Test-Path $pubScript) {
+            Write-Host "`n[GITHUB] Publishing official GitHub Release v$activeVersion with assets..." -ForegroundColor Cyan
+            python $pubScript
+        }
     } catch {
         Write-Host "-> [GitHub Push Notice]: $($_.Exception.Message)" -ForegroundColor Yellow
     }
