@@ -24,6 +24,7 @@ namespace VayuClient.ViewModels
         private readonly MainViewModel _main;
         private readonly IInstanceService? _instanceService;
         private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(15) };
+        private static readonly SemaphoreSlim _modrinthLoadSemaphore = new(1, 1);
         private bool _disposed;
 
         static InstallationManagerViewModel()
@@ -1007,6 +1008,12 @@ namespace VayuClient.ViewModels
 
         public async Task LoadModrinthProjectsAsync()
         {
+            // Prevent concurrent requests — if already loading, skip
+            if (!await _modrinthLoadSemaphore.WaitAsync(0))
+            {
+                return;
+            }
+
             IsLoadingModrinth = true;
             StatusMessage = "Connecting to Modrinth...";
 
@@ -1090,28 +1097,18 @@ namespace VayuClient.ViewModels
                                 CompatibleLoaders = compLoaders,
                                 IsCompatible = true
                             });
-
-                            // Preload images
-                            if (!string.IsNullOrEmpty(iconUrl))
-                            {
-                                _ = Task.Run(async () =>
-                                {
-                                    try
-                                    {
-                                        var bytes = await _httpClient.GetByteArrayAsync(iconUrl);
-                                        // Cache strategy could be implemented here
-                                    }
-                                    catch { }
-                                });
-                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
+                CrashLogger.LogException("LoadModrinthProjects", ex);
                 System.Diagnostics.Debug.WriteLine($"Modrinth API load error: {ex.Message}");
                 StatusMessage = "Could not connect to Modrinth. Please check internet connection.";
+                IsLoadingModrinth = false;
+                _modrinthLoadSemaphore.Release();
+                return;
             }
 
             var app = Application.Current;
@@ -1150,14 +1147,19 @@ namespace VayuClient.ViewModels
                     : "No projects found on Modrinth for this category.";
             }
 
-            if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess() && !app.Dispatcher.HasShutdownStarted)
+            if (app?.Dispatcher != null && !app.Dispatcher.HasShutdownStarted)
             {
-                try { app.Dispatcher.Invoke(ApplyState); } catch { ApplyState(); }
+                if (!app.Dispatcher.CheckAccess())
+                {
+                    app.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, (Action)ApplyState);
+                }
+                else
+                {
+                    ApplyState();
+                }
             }
-            else
-            {
-                ApplyState();
-            }
+            
+            _modrinthLoadSemaphore.Release();
         }
 
         [RelayCommand]

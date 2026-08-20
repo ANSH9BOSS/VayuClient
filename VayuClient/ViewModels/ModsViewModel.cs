@@ -293,6 +293,8 @@ namespace VayuClient.ViewModels
         private static readonly HttpClient _modrinthHttp = new() { Timeout = TimeSpan.FromSeconds(5) };
         private static readonly string _iconsCacheDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VayuClient", "Cache", "Icons");
+        // Limit concurrent Modrinth icon fetches to avoid HTTP flooding
+        private static readonly SemaphoreSlim _iconFetchSemaphore = new(4, 4);
 
         static ModsViewModel()
         {
@@ -513,6 +515,8 @@ namespace VayuClient.ViewModels
         {
             _ = Task.Run(async () =>
             {
+                // Throttle concurrent requests
+                await _iconFetchSemaphore.WaitAsync();
                 try
                 {
                     string url = $"https://api.modrinth.com/v2/search?query={Uri.EscapeDataString(query)}&facets=[[\"project_type:mod\"]]&limit=1";
@@ -535,6 +539,10 @@ namespace VayuClient.ViewModels
                     }
                 }
                 catch { }
+                finally
+                {
+                    _iconFetchSemaphore.Release();
+                }
             });
         }
 

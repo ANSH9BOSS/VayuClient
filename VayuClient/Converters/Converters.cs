@@ -367,21 +367,33 @@ namespace VayuClient.Converters
                 catch { }
             }
 
-            // Asynchronously fetch image from CDN
+            // Asynchronously fetch image from CDN, then refresh via Dispatcher
             _ = Task.Run(async () =>
             {
                 try
                 {
                     var data = await _httpClient.GetByteArrayAsync(url);
-                    if (data != null && data.Length > 0)
+                    if (data == null || data.Length == 0) return;
+
+                    // Write to disk cache
+                    try { await File.WriteAllBytesAsync(localFile, data); } catch { }
+
+                    // Build BitmapImage on UI thread so WPF bindings auto-refresh
+                    var app = Application.Current;
+                    if (app?.Dispatcher == null || app.Dispatcher.HasShutdownStarted) return;
+
+                    app.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)(() =>
                     {
-                        await File.WriteAllBytesAsync(localFile, data);
-                        var loaded = LoadBitmapFromBytes(data);
-                        if (loaded != null)
+                        try
                         {
-                            _imageCache[url] = loaded;
+                            var loaded = LoadBitmapFromBytes(data);
+                            if (loaded != null)
+                            {
+                                _imageCache[url] = loaded;
+                            }
                         }
-                    }
+                        catch { }
+                    }));
                 }
                 catch { }
             });
