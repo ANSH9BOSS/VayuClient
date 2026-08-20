@@ -21,6 +21,11 @@ namespace VayuClient.Services.Launch
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             var librariesDir = Path.Combine(appData, "VayuClient", "libraries");
 
+            bool isMsa = parameters.Profile.AccountType == AccountType.Microsoft && !string.IsNullOrWhiteSpace(parameters.Profile.AccessToken);
+            string accessToken = isMsa ? parameters.Profile.AccessToken! : "0";
+            string userType = isMsa ? "msa" : "mojang";
+            string xuid = isMsa ? (parameters.Profile.Uuid ?? string.Empty) : string.Empty;
+
             var tokenMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 { "natives_directory", parameters.InstanceNativesDir },
@@ -30,9 +35,9 @@ namespace VayuClient.Services.Launch
                 { "classpath_separator", ";" },
                 { "library_directory", librariesDir },
                 { "auth_player_name", parameters.Profile.Username },
-                { "auth_session", string.IsNullOrEmpty(parameters.Profile.AccessToken) ? "token:0:0" : parameters.Profile.AccessToken },
+                { "auth_session", accessToken },
                 { "user_properties", "{}" },
-                { "auth_xuid", parameters.Profile.Uuid },
+                { "auth_xuid", xuid },
                 { "clientid", Guid.NewGuid().ToString("N") },
                 { "quickPlayPath", "" },
                 { "quickPlaySingleplayer", "" },
@@ -42,9 +47,9 @@ namespace VayuClient.Services.Launch
                 { "game_directory", parameters.Instance.GameDirectory },
                 { "assets_root", parameters.SharedAssetsDir },
                 { "assets_index_name", parameters.VersionPackage.AssetIndex?.Id ?? parameters.VersionPackage.Assets ?? "legacy" },
-                { "auth_uuid", parameters.Profile.Uuid },
-                { "auth_access_token", string.IsNullOrEmpty(parameters.Profile.AccessToken) ? "0" : parameters.Profile.AccessToken },
-                { "user_type", parameters.Profile.AccountType == AccountType.Microsoft ? "msa" : "offline" },
+                { "auth_uuid", parameters.Profile.Uuid ?? string.Empty },
+                { "auth_access_token", accessToken },
+                { "user_type", userType },
                 { "version_type", parameters.VersionPackage.Type ?? "release" },
                 { "resolution_width", "1280" },
                 { "resolution_height", "720" }
@@ -227,8 +232,8 @@ namespace VayuClient.Services.Launch
                     "--assetsDir", parameters.SharedAssetsDir,
                     "--assetIndex", parameters.VersionPackage.AssetIndex?.Id ?? "legacy",
                     "--uuid", parameters.Profile.Uuid,
-                    "--accessToken", string.IsNullOrEmpty(parameters.Profile.AccessToken) ? "0" : parameters.Profile.AccessToken,
-                    "--userType", parameters.Profile.AccountType == AccountType.Microsoft ? "msa" : "offline",
+                    "--accessToken", accessToken,
+                    "--userType", userType,
                     "--versionType", parameters.VersionPackage.Type ?? "release"
                 });
             }
