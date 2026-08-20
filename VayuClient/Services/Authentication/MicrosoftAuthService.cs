@@ -66,41 +66,81 @@ namespace VayuClient.Services.Authentication
         }
 
         /// <summary>
-        /// Interactive Microsoft login via MSAL.NET system default browser with registered Desktop redirect URI http://localhost.
-        /// Authenticates the user, acquires Microsoft access token, and completes the Minecraft authentication pipeline.
+        /// Interactive Microsoft login via MSAL.NET system default browser.
+        /// Strategy: silent cache → interactive browser → device code fallback.
+        /// Scope is XboxLive.signin only — MSAL manages offline_access/openid internally.
         /// </summary>
         public async Task<UserProfile> LoginInteractiveAsync(IProgress<string>? status = null, CancellationToken ct = default)
         {
-            CrashLogger.LogMessage("[AUTH] Starting MSAL.NET Desktop Interactive OAuth authentication flow");
-            status?.Report("Opening browser for Microsoft sign-in...");
-
+            CrashLogger.LogMessage("[AUTH] Starting Microsoft authentication. Strategy: silent → interactive → device-code");
             var app = GetMsalApp();
 
-            AuthenticationResult authResult;
+            // 1. Try silent token acquisition from MSAL cache
+            var accounts = await app.GetAccountsAsync();
+            if (accounts.Any())
+            {
+                try
+                {
+                    status?.Report("Refreshing Microsoft session from cache...");
+                    var silentResult = await app.AcquireTokenSilent(MicrosoftAuthConfig.Scopes, accounts.First())
+                        .ExecuteAsync(ct);
+
+                    if (silentResult != null && !string.IsNullOrWhiteSpace(silentResult.AccessToken))
+                    {
+                        CrashLogger.LogMessage($"[AUTH] Silent token acquired for cached account: {silentResult.Account?.Username}");
+                        return await CompleteMinecraftAuthenticationAsync(silentResult.AccessToken, silentResult.Account?.HomeAccountId?.Identifier, status, ct);
+                    }
+                }
+                catch (MsalUiRequiredException)
+                {
+                    CrashLogger.LogMessage("[AUTH] Silent auth requires UI interaction. Proceeding to interactive flow.");
+                }
+                catch (Exception silentEx)
+                {
+                    CrashLogger.LogMessage($"[AUTH] Silent auth failed (non-critical): {silentEx.Message}");
+                }
+            }
+
+            // 2. Interactive browser-based login
             try
             {
-                authResult = await app.AcquireTokenInteractive(MicrosoftAuthConfig.Scopes)
+                status?.Report("Opening browser for Microsoft sign-in...");
+                CrashLogger.LogMessage("[AUTH] Attempting interactive MSAL desktop browser auth...");
+
+                var authResult = await app.AcquireTokenInteractive(MicrosoftAuthConfig.Scopes)
                     .WithPrompt(Prompt.SelectAccount)
                     .ExecuteAsync(ct);
+
+                if (authResult != null && !string.IsNullOrWhiteSpace(authResult.AccessToken))
+                {
+                    CrashLogger.LogMessage($"[AUTH] Interactive token acquired for: {authResult.Account?.Username ?? "Microsoft User"}");
+                    return await CompleteMinecraftAuthenticationAsync(authResult.AccessToken, authResult.Account?.HomeAccountId?.Identifier, status, ct);
+                }
             }
             catch (MsalClientException ex) when (ex.ErrorCode == "authentication_canceled")
             {
-                CrashLogger.LogMessage("[AUTH] Interactive Microsoft login cancelled by user.");
+                CrashLogger.LogMessage("[AUTH] Interactive login cancelled by user.");
                 throw new OperationCanceledException("Microsoft sign-in was cancelled.", ex);
             }
-            catch (MsalException ex)
+            catch (OperationCanceledException)
             {
-                CrashLogger.LogException("MicrosoftAuthService.LoginInteractiveAsync", ex);
-                throw new InvalidOperationException($"Microsoft authentication error: {ex.Message}", ex);
+                throw;
+            }
+            catch (MsalException msalEx)
+            {
+                // Recoverable MSAL errors — fall through to device code
+                CrashLogger.LogMessage($"[AUTH] Interactive MSAL auth failed ({msalEx.ErrorCode}): {msalEx.Message}. Falling back to device code flow...");
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogMessage($"[AUTH] Interactive auth unexpected error: {ex.Message}. Falling back to device code flow...");
             }
 
-            if (authResult == null || string.IsNullOrWhiteSpace(authResult.AccessToken))
-            {
-                throw new InvalidOperationException("Microsoft returned an empty access token.");
-            }
-
-            CrashLogger.LogMessage($"[AUTH] Microsoft identity token acquired successfully for account: {authResult.Account?.Username ?? "Microsoft User"}. Continuing through Xbox Live pipeline...");
-            return await CompleteMinecraftAuthenticationAsync(authResult.AccessToken, authResult.Account?.HomeAccountId?.Identifier, status, ct);
+            // 3. Device code fallback (works when redirect URI or browser fails)
+            status?.Report("Browser login unavailable — using device code sign-in...");
+            CrashLogger.LogMessage("[AUTH] Falling back to device code authentication flow.");
+            var deviceCode = await RequestDeviceCodeAsync(ct);
+            return await PollForAuthenticationAsync(deviceCode, status, ct);
         }
 
 

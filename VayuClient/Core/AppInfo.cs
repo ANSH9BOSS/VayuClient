@@ -68,7 +68,10 @@ namespace VayuClient.Core
         public const string ClientId = "1390dea5-c274-4c1f-8fa6-a9d5fd33c70a";
         public const string Authority = "https://login.microsoftonline.com/common";
         public const string RedirectUri = "http://localhost";
-        public static readonly string[] Scopes = { "XboxLive.signin", "offline_access" };
+        // IMPORTANT: Do NOT include "offline_access" or "openid" here.
+        // MSAL.NET manages those OIDC scopes internally. Passing them explicitly
+        // causes Azure AD to reject the request with AADSTS70011.
+        public static readonly string[] Scopes = { "XboxLive.signin" };
 
         public const string XboxAuthEndpoint = "https://user.auth.xboxlive.com/user/authenticate";
         public const string XstsAuthEndpoint = "https://xsts.auth.xboxlive.com/xsts/authorize";

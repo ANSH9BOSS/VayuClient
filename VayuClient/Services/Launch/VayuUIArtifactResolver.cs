@@ -161,17 +161,41 @@ namespace VayuClient.Services.Launch
             string targetFileName = Path.GetFileName(matchedSource);
             string targetJar = Path.Combine(modsDir, targetFileName);
 
-            try
+            // Determine all mods directories to deploy into (handles nested game/ structure)
+            var deployTargets = new List<string> { modsDir };
+
+            // Also deploy to game/mods/ if that structure exists (VayuClient nested instance layout)
+            string gameModsDir = Path.Combine(instPath, "game", "mods");
+            if (Directory.Exists(Path.Combine(instPath, "game")))
             {
-                File.Copy(matchedSource, targetJar, true);
-                CrashLogger.LogMessage($"[VayuHUD Resolver] Successfully deployed universal HUD artifact '{targetFileName}' (Bytecode {matchedInfo?.BytecodeMajor}) to {targetJar}");
-                return targetJar;
+                Directory.CreateDirectory(gameModsDir);
+                deployTargets.Add(gameModsDir);
+                CrashLogger.LogMessage($"[VayuHUD Resolver] Detected nested 'game/' directory — will also deploy to {gameModsDir}");
             }
-            catch (Exception ex)
+
+            string? primaryDeployedPath = null;
+            foreach (var deployDir in deployTargets)
             {
-                CrashLogger.LogMessage($"[VayuHUD Resolver] Warning: Could not deploy artifact: {ex.Message}. Falling back to native.");
+                string dest = Path.Combine(deployDir, targetFileName);
+                try
+                {
+                    File.Copy(matchedSource, dest, true);
+                    CrashLogger.LogMessage($"[VayuHUD Resolver] Deployed '{targetFileName}' (Bytecode {matchedInfo?.BytecodeMajor}) → {dest}");
+                    primaryDeployedPath ??= dest;
+                }
+                catch (Exception ex)
+                {
+                    CrashLogger.LogMessage($"[VayuHUD Resolver] Warning: Could not deploy to {dest}: {ex.Message}");
+                }
+            }
+
+            if (primaryDeployedPath == null)
+            {
+                CrashLogger.LogMessage("[VayuHUD Resolver] All deploy attempts failed. Launching without VayuHUD.");
                 return null;
             }
+
+            return primaryDeployedPath;
         }
 
         private static bool IsVersionInRange(string version, string rangeSpec)
