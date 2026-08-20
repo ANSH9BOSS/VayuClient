@@ -112,7 +112,7 @@ namespace VayuClient.ViewModels
         private string _selectedModpackLoader = "Fabric";
 
         [ObservableProperty]
-        private string _selectedModpackVersion = "1.21.11";
+        private string _selectedModpackVersion = "26.2";
 
         [ObservableProperty]
         private int _modpackRamMB = 4096;
@@ -120,9 +120,10 @@ namespace VayuClient.ViewModels
         public ObservableCollection<string> ModpackLoaders { get; } = new() { "Fabric", "NeoForge", "Forge", "Quilt", "Vanilla" };
         public ObservableCollection<string> ModpackVersions { get; } = new()
         {
-            "1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.21.3", "1.21.1", "1.21",
+            "26.2", "26.2.0", "26.1.2", "26.1", "26",
+            "1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21",
             "1.20.6", "1.20.4", "1.20.2", "1.20.1",
-            "1.19.4", "1.19.2", "1.18.2", "1.16.5",
+            "1.19.4", "1.19.2", "1.18.2", "1.17.1", "1.16.5",
             "1.12.2", "1.8.9", "1.7.10"
         };
 
@@ -150,7 +151,7 @@ namespace VayuClient.ViewModels
         private string _editName = string.Empty;
 
         [ObservableProperty]
-        private string _editVersion = "1.21.11";
+        private string _editVersion = "26.2";
 
         [ObservableProperty]
         private string _editLoader = "Fabric";
@@ -414,6 +415,10 @@ namespace VayuClient.ViewModels
 
             EditingInstance = inst;
             EditName = inst.Name;
+            if (!string.IsNullOrWhiteSpace(inst.MinecraftVersion) && !ModpackVersions.Contains(inst.MinecraftVersion))
+            {
+                ModpackVersions.Insert(0, inst.MinecraftVersion);
+            }
             EditVersion = inst.MinecraftVersion;
             EditLoader = inst.Loader;
             EditRamMB = inst.RamMB;
@@ -530,7 +535,7 @@ namespace VayuClient.ViewModels
                 {
                     InstanceId = Guid.NewGuid().ToString("N"),
                     Name = instanceName,
-                    MinecraftVersion = "1.21.11",
+                    MinecraftVersion = "26.2",
                     Loader = "Fabric",
                     GameDirectory = instanceDir,
                     RamMB = 4096,
@@ -650,12 +655,12 @@ namespace VayuClient.ViewModels
                 }
                 else
                 {
-                    var defaults = new[] { "1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.21.3", "1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.2", "1.18.2", "1.16.5", "1.12.2", "1.8.9", "1.7.10" };
+                    var defaults = new[] { "26.2", "26.2.0", "26.1.2", "26.1", "26", "1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.2", "1.18.2", "1.17.1", "1.16.5", "1.12.2", "1.8.9", "1.7.10" };
                     foreach (var d in defaults) ModpackVersions.Add(d);
                 }
 
                 SelectedModpackLoader = ModpackLoaders.FirstOrDefault() ?? "Fabric";
-                SelectedModpackVersion = ModpackVersions.FirstOrDefault() ?? "1.21.11";
+                SelectedModpackVersion = ModpackVersions.FirstOrDefault() ?? "26.2";
                 IsModpackModalOpen = true;
 
                 // 2. Query real-time versions from Modrinth API for this specific project
@@ -718,7 +723,7 @@ namespace VayuClient.ViewModels
 
                                             if (string.IsNullOrEmpty(SelectedModpackVersion) || !ModpackVersions.Contains(SelectedModpackVersion))
                                             {
-                                                SelectedModpackVersion = ModpackVersions.FirstOrDefault() ?? "1.21.11";
+                                                SelectedModpackVersion = ModpackVersions.FirstOrDefault() ?? "26.2";
                                             }
 
                                             if (distinctLoaders.Count > 0)

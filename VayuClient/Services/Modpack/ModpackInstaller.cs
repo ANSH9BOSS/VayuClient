@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VayuClient.Core;
@@ -434,6 +435,116 @@ namespace VayuClient.Services.Modpack
             var gameDir = instance.GameDirectory;
             Directory.CreateDirectory(gameDir);
 
+            // 1. Inspect MultiMC / Prism instance.cfg
+            var instanceCfgEntry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("instance.cfg", StringComparison.OrdinalIgnoreCase));
+            if (instanceCfgEntry != null)
+            {
+                try
+                {
+                    using var cfgStream = instanceCfgEntry.Open();
+                    using var reader = new StreamReader(cfgStream);
+                    string cfgText = await reader.ReadToEndAsync(ct);
+                    foreach (var line in cfgText.Split('\n'))
+                    {
+                        var trimmed = line.Trim();
+                        if (trimmed.StartsWith("IntendedVersion=", StringComparison.OrdinalIgnoreCase) ||
+                            trimmed.StartsWith("MinecraftVersion=", StringComparison.OrdinalIgnoreCase) ||
+                            trimmed.StartsWith("MCVersion=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var ver = trimmed.Split('=', 2)[1].Trim();
+                            if (!string.IsNullOrEmpty(ver)) instance.MinecraftVersion = ver;
+                        }
+                        if (trimmed.StartsWith("name=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var name = trimmed.Split('=', 2)[1].Trim();
+                            if (!string.IsNullOrEmpty(name)) instance.Name = name;
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 2. Inspect mmc-pack.json / pack.json
+            var mmcPackEntry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith("mmc-pack.json", StringComparison.OrdinalIgnoreCase) || e.FullName.EndsWith("pack.json", StringComparison.OrdinalIgnoreCase));
+            if (mmcPackEntry != null)
+            {
+                try
+                {
+                    using var stream = mmcPackEntry.Open();
+                    using var reader = new StreamReader(stream);
+                    var json = await reader.ReadToEndAsync(ct);
+                    var obj = JObject.Parse(json);
+                    var components = obj["components"] as JArray;
+                    if (components != null)
+                    {
+                        foreach (var c in components)
+                        {
+                            var uid = c["uid"]?.ToString() ?? c["cachedComponentId"]?.ToString();
+                            var ver = c["version"]?.ToString();
+                            if (uid == "net.minecraft" && !string.IsNullOrEmpty(ver))
+                            {
+                                instance.MinecraftVersion = ver;
+                            }
+                            if (uid == "net.fabricmc.fabric-loader" && !string.IsNullOrEmpty(ver))
+                            {
+                                instance.Loader = "Fabric";
+                                instance.LoaderVersion = ver;
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 3. Inspect mod JARs inside mods/ for fabric.mod.json / dependencies
+            var modEntries = archive.Entries.Where(e => e.FullName.Contains("mods/") && e.FullName.EndsWith(".jar", StringComparison.OrdinalIgnoreCase)).Take(15).ToList();
+            foreach (var modEntry in modEntries)
+            {
+                try
+                {
+                    using var modStream = modEntry.Open();
+                    using var memoryStream = new MemoryStream();
+                    await modStream.CopyToAsync(memoryStream, ct);
+                    memoryStream.Position = 0;
+
+                    using var modZip = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+                    var fabricJson = modZip.Entries.FirstOrDefault(e => e.FullName.Equals("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
+                    if (fabricJson != null)
+                    {
+                        using var fjStream = fabricJson.Open();
+                        using var fjReader = new StreamReader(fjStream);
+                        var fjText = await fjReader.ReadToEndAsync(ct);
+                        var fjObj = JObject.Parse(fjText);
+                        var depends = fjObj["depends"] as JObject;
+                        if (depends != null)
+                        {
+                            var mcDep = depends["minecraft"]?.ToString();
+                            if (!string.IsNullOrEmpty(mcDep))
+                            {
+                                var match = Regex.Match(mcDep, @"(26(\.\d+)*|1\.21(\.\d+)*)");
+                                if (match.Success)
+                                {
+                                    instance.MinecraftVersion = match.Value;
+                                    instance.Loader = "Fabric";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 4. Inspect instance name for explicit version tag (e.g. 26.2, 26.1, 1.21.4, etc.)
+            if (string.IsNullOrEmpty(instance.MinecraftVersion) || instance.MinecraftVersion == "1.21.11")
+            {
+                var nameMatch = Regex.Match(instance.Name, @"\b(26(\.\d+)*|1\.21(\.\d+)*)\b");
+                if (nameMatch.Success)
+                {
+                    instance.MinecraftVersion = nameMatch.Value;
+                }
+            }
+
             // Detect if all files share a common root directory
             var firstEntry = archive.Entries.FirstOrDefault(e => !string.IsNullOrEmpty(e.Name));
             string commonPrefix = "";
@@ -470,7 +581,17 @@ namespace VayuClient.Services.Modpack
                 entry.ExtractToFile(dest, overwrite: true);
             }
 
-            await Task.CompletedTask;
+            // Persist updated instance properties
+            try
+            {
+                var instanceService = ServiceLocator.Resolve<IInstanceService>();
+                if (instanceService != null)
+                {
+                    await instanceService.SaveInstanceAsync(instance);
+                }
+            }
+            catch { }
+
             return true;
         }
     }

@@ -7,12 +7,27 @@ import urllib.parse
 import mimetypes
 
 REPO = "ANSH9BOSS/VayuClient"
-VERSION_TAG = "v1.9.0"
-RELEASE_TITLE = "VayuClient v1.9.0 - Universal Minecraft 1.21+ & Glassmorphic Config UI"
-RELEASE_NOTES = """## 🌌 VayuClient v1.9.0 Official Release
+
+def get_version():
+    if len(sys.argv) > 1 and sys.argv[1].strip():
+        v = sys.argv[1].strip()
+        return v if v.startswith("v") else f"v{v}"
+    try:
+        vjson = os.path.join(os.path.dirname(__file__), "version.json")
+        with open(vjson, "r") as f:
+            data = json.load(f)
+            v = data.get("version", "1.9.1")
+            return v if v.startswith("v") else f"v{v}"
+    except:
+        return "v1.9.1"
+
+VERSION_TAG = get_version()
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Universal Minecraft 26.x & 1.21+ Support"
+RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
-* **Universal Minecraft 1.21+ & 26.x HUD**: Full native support across 16 Minecraft versions (1.21 through 1.21.11, 26.1 through 26.2.0).
+* **Expanded Minecraft 26.x & 1.21+ Native Ecosystem**: Added full first-class support for `26.2`, `26.2.0`, `26.1.2`, `26.1`, `26`, `1.21.11`, through `1.21`.
+* **Deep Modpack Archive & Mod Inspector**: Automatic version and loader detection for `.zip`, `.mrpack`, CurseForge `manifest.json`, MultiMC `instance.cfg` & `mmc-pack.json`, and direct inspection of `mods/*.jar` dependencies.
 * **1000+ FPS Entity Rendering Optimization**: Zero-allocation fast-exit paths in entity render states eliminate framerate drops when multiple players are nearby.
 * **Sleek In-App Live Game Output Menu**: Replaced raw Windows CMD prompt with Cyber-Aero Glassmorphic live log viewer dialog.
 * **Complete Module Config Overhaul**: Glass cards, interactive header toggles, cyber keycap buttons, glowing sliders, and dropdown menus.

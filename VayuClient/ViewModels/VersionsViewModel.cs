@@ -70,7 +70,7 @@ namespace VayuClient.ViewModels
 
         // Step 1
         [ObservableProperty]
-        private string _selectedMinecraftVersion = "1.21.11";
+        private string _selectedMinecraftVersion = "26.2";
 
         // Step 2
         public ObservableCollection<LoaderInfo> AvailableLoaders { get; } = new();
@@ -316,7 +316,7 @@ namespace VayuClient.ViewModels
             var versionId = versionIdObj?.ToString();
             if (string.IsNullOrWhiteSpace(versionId))
             {
-                versionId = !string.IsNullOrWhiteSpace(SelectedMinecraftVersion) ? SelectedMinecraftVersion : "1.21.11";
+                versionId = !string.IsNullOrWhiteSpace(SelectedMinecraftVersion) ? SelectedMinecraftVersion : "26.2";
             }
             SelectedMinecraftVersion = versionId;
             InstanceName = $"Minecraft {versionId}";

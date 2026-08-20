@@ -149,6 +149,10 @@ namespace VayuClient.Services.Version
             return new List<MinecraftVersion>
             {
                 new() { Id = "26.2", Type = "release", ReleaseDate = new DateTime(2026, 4, 1) },
+                new() { Id = "26.2.0", Type = "release", ReleaseDate = new DateTime(2026, 4, 1) },
+                new() { Id = "26.1.2", Type = "release", ReleaseDate = new DateTime(2026, 2, 1) },
+                new() { Id = "26.1", Type = "release", ReleaseDate = new DateTime(2026, 1, 15) },
+                new() { Id = "26", Type = "release", ReleaseDate = new DateTime(2026, 1, 1) },
                 new() { Id = "1.21.11", Type = "release", ReleaseDate = new DateTime(2025, 12, 9) },
                 new() { Id = "1.21.10", Type = "release", ReleaseDate = new DateTime(2025, 10, 7) },
                 new() { Id = "1.21.9", Type = "release", ReleaseDate = new DateTime(2025, 9, 30) },
@@ -158,6 +162,7 @@ namespace VayuClient.Services.Version
                 new() { Id = "1.21.5", Type = "release", ReleaseDate = new DateTime(2025, 3, 25) },
                 new() { Id = "1.21.4", Type = "release", ReleaseDate = new DateTime(2024, 12, 3) },
                 new() { Id = "1.21.3", Type = "release", ReleaseDate = new DateTime(2024, 10, 23) },
+                new() { Id = "1.21.2", Type = "release", ReleaseDate = new DateTime(2024, 9, 15) },
                 new() { Id = "1.21.1", Type = "release", ReleaseDate = new DateTime(2024, 8, 8) },
                 new() { Id = "1.21", Type = "release", ReleaseDate = new DateTime(2024, 6, 13) },
                 new() { Id = "1.20.6", Type = "release", ReleaseDate = new DateTime(2024, 4, 29) },

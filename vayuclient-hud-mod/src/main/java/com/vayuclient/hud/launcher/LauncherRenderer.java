@@ -81,7 +81,7 @@ public final class LauncherRenderer {
         g.pose().popMatrix();
 
         // Subtitle badge
-        String sub = "v1.9.0 - FABRIC 26.2";
+        String sub = "v1.9.1 - FABRIC 26.2";
         int subW = font.width(sub);
         int badgePad = 8;
         int badgeX = centerX - (subW + badgePad * 2) / 2;
@@ -266,7 +266,7 @@ public final class LauncherRenderer {
 
         // Header Title in Box
         g.text(font, "GAME PAUSED", panelX + 16, panelY + 14, VayuTheme.PRIMARY, true);
-        g.text(font, "VayuClient v1.9.0 - Fabric 26.2", panelX + 16, panelY + 26, VayuTheme.TEXT_MUTED, false);
+        g.text(font, "VayuClient v1.9.1 - Fabric 26.2", panelX + 16, panelY + 26, VayuTheme.TEXT_MUTED, false);
 
         // World Telemetry Readout Box
         int statBoxW = panelW - 32;
@@ -359,7 +359,7 @@ public final class LauncherRenderer {
         VayuHUDUI.roundedRect(g, leftX, y, badgeW, h, 6, 0xD00A111A);
         VayuHUDUI.roundedOutline(g, leftX, y, badgeW, h, 6, 0x3338BDF8);
         g.text(font, "VAYUCLIENT", leftX + 10, y + 9, VayuTheme.PRIMARY, true);
-        g.text(font, "1.9.0", leftX + badgeW - 36, y + 9, VayuTheme.TEXT_MUTED, false);
+        g.text(font, "1.9.1", leftX + badgeW - 36, y + 9, VayuTheme.TEXT_MUTED, false);
 
         // Right Profile Pill
         String user = getUserName();
@@ -387,7 +387,7 @@ public final class LauncherRenderer {
     // ═══════════════════════════════════════════════════════════════
 
     public static void renderVanillaOverlay(GuiGraphicsExtractor g, Font font, int screenW, int screenH, int mouseX, int mouseY) {
-        g.text(font, "VayuClient v1.9.0", 12, screenH - 18, 0x8838BDF8, true);
+        g.text(font, "VayuClient v1.9.1", 12, screenH - 18, 0x8838BDF8, true);
     }
 
     public static int[] skinToggleBounds(int screenW, int screenH) {
