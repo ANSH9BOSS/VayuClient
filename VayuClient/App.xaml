@@ -25,6 +25,7 @@
             <converters:SkinHeadImageConverter x:Key="SkinHeadImage"/>
             <converters:WebImageConverter x:Key="WebImage"/>
             <converters:BoolToOnlineStatusBrushConverter x:Key="BoolToOnlineStatusBrush"/>
+            <converters:BoolToActiveBorderBrushConverter x:Key="BoolToActiveBorderBrush"/>
             <converters:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter"/>
             <converters:ZeroToVisibilityConverter x:Key="ZeroToVis"/>
             <converters:NonZeroToVisibilityConverter x:Key="NonZeroToVis"/>

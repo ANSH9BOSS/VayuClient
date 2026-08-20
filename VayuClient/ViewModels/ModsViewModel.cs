@@ -553,52 +553,95 @@ namespace VayuClient.ViewModels
             ModInfo? mod = modIdObj as ModInfo;
             if (mod == null && modIdObj is string modIdStr)
             {
-                mod = Mods.FirstOrDefault(m => m.Name == modIdStr || m.Id == modIdStr || m.FilePath == modIdStr);
+                mod = _allMods.FirstOrDefault(m => m.Name == modIdStr || m.Id == modIdStr || m.FilePath == modIdStr);
             }
             if (mod == null) return;
 
-            if (!string.IsNullOrEmpty(mod.FilePath) && File.Exists(mod.FilePath))
+            string currentPath = mod.FilePath ?? string.Empty;
+
+            // Determine if the mod is currently disabled on disk
+            bool isCurrentlyDisabledOnDisk = currentPath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                || (!File.Exists(currentPath) && File.Exists(currentPath + ".disabled"));
+
+            if (isCurrentlyDisabledOnDisk)
             {
+                // Action: ENABLE the mod (rename .disabled -> .jar)
                 try
                 {
-                    if (mod.IsEnabled)
+                    string disabledFile = currentPath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                        ? currentPath
+                        : currentPath + ".disabled";
+
+                    if (!File.Exists(disabledFile))
                     {
-                        // Disable -> rename to .disabled
-                        var disabledPath = mod.FilePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
-                            ? mod.FilePath
-                            : mod.FilePath + ".disabled";
-                        if (File.Exists(disabledPath)) File.Delete(disabledPath);
-                        File.Move(mod.FilePath, disabledPath);
-                        mod.FilePath = disabledPath;
-                        mod.Id = disabledPath;
-                        mod.IsEnabled = false;
+                        _main.ShowNotification("Mod File Not Found", $"Could not find file on disk: {Path.GetFileName(disabledFile)}", NotificationType.Warning);
+                        return;
                     }
-                    else
+
+                    string enabledFile = disabledFile.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                        ? disabledFile.Substring(0, disabledFile.Length - ".disabled".Length)
+                        : disabledFile;
+
+                    if (File.Exists(enabledFile))
                     {
-                        // Enable -> rename to .jar
-                        var enabledPath = mod.FilePath.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
-                            ? mod.FilePath.Substring(0, mod.FilePath.Length - ".disabled".Length)
-                            : mod.FilePath;
-                        if (File.Exists(enabledPath)) File.Delete(enabledPath);
-                        File.Move(mod.FilePath, enabledPath);
-                        mod.FilePath = enabledPath;
-                        mod.Id = enabledPath;
-                        mod.IsEnabled = true;
+                        File.Delete(enabledFile);
                     }
+
+                    File.Move(disabledFile, enabledFile);
+                    mod.FilePath = enabledFile;
+                    mod.FileName = Path.GetFileName(enabledFile);
+                    mod.Id = enabledFile;
+                    mod.IsEnabled = true;
+
+                    CrashLogger.LogMessage($"[Mods] Enabled mod '{mod.Name}' → {mod.FileName}");
                 }
                 catch (Exception ex)
                 {
-                    _main.ShowNotification("Mod Toggle Failed", ex.Message, NotificationType.Error);
+                    CrashLogger.LogException("ToggleMod (Enable)", ex);
+                    _main.ShowNotification("Mod Enable Failed", ex.Message, NotificationType.Error);
                     return;
                 }
             }
             else
             {
-                mod.IsEnabled = !mod.IsEnabled;
+                // Action: DISABLE the mod (rename .jar -> .jar.disabled)
+                try
+                {
+                    string enabledFile = currentPath;
+                    if (!File.Exists(enabledFile))
+                    {
+                        _main.ShowNotification("Mod File Not Found", $"Could not find file on disk: {Path.GetFileName(enabledFile)}", NotificationType.Warning);
+                        return;
+                    }
+
+                    string disabledFile = enabledFile.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                        ? enabledFile
+                        : enabledFile + ".disabled";
+
+                    if (File.Exists(disabledFile))
+                    {
+                        File.Delete(disabledFile);
+                    }
+
+                    File.Move(enabledFile, disabledFile);
+                    mod.FilePath = disabledFile;
+                    mod.FileName = Path.GetFileName(disabledFile);
+                    mod.Id = disabledFile;
+                    mod.IsEnabled = false;
+
+                    CrashLogger.LogMessage($"[Mods] Disabled mod '{mod.Name}' → {mod.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    CrashLogger.LogException("ToggleMod (Disable)", ex);
+                    _main.ShowNotification("Mod Disable Failed", ex.Message, NotificationType.Error);
+                    return;
+                }
             }
 
             TotalModCount = _allMods.Count;
             EnabledModCount = _allMods.Count(m => m.IsEnabled);
+
             _main.ShowNotification(
                 mod.IsEnabled ? "Mod Enabled" : "Mod Disabled",
                 $"{mod.Name} is now {(mod.IsEnabled ? "enabled" : "disabled")}.",

@@ -23,12 +23,11 @@ namespace VayuClient.Services.Account
             get
             {
                 var profiles = _profileService.GetAllProfiles();
-                var active = profiles.FirstOrDefault(p => p.IsActive);
+                var active = profiles.LastOrDefault(p => p.IsActive) ?? profiles.FirstOrDefault(p => p.IsActive);
                 if (active == null && profiles.Count > 0)
                 {
-                    active = profiles[0];
-                    active.IsActive = true;
-                    _profileService.AddOrUpdateProfile(active);
+                    active = profiles.FirstOrDefault(p => p.AccountType == AccountType.Microsoft) ?? profiles[0];
+                    _profileService.SetActiveProfile(active.Id);
                 }
                 return active;
             }

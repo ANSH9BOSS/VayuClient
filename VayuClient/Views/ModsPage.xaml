@@ -298,7 +298,7 @@
                                         </StackPanel>
 
                                         <!-- Enable/Disable Switch -->
-                                        <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding IsEnabled}"
+                                        <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding IsEnabled, Mode=OneWay}"
                                                   Command="{Binding DataContext.ToggleModCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   CommandParameter="{Binding}"
                                                   Cursor="Hand" VerticalAlignment="Top" Style="{StaticResource VayuToggleSwitch}"/>

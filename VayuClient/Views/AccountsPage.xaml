@@ -4,6 +4,13 @@
              xmlns:converters="clr-namespace:VayuClient.Converters"
              Background="#070B14">
 
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+        <converters:SkinHeadImageConverter x:Key="SkinHeadImage"/>
+        <converters:BoolToActiveBorderBrushConverter x:Key="BoolToActiveBorderBrush"/>
+    </UserControl.Resources>
+
     <Grid>
         <!-- ═══ AMBIENT MOUNTAIN AURORA BACKGROUND ═══ -->
         <Image Source="/Assets/Images/bg_mountain_aurora.jpg" 
@@ -79,7 +86,7 @@
                                         <TextBlock Text="{Binding MicrosoftUserCode}" FontSize="24" FontWeight="Bold"
                                                    Foreground="{StaticResource VayuBrightBlueBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                                         <Button Style="{StaticResource VayuDarkButton}" Padding="12,6" Command="{Binding CopyUserCodeCommand}" Margin="0,0,6,0">
-                                            <TextBlock Text="Copy Code" FontSize="11.5"/>
+                                             <TextBlock Text="Copy Code" FontSize="11.5"/>
                                         </Button>
                                         <Button Style="{StaticResource VayuDarkButton}" Padding="12,6" Command="{Binding OpenVerificationLinkCommand}">
                                             <TextBlock Text="Open Link" FontSize="11.5"/>
@@ -109,7 +116,7 @@
                         <ItemsControl ItemsSource="{Binding MicrosoftAccounts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border CornerRadius="4" Background="#1B2638" BorderBrush="#243247" BorderThickness="1"
+                                    <Border CornerRadius="6" Background="#1B2638" BorderBrush="{Binding IsActive, Converter={StaticResource BoolToActiveBorderBrush}}" BorderThickness="1.5"
                                             Padding="16,12" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -127,15 +134,25 @@
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding Username}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource VayuTextBrush}" Margin="0,0,8,0"/>
-                                                    <Border CornerRadius="3" Background="#10251C" BorderBrush="#22C55E" BorderThickness="1" Padding="6,1" VerticalAlignment="Center">
+                                                    <Border CornerRadius="3" Background="#10251C" BorderBrush="#22C55E" BorderThickness="1" Padding="6,1" VerticalAlignment="Center" Margin="0,0,6,0">
                                                         <TextBlock Text="MICROSOFT" FontSize="9" FontWeight="Bold" Foreground="#22C55E"/>
+                                                    </Border>
+                                                    <Border CornerRadius="3" Background="#064E3B" BorderBrush="#10B981" BorderThickness="1" Padding="6,1" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="CURRENT ACTIVE" FontSize="8.5" FontWeight="Black" Foreground="#34D399"/>
                                                     </Border>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Uuid}" FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,2,0,0"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource VayuAccentButton}" Padding="12,5" Margin="0,0,6,0"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}"
+                                                        IsEnabled="False">
+                                                    <TextBlock Text="✓ Active" FontSize="11.5" FontWeight="Bold" Foreground="White"/>
+                                                </Button>
                                                 <Button Style="{StaticResource VayuDarkButton}" Padding="12,5" Margin="0,0,6,0"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource InverseBoolToVis}}"
                                                         Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding Id}">
                                                     <TextBlock Text="Select" FontSize="11.5"/>
@@ -193,7 +210,7 @@
                         <ItemsControl ItemsSource="{Binding OfflineProfiles}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border CornerRadius="4" Background="#1B2638" BorderBrush="#243247" BorderThickness="1"
+                                    <Border CornerRadius="6" Background="#1B2638" BorderBrush="{Binding IsActive, Converter={StaticResource BoolToActiveBorderBrush}}" BorderThickness="1.5"
                                             Padding="16,12" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -211,15 +228,25 @@
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding Username}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource VayuTextBrush}" Margin="0,0,8,0"/>
-                                                    <Border CornerRadius="3" Background="#1E293B" BorderBrush="#243247" BorderThickness="1" Padding="6,1" VerticalAlignment="Center">
+                                                    <Border CornerRadius="3" Background="#1E293B" BorderBrush="#243247" BorderThickness="1" Padding="6,1" VerticalAlignment="Center" Margin="0,0,6,0">
                                                         <TextBlock Text="OFFLINE" FontSize="9" FontWeight="Bold" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                                    </Border>
+                                                    <Border CornerRadius="3" Background="#064E3B" BorderBrush="#10B981" BorderThickness="1" Padding="6,1" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="CURRENT ACTIVE" FontSize="8.5" FontWeight="Black" Foreground="#34D399"/>
                                                     </Border>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Uuid}" FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,2,0,0"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource VayuAccentButton}" Padding="12,5" Margin="0,0,6,0"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}"
+                                                        IsEnabled="False">
+                                                    <TextBlock Text="✓ Active" FontSize="11.5" FontWeight="Bold" Foreground="White"/>
+                                                </Button>
                                                 <Button Style="{StaticResource VayuDarkButton}" Padding="12,5" Margin="0,0,6,0"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource InverseBoolToVis}}"
                                                         Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding Id}">
                                                     <TextBlock Text="Select" FontSize="11.5"/>

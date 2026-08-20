@@ -58,7 +58,7 @@ namespace VayuClient.Services.Profiles
             string cleanName = username.Trim();
             lock (_profiles)
             {
-                var existing = _profiles.FirstOrDefault(p => string.Equals(p.Username, cleanName, StringComparison.OrdinalIgnoreCase));
+                var existing = _profiles.FirstOrDefault(p => p.AccountType == AccountType.Offline && string.Equals(p.Username, cleanName, StringComparison.OrdinalIgnoreCase));
                 if (existing != null)
                 {
                     return existing;
@@ -66,7 +66,7 @@ namespace VayuClient.Services.Profiles
 
                 var profile = new UserProfile
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = Guid.NewGuid().ToString("N"),
                     Username = cleanName,
                     UUID = Utilities.UuidGenerator.GenerateOfflineUuid(cleanName),
                     AccountType = AccountType.Offline,
@@ -87,8 +87,8 @@ namespace VayuClient.Services.Profiles
             lock (_profiles)
             {
                 var existingIndex = _profiles.FindIndex(p => p.Id == profile.Id || 
-                    string.Equals(p.Username, profile.Username, StringComparison.OrdinalIgnoreCase) || 
-                    (p.AccountType == AccountType.Microsoft && p.UUID == profile.UUID));
+                    (p.AccountType == AccountType.Microsoft && !string.IsNullOrEmpty(profile.UUID) && p.UUID == profile.UUID) ||
+                    (p.AccountType == profile.AccountType && string.Equals(p.Username, profile.Username, StringComparison.OrdinalIgnoreCase)));
 
                 if (existingIndex >= 0)
                 {
@@ -98,6 +98,18 @@ namespace VayuClient.Services.Profiles
                 {
                     _profiles.Add(profile);
                 }
+
+                if (profile.IsActive)
+                {
+                    foreach (var p in _profiles)
+                    {
+                        if (p.Id != profile.Id)
+                        {
+                            p.IsActive = false;
+                        }
+                    }
+                }
+
                 SaveProfiles();
             }
             ProfilesChanged?.Invoke();

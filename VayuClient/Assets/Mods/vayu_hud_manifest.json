@@ -1,19 +1,14 @@
 {
   "schemaVersion": "2.0",
-  "generatedAt": "2026-08-20T05:12:18.962684+00:00",
-  "hudProductVersion": "1.8.0",
+  "generatedAt": "2026-08-20T12:15:10.495314+00:00",
+  "hudProductVersion": "1.9.1",
   "artifacts": [
     {
-      "hudProductVersion": "1.8.0",
-      "minecraftVersion": "1.21.11",
-      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "26.2.0",
+      "minecraftCompatibilityRange": ">=26.2.0 <=26.2.0",
       "supportedVersions": [
-        "1.21.11",
-        "1.21.4",
-        "1.21.3",
-        "1.21.2",
-        "1.21.1",
-        "1.21"
+        "26.2.0"
       ],
       "supportedLoaders": [
         "Fabric",
@@ -23,15 +18,14 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v1_21",
-      "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.11-universal.jar",
-      "sha256": "c2ede8dc266c295872cab82a6ebf6770dc8431216d8ce39a22434578561dc31b",
-      "fileSizeBytes": 7413719,
+      "adapter": "v26_2_0",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc26.2.0-universal.jar",
+      "sha256": "0d4b65dd0aa041638d992af17b8396b94384b1e60c6983dbbe630cc24c96784c",
+      "fileSizeBytes": 7415550,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -43,52 +37,43 @@
       ]
     },
     {
-      "hudProductVersion": "1.8.0",
-      "minecraftVersion": "1.21.4",
-      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
-      "supportedVersions": [
-        "1.21.11",
-        "1.21.4",
-        "1.21.3",
-        "1.21.2",
-        "1.21.1",
-        "1.21"
-      ],
-      "supportedLoaders": [
-        "Fabric",
-        "Quilt",
-        "NeoForge"
-      ],
-      "loaderStatus": {
-        "Fabric": "Supported",
-        "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
-      },
-      "requiredJavaVersion": 21,
-      "bytecodeMajor": 65,
-      "adapter": "v1_21",
-      "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.4-universal.jar",
-      "sha256": "1472b04fed156ae63656f83c7c638332bb76aa900267d7dcb4d1a4620ce81247",
-      "fileSizeBytes": 7413721,
-      "compatibilityStatus": "Verified",
-      "entrypoints": [
-        "com.vayuclient.hud.VayuHUDClient",
-        "com.vayuclient.hud.VayuHUD"
-      ],
-      "mixins": [
-        "vayuclient-hud.mixins.json",
-        "vayuclient-hud.client.mixins.json"
-      ]
-    },
-    {
-      "hudProductVersion": "1.8.0",
+      "hudProductVersion": "1.9.1",
       "minecraftVersion": "26.2",
-      "minecraftCompatibilityRange": ">=26.1 <=26.2",
+      "minecraftCompatibilityRange": ">=26.2 <=26.2",
       "supportedVersions": [
-        "26.2",
-        "26.2.0",
-        "26.1",
+        "26.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc26.2-universal.jar",
+      "sha256": "3f27a169e94e6edc4407f95e46a78308d1b8f7cf51455e3c795c12b7604b9505",
+      "fileSizeBytes": 7415546,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "26.1.2",
+      "minecraftCompatibilityRange": ">=26.1.2 <=26.1.2",
+      "supportedVersions": [
         "26.1.2"
       ],
       "supportedLoaders": [
@@ -99,15 +84,1454 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v26_x",
-      "artifactFilename": "vayuclient-hud-1.8.0-mc26.2-universal.jar",
-      "sha256": "6070f4ea984e8248c33e7136e8fac1eb44d0c76e4d5b9c44f98f962717aa9fc1",
-      "fileSizeBytes": 7413716,
+      "adapter": "v26_1_2",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc26.1.2-universal.jar",
+      "sha256": "09815c0ed1790e499a72d52809909441b5cedbccddab5d787ac1ca5ac527e5db",
+      "fileSizeBytes": 7415548,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "26.1",
+      "minecraftCompatibilityRange": ">=26.1 <=26.1",
+      "supportedVersions": [
+        "26.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_1",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc26.1-universal.jar",
+      "sha256": "5b2f08b467a21fa6052a15e19b05ba3f15db8ce5fd25b2d5704bf25e0cf2a373",
+      "fileSizeBytes": 7415546,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.9",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.9",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_9",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.9-universal.jar",
+      "sha256": "ef169fb071a1182dafa3868fb3cad71a31ba0adf4ed80d5518eb5da14f586892",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.8",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.8",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_8",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.8-universal.jar",
+      "sha256": "3615fbe872308d96775d1f305fcba758e9d0c003261f33fc59b63dd455de4a45",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.7",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.7",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_7",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.7-universal.jar",
+      "sha256": "a702a79ed6a3b13ee55f40f01fcbd1ab4ad6056c2612b1b163ca748bb0282a46",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.6",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.6",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_6",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.6-universal.jar",
+      "sha256": "4adcb22d753a6c024aedf15364534d5cd3ae4d271780d26d2d6998ab283ab23f",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.5",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.5",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_5",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.5-universal.jar",
+      "sha256": "04e923c161f187f5a95ff12f63b983cec8e74e21550f9dfaf44fafda688c4f58",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.4",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.4",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_4",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.4-universal.jar",
+      "sha256": "5c224edc7994d56e8978f434db9f7c366ad9bd62310a0641b41502e90559e19d",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.3",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.3",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_3",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.3-universal.jar",
+      "sha256": "dd89820ccc4f35ff1ffbf9c49022a6f0fb21e9c9da148b378101ee8046597d2a",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.2",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.2",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_2",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.2-universal.jar",
+      "sha256": "66ba698b77902808c1302d071a10aa6f4058eac02a13996c997f2a23a2089ed9",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.11",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10",
+        "1.21.11"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_11",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.11-universal.jar",
+      "sha256": "5c38f3a3d29a54398442200502982d6189e7d0e08124e98e7be7c3cd936ead7d",
+      "fileSizeBytes": 7415564,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.10",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.10",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_10",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.10-universal.jar",
+      "sha256": "4b8d54f702b8f1008664cd5b96501b69f5ef352628f7e6fda2debdb4f64685e6",
+      "fileSizeBytes": 7415570,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21.1",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.1",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_1",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.1-universal.jar",
+      "sha256": "23e01e8fc28b1771092195de39c86c80865fd5772089717ce167bdd6673945a0",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.1",
+      "minecraftVersion": "1.21",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21",
+      "supportedVersions": [
+        "1.21"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21",
+      "artifactFilename": "vayuclient-hud-1.9.1-mc1.21-universal.jar",
+      "sha256": "74f27fad27230116d80da231afcadec254510f718d0a0255ef70def200d383a0",
+      "fileSizeBytes": 7415565,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "26.2.0",
+      "minecraftCompatibilityRange": ">=26.2.0 <=26.2.0",
+      "supportedVersions": [
+        "26.2.0"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2_0",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc26.2.0-universal.jar",
+      "sha256": "b810d0ec66c0cab1d8f7f341b72339e888e9f64cb378ceb479e0747a3614c78d",
+      "fileSizeBytes": 7415551,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "26.2",
+      "minecraftCompatibilityRange": ">=26.2 <=26.2",
+      "supportedVersions": [
+        "26.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc26.2-universal.jar",
+      "sha256": "7ed7e2b164c4fc2974b3ee10f55d13083d04913f06a7ac8cc5f9248c2ca02075",
+      "fileSizeBytes": 7415548,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "26.1.2",
+      "minecraftCompatibilityRange": ">=26.1.2 <=26.1.2",
+      "supportedVersions": [
+        "26.1.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_1_2",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc26.1.2-universal.jar",
+      "sha256": "5a81b5c95de40668146ce24f9e255cbf56089f47355cfcd4ce667789ba029d2e",
+      "fileSizeBytes": 7415551,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "26.1",
+      "minecraftCompatibilityRange": ">=26.1 <=26.1",
+      "supportedVersions": [
+        "26.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_1",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc26.1-universal.jar",
+      "sha256": "65aae7e72e2d26ace37bf26aad671c926c9569378841372c11f7340076568955",
+      "fileSizeBytes": 7415550,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.9",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.9",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_9",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.9-universal.jar",
+      "sha256": "8c41e2ffc681c223559258931eae66d988a69016470a378798bc7d5232a86632",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.8",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.8",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_8",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.8-universal.jar",
+      "sha256": "7d3264702b04019b7afb889b4db0686d01feca26773fa16cc33b9b2f86803928",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.7",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.7",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_7",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.7-universal.jar",
+      "sha256": "1682a09f30c788b7a69e55e1ba40f0d473a8cbde35d44fa135116255b262fe5e",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.6",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.6",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_6",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.6-universal.jar",
+      "sha256": "63a53049ceeb73406f3f1ddcbe1fb676f3394aa609b320360bfe30a91d601d93",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.5",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.5",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_5",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.5-universal.jar",
+      "sha256": "85e6b48ec5087ee7197d66e1dc1c975ffd9018cde878200b647aa0ad60febd00",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.4",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.4",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_4",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.4-universal.jar",
+      "sha256": "c3819af6e4457326ded312d2692f1debab48c92010a45f873c6255c8a11c5a1a",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.3",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.3",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_3",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.3-universal.jar",
+      "sha256": "2dc4282ebc747ebb1be1f4d4ba09100216e8928efd5aee34839e06a65c5e600b",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.2",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.2",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_2",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.2-universal.jar",
+      "sha256": "ccc440eb1d037bff158369a3ab145ed75178083bc3b148cd1520232620a30ab8",
+      "fileSizeBytes": 7415568,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.11",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10",
+        "1.21.11"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_11",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.11-universal.jar",
+      "sha256": "83364f9d57563122d62eadf281cade99ca28b5f20e1211487db01e4e2d55285c",
+      "fileSizeBytes": 7415563,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.10",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.10",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_10",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.10-universal.jar",
+      "sha256": "1253b1ff697d3b0442ad47a0841c01f4eb27bfc2e10a1cb6c130b205d5307869",
+      "fileSizeBytes": 7415569,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21.1",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.1",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_1",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21.1-universal.jar",
+      "sha256": "dde665e5020aebcae516562fb09178dffc4bab013c1b48ffccfdb28ead0fbcc7",
+      "fileSizeBytes": 7415567,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.9.0",
+      "minecraftVersion": "1.21",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21",
+      "supportedVersions": [
+        "1.21"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21",
+      "artifactFilename": "vayuclient-hud-1.9.0-mc1.21-universal.jar",
+      "sha256": "0f93fc4917f3103ac9d35fd3e22dca7322a5100bc9cf5789d68af14461989b03",
+      "fileSizeBytes": 7415564,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "26.2.0",
+      "minecraftCompatibilityRange": ">=26.2.0 <=26.2.0",
+      "supportedVersions": [
+        "26.2.0"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2_0",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc26.2.0-universal.jar",
+      "sha256": "579750321113bfdbb74f60f419f2b0ad0870a2cea86cc97f7b0577756f1a6888",
+      "fileSizeBytes": 7415702,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "26.2",
+      "minecraftCompatibilityRange": ">=26.2 <=26.2",
+      "supportedVersions": [
+        "26.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc26.2-universal.jar",
+      "sha256": "eddcf77481ce1ab70eaedb7d0629de716f51f2da55f764eb40e02aa4bcc257c9",
+      "fileSizeBytes": 7415699,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "26.1.2",
+      "minecraftCompatibilityRange": ">=26.1.2 <=26.1.2",
+      "supportedVersions": [
+        "26.1.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_1_2",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc26.1.2-universal.jar",
+      "sha256": "59e0404c929934563212f7248adae968141723f35db1c374963404cc44d5cf38",
+      "fileSizeBytes": 7415701,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "26.1",
+      "minecraftCompatibilityRange": ">=26.1 <=26.1",
+      "supportedVersions": [
+        "26.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_1",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc26.1-universal.jar",
+      "sha256": "cd9de47e9f4a8c0312b094509666d0a1e9971aeadd1c173909b74aee369a1c2b",
+      "fileSizeBytes": 7415700,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "1.21.4",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.4",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_4",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc1.21.4-universal.jar",
+      "sha256": "b0304bd48dbdb36d0649602b7b6d39ae63fd0fecf309a92af789a8039c45b230",
+      "fileSizeBytes": 7415706,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "1.21.3",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.3",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_3",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc1.21.3-universal.jar",
+      "sha256": "b62cca342d73317b054959fc168088814c56573443db989844cda615d6242451",
+      "fileSizeBytes": 7415706,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "1.21.2",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.2",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_2",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc1.21.2-universal.jar",
+      "sha256": "c8ff0a238f3b5cd2bdc4d6673e1c3a13c6dcca42b7f841c7e6403639ff675574",
+      "fileSizeBytes": 7415708,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "1.21.11",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10",
+        "1.21.11"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_11",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc1.21.11-universal.jar",
+      "sha256": "cdc40d325c4e407003aa3afb20d8f633c797214f14bbdc2085f6a5255844c63a",
+      "fileSizeBytes": 7415702,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "1.21.1",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.1",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_1",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc1.21.1-universal.jar",
+      "sha256": "5f19337fac07643131697d7dec2d689e43e85bb106f5118ecc498a1416b7811a",
+      "fileSizeBytes": 7415706,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.13",
+      "minecraftVersion": "1.21",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21",
+      "supportedVersions": [
+        "1.21"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21",
+      "artifactFilename": "vayuclient-hud-1.8.13-mc1.21-universal.jar",
+      "sha256": "75bee196b0ced7ad07d13b27b03fb42049e1070318dabc14db62f07b623c0216",
+      "fileSizeBytes": 7415702,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -121,12 +1545,9 @@
     {
       "hudProductVersion": "1.8.0",
       "minecraftVersion": "26.2.0",
-      "minecraftCompatibilityRange": ">=26.1 <=26.2",
+      "minecraftCompatibilityRange": ">=26.2.0 <=26.2.0",
       "supportedVersions": [
-        "26.2",
-        "26.2.0",
-        "26.1",
-        "26.1.2"
+        "26.2.0"
       ],
       "supportedLoaders": [
         "Fabric",
@@ -136,12 +1557,11 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v26_x",
+      "adapter": "v26_2_0",
       "artifactFilename": "vayuclient-hud-1.8.0-mc26.2.0-universal.jar",
       "sha256": "33ac52ebc40d5c6258f196ff1ce18df5cce5235a6532062044823c5946d5dd8f",
       "fileSizeBytes": 7413719,
@@ -157,13 +1577,10 @@
     },
     {
       "hudProductVersion": "1.8.0",
-      "minecraftVersion": "26.1",
-      "minecraftCompatibilityRange": ">=26.1 <=26.2",
+      "minecraftVersion": "26.2",
+      "minecraftCompatibilityRange": ">=26.2 <=26.2",
       "supportedVersions": [
-        "26.2",
-        "26.2.0",
-        "26.1",
-        "26.1.2"
+        "26.2"
       ],
       "supportedLoaders": [
         "Fabric",
@@ -173,15 +1590,45 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v26_x",
-      "artifactFilename": "vayuclient-hud-1.8.0-mc26.1-universal.jar",
-      "sha256": "943fea9add90f34c9f3bb8500bbf6fc94f596713522de89cc8f12b2c2773305f",
-      "fileSizeBytes": 7413718,
+      "adapter": "v26_2",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc26.2-universal.jar",
+      "sha256": "6070f4ea984e8248c33e7136e8fac1eb44d0c76e4d5b9c44f98f962717aa9fc1",
+      "fileSizeBytes": 7413716,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "26.2",
+      "minecraftCompatibilityRange": ">=26.2 <=26.2",
+      "supportedVersions": [
+        "26.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc26.2-fabric.jar",
+      "sha256": "aa090c9efc2296b36941ae59b1ed2bb76e79735cdd5e20ea6a3b343e6364610b",
+      "fileSizeBytes": 7365425,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -195,11 +1642,8 @@
     {
       "hudProductVersion": "1.8.0",
       "minecraftVersion": "26.1.2",
-      "minecraftCompatibilityRange": ">=26.1 <=26.2",
+      "minecraftCompatibilityRange": ">=26.1.2 <=26.1.2",
       "supportedVersions": [
-        "26.2",
-        "26.2.0",
-        "26.1",
         "26.1.2"
       ],
       "supportedLoaders": [
@@ -210,12 +1654,11 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v26_x",
+      "adapter": "v26_1_2",
       "artifactFilename": "vayuclient-hud-1.8.0-mc26.1.2-universal.jar",
       "sha256": "7d123f0af02c3668904aead0e818eb84e94fd5a4bc2682bebfcf83b0fd492c70",
       "fileSizeBytes": 7413719,
@@ -231,15 +1674,10 @@
     },
     {
       "hudProductVersion": "1.8.0",
-      "minecraftVersion": "1.21.3",
-      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "minecraftVersion": "26.1",
+      "minecraftCompatibilityRange": ">=26.1 <=26.1",
       "supportedVersions": [
-        "1.21.11",
-        "1.21.4",
-        "1.21.3",
-        "1.21.2",
-        "1.21.1",
-        "1.21"
+        "26.1"
       ],
       "supportedLoaders": [
         "Fabric",
@@ -249,12 +1687,150 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v1_21",
+      "adapter": "v26_1",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc26.1-universal.jar",
+      "sha256": "943fea9add90f34c9f3bb8500bbf6fc94f596713522de89cc8f12b2c2773305f",
+      "fileSizeBytes": 7413718,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "26.1",
+      "minecraftCompatibilityRange": ">=26.1 <=26.1",
+      "supportedVersions": [
+        "26.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_1",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc26.1-fabric.jar",
+      "sha256": "447cf2765eaa9f649a2c7ed4b229bad5082381b49a8a3825ffe82df611a48640",
+      "fileSizeBytes": 7365437,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "1.21.4",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.4",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_4",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.4-universal.jar",
+      "sha256": "1472b04fed156ae63656f83c7c638332bb76aa900267d7dcb4d1a4620ce81247",
+      "fileSizeBytes": 7413721,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "1.21.4",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.4",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_4",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.4-fabric.jar",
+      "sha256": "4be421f454dfb6f5c68b168a8b543064723c0f706c0ba5225c7b69a4e9083a61",
+      "fileSizeBytes": 7365428,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "1.21.3",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.3",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_3",
       "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.3-universal.jar",
       "sha256": "a3e91962f0b87f340108aca356e98117aa9ea71cfec9c5071000ee9f6c571826",
       "fileSizeBytes": 7413721,
@@ -271,14 +1847,11 @@
     {
       "hudProductVersion": "1.8.0",
       "minecraftVersion": "1.21.2",
-      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.2",
       "supportedVersions": [
-        "1.21.11",
-        "1.21.4",
-        "1.21.3",
-        "1.21.2",
+        "1.21",
         "1.21.1",
-        "1.21"
+        "1.21.2"
       ],
       "supportedLoaders": [
         "Fabric",
@@ -288,12 +1861,11 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v1_21",
+      "adapter": "v1_21_2",
       "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.2-universal.jar",
       "sha256": "f82802d01030344614bbca4ce75de78d45026e6f8f300773738d163b25c3e7f5",
       "fileSizeBytes": 7413722,
@@ -309,15 +1881,21 @@
     },
     {
       "hudProductVersion": "1.8.0",
-      "minecraftVersion": "1.21.1",
+      "minecraftVersion": "1.21.11",
       "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
       "supportedVersions": [
-        "1.21.11",
-        "1.21.4",
-        "1.21.3",
-        "1.21.2",
+        "1.21",
         "1.21.1",
-        "1.21"
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10",
+        "1.21.11"
       ],
       "supportedLoaders": [
         "Fabric",
@@ -327,12 +1905,87 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
-      "adapter": "v1_21",
+      "adapter": "v1_21_11",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.11-universal.jar",
+      "sha256": "c2ede8dc266c295872cab82a6ebf6770dc8431216d8ce39a22434578561dc31b",
+      "fileSizeBytes": 7413719,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "1.21.11",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1",
+        "1.21.2",
+        "1.21.3",
+        "1.21.4",
+        "1.21.5",
+        "1.21.6",
+        "1.21.7",
+        "1.21.8",
+        "1.21.9",
+        "1.21.10",
+        "1.21.11"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_11",
+      "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.11-fabric.jar",
+      "sha256": "876f8ff9f954290608a8182e4ee73195236d7594843edb3f6a0db2b5249e0e72",
+      "fileSizeBytes": 7365438,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.8.0",
+      "minecraftVersion": "1.21.1",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21.1",
+      "supportedVersions": [
+        "1.21",
+        "1.21.1"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt",
+        "NeoForge"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported",
+        "NeoForge": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v1_21_1",
       "artifactFilename": "vayuclient-hud-1.8.0-mc1.21.1-universal.jar",
       "sha256": "319be88eb07720ecc43c2f6df5fd9fc1c2c57deeacb3359bed1c97a9f34ce5dd",
       "fileSizeBytes": 7413720,
@@ -349,13 +2002,8 @@
     {
       "hudProductVersion": "1.8.0",
       "minecraftVersion": "1.21",
-      "minecraftCompatibilityRange": ">=1.21 <=1.21.11",
+      "minecraftCompatibilityRange": ">=1.21 <=1.21",
       "supportedVersions": [
-        "1.21.11",
-        "1.21.4",
-        "1.21.3",
-        "1.21.2",
-        "1.21.1",
         "1.21"
       ],
       "supportedLoaders": [
@@ -366,8 +2014,7 @@
       "loaderStatus": {
         "Fabric": "Supported",
         "Quilt": "Supported",
-        "NeoForge": "Supported",
-        "Forge": "Not yet supported"
+        "NeoForge": "Supported"
       },
       "requiredJavaVersion": 21,
       "bytecodeMajor": 65,
@@ -375,6 +2022,37 @@
       "artifactFilename": "vayuclient-hud-1.8.0-mc1.21-universal.jar",
       "sha256": "c7f4172d53bc07c2c70e5881aa496529625e66e2bd1add013523ccc000a186df",
       "fileSizeBytes": 7413717,
+      "compatibilityStatus": "Verified",
+      "entrypoints": [
+        "com.vayuclient.hud.VayuHUDClient",
+        "com.vayuclient.hud.VayuHUD"
+      ],
+      "mixins": [
+        "vayuclient-hud.mixins.json",
+        "vayuclient-hud.client.mixins.json"
+      ]
+    },
+    {
+      "hudProductVersion": "1.7.0",
+      "minecraftVersion": "26.2",
+      "minecraftCompatibilityRange": ">=26.2 <=26.2",
+      "supportedVersions": [
+        "26.2"
+      ],
+      "supportedLoaders": [
+        "Fabric",
+        "Quilt"
+      ],
+      "loaderStatus": {
+        "Fabric": "Supported",
+        "Quilt": "Supported"
+      },
+      "requiredJavaVersion": 21,
+      "bytecodeMajor": 65,
+      "adapter": "v26_2",
+      "artifactFilename": "vayuclient-hud-1.7.0-mc26.2-fabric.jar",
+      "sha256": "d4c78102ec8957caa961f6b1836498568552d53dfdea471f4066542a42f32eef",
+      "fileSizeBytes": 7372946,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",

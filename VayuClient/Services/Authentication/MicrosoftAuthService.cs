@@ -137,9 +137,21 @@ namespace VayuClient.Services.Authentication
             }
 
             // 3. Device code fallback (works when redirect URI or browser fails)
-            status?.Report("Browser login unavailable — using device code sign-in...");
+            status?.Report("Browser login unavailable — opening device code sign-in...");
             CrashLogger.LogMessage("[AUTH] Falling back to device code authentication flow.");
             var deviceCode = await RequestDeviceCodeAsync(ct);
+
+            // Report code to UI immediately
+            status?.Report($"DEVICE_CODE:{deviceCode.UserCode}|{deviceCode.VerificationUri}");
+            status?.Report($"Enter code: {deviceCode.UserCode} at {deviceCode.VerificationUri}");
+
+            // Automatically open browser for convenience
+            try
+            {
+                Process.Start(new ProcessStartInfo(deviceCode.VerificationUri) { UseShellExecute = true });
+            }
+            catch { }
+
             return await PollForAuthenticationAsync(deviceCode, status, ct);
         }
 

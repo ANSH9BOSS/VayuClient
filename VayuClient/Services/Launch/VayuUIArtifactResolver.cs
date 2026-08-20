@@ -56,67 +56,77 @@ namespace VayuClient.Services.Launch
             VayuUiArtifactInfo? matchedInfo = null;
 
             // 4. Try Manifest-Driven Dynamic Resolution
+            // Collect all candidates, then pick the highest HUD version that matches
+            var manifestCandidates = new List<(string path, VayuUiArtifactInfo? info, string hudVer)>();
+
             foreach (var dir in searchDirs)
             {
                 if (!Directory.Exists(dir)) continue;
                 string manifestPath = Path.Combine(dir, "vayu_hud_manifest.json");
-                if (File.Exists(manifestPath))
+                if (!File.Exists(manifestPath)) continue;
+
+                try
                 {
-                    try
+                    var json = File.ReadAllText(manifestPath);
+                    var doc = JObject.Parse(json);
+                    var artifacts = doc["artifacts"] as JArray;
+                    if (artifacts == null) continue;
+
+                    foreach (var art in artifacts)
                     {
-                        var json = File.ReadAllText(manifestPath);
-                        var doc = JObject.Parse(json);
-                        var artifacts = doc["artifacts"] as JArray;
-                        if (artifacts != null)
+                        string? fileName = art["artifactFilename"]?.ToString();
+                        if (string.IsNullOrEmpty(fileName)) continue;
+
+                        string candidatePath = Path.Combine(dir, fileName);
+                        if (!File.Exists(candidatePath)) continue;
+
+                        // Check supported loader (with fallback to universal)
+                        var loaders = art["supportedLoaders"]?.ToObject<List<string>>() ?? new List<string>();
+                        bool loaderMatch = loaders.Count == 0 ||
+                            loaders.Any(l => string.Equals(l, loader, StringComparison.OrdinalIgnoreCase)) ||
+                            loaders.Any(l => string.Equals(l, "universal", StringComparison.OrdinalIgnoreCase));
+
+                        if (!loaderMatch) continue;
+
+                        // Check Minecraft version — exact list, range, or prefix match
+                        var supportedVersions = art["supportedVersions"]?.ToObject<List<string>>() ?? new List<string>();
+                        string compatibilityRange = art["minecraftCompatibilityRange"]?.ToString() ?? string.Empty;
+
+                        bool isVersionMatch =
+                            supportedVersions.Any(v => string.Equals(v, mcVersion, StringComparison.OrdinalIgnoreCase)) ||
+                            (!string.IsNullOrEmpty(compatibilityRange) && IsVersionInRange(mcVersion, compatibilityRange)) ||
+                            IsVersionFamilyMatch(mcVersion, supportedVersions); // prefix fallback
+
+                        if (!isVersionMatch) continue;
+
+                        if (_validator.ValidateCompatibility(jvmMajor, candidatePath, mcVersion, loader, out string failureReason))
                         {
-                            foreach (var art in artifacts)
-                            {
-                                string? fileName = art["artifactFilename"]?.ToString();
-                                if (string.IsNullOrEmpty(fileName)) continue;
-
-                                string candidatePath = Path.Combine(dir, fileName);
-                                if (!File.Exists(candidatePath)) continue;
-
-                                // Check supported loader
-                                var loaders = art["supportedLoaders"]?.ToObject<List<string>>() ?? new List<string>();
-                                if (loaders.Count > 0 && !loaders.Any(l => string.Equals(l, loader, StringComparison.OrdinalIgnoreCase)))
-                                {
-                                    continue;
-                                }
-
-                                // Check Minecraft version list or range
-                                var supportedVersions = art["supportedVersions"]?.ToObject<List<string>>() ?? new List<string>();
-                                string compatibilityRange = art["minecraftCompatibilityRange"]?.ToString() ?? string.Empty;
-
-                                bool isVersionMatch = supportedVersions.Any(v => string.Equals(v, mcVersion, StringComparison.OrdinalIgnoreCase));
-                                if (!isVersionMatch && !string.IsNullOrEmpty(compatibilityRange))
-                                {
-                                    isVersionMatch = IsVersionInRange(mcVersion, compatibilityRange);
-                                }
-
-                                if (isVersionMatch)
-                                {
-                                    if (_validator.ValidateCompatibility(jvmMajor, candidatePath, mcVersion, loader, out string failureReason))
-                                    {
-                                        matchedSource = candidatePath;
-                                        matchedInfo = _validator.InspectArtifact(candidatePath);
-                                        CrashLogger.LogMessage($"[VayuHUD Resolver] Selected manifest-matched artifact '{fileName}' for Minecraft {mcVersion} ({loader}).");
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        CrashLogger.LogMessage($"[VayuHUD Resolver] Candidate '{fileName}' failed validation: {failureReason}");
-                                    }
-                                }
-                            }
+                            string hudVer = art["hudProductVersion"]?.ToString() ?? "0";
+                            manifestCandidates.Add((candidatePath, _validator.InspectArtifact(candidatePath), hudVer));
+                            CrashLogger.LogMessage($"[VayuHUD Resolver] Candidate found: '{fileName}' (HUD v{hudVer}) for MC {mcVersion} ({loader}).");
+                        }
+                        else
+                        {
+                            CrashLogger.LogMessage($"[VayuHUD Resolver] Candidate '{fileName}' failed validation: {failureReason}");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        CrashLogger.LogMessage($"[VayuHUD Resolver] Error reading manifest at {manifestPath}: {ex.Message}");
-                    }
                 }
-                if (matchedSource != null) break;
+                catch (Exception ex)
+                {
+                    CrashLogger.LogMessage($"[VayuHUD Resolver] Error reading manifest at {manifestPath}: {ex.Message}");
+                }
+
+                if (manifestCandidates.Count > 0) break; // stop at first searchDir that has matches
+            }
+
+            // Sort by HUD version descending — always deploy the newest
+            if (manifestCandidates.Count > 0)
+            {
+                manifestCandidates.Sort((a, b) => CompareVersionStrings(b.hudVer, a.hudVer));
+                var best = manifestCandidates[0];
+                matchedSource = best.path;
+                matchedInfo = best.info;
+                CrashLogger.LogMessage($"[VayuHUD Resolver] Selected best artifact '{Path.GetFileName(matchedSource)}' (HUD v{best.hudVer}) for Minecraft {mcVersion} ({loader}).");
             }
 
             // 5. Fallback: Heuristic file search
@@ -256,6 +266,39 @@ namespace VayuClient.Services.Launch
                 return $"{parts[0]}.{parts[1]}";
             }
             return version;
+        }
+
+        /// <summary>
+        /// Prefix/family match: e.g. "1.21.11" matches "1.21" or "1.21.x" entries.
+        /// Also handles 26.x family.
+        /// </summary>
+        private static bool IsVersionFamilyMatch(string mcVersion, IEnumerable<string> supportedVersions)
+        {
+            if (string.IsNullOrEmpty(mcVersion)) return false;
+            var major = GetMajorMinor(mcVersion);
+            foreach (var sv in supportedVersions)
+            {
+                // Direct major.minor match (e.g. "1.21" matches "1.21.11")
+                if (mcVersion.StartsWith(sv + ".", StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(sv, mcVersion, StringComparison.OrdinalIgnoreCase)) return true;
+                if (!string.IsNullOrEmpty(major) && sv.StartsWith(major, StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Compares two version strings like "1.9.1" vs "1.9.0". Returns negative if v1 &lt; v2.</summary>
+        private static int CompareVersionStrings(string v1, string v2)
+        {
+            var p1 = (v1 ?? "0").Split('.').Select(s => int.TryParse(s, out int n) ? n : 0).ToArray();
+            var p2 = (v2 ?? "0").Split('.').Select(s => int.TryParse(s, out int n) ? n : 0).ToArray();
+            int len = Math.Max(p1.Length, p2.Length);
+            for (int i = 0; i < len; i++)
+            {
+                int n1 = i < p1.Length ? p1[i] : 0;
+                int n2 = i < p2.Length ? p2[i] : 0;
+                if (n1 != n2) return n1.CompareTo(n2);
+            }
+            return 0;
         }
     }
 }

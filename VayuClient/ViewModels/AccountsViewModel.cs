@@ -303,12 +303,24 @@ namespace VayuClient.ViewModels
             {
                 var progress = new Progress<string>(s =>
                 {
-                    MicrosoftAuthStatus = s;
+                    if (s.StartsWith("DEVICE_CODE:"))
+                    {
+                        var parts = s.Substring("DEVICE_CODE:".Length).Split('|');
+                        if (parts.Length > 0)
+                        {
+                            MicrosoftUserCode = parts[0].Trim();
+                        }
+                    }
+                    else
+                    {
+                        MicrosoftAuthStatus = s;
+                    }
                 });
 
                 var profile = await _authService.LoginInteractiveAsync(progress, _msAuthCts.Token);
                 LoadProfiles();
                 _main.HomeVM.RefreshProfile();
+                _main.ActiveProfile = _accountService.ActiveProfile;
                 IsLoggingInMicrosoft = false;
 
                 try

@@ -113,26 +113,10 @@ namespace VayuClient.Services.Updates
                 using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
                 using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
-                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden || !response.IsSuccessStatusCode)
                 {
-                    string msg = "GitHub API rate limit reached. Please try again later.";
-                    CrashLogger.LogMessage($"[AutoUpdate] Check failed: {msg}");
-                    result.IsUpdateAvailable = false;
-                    result.StatusMessage = msg;
-                    SetState(UpdateState.Failed, msg);
-                    _latestUpdateInfo = result;
-                    return result;
-                }
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    string msg = $"GitHub API returned status code {(int)response.StatusCode} ({response.ReasonPhrase})";
-                    CrashLogger.LogMessage($"[AutoUpdate] Check failed: {msg}");
-                    result.IsUpdateAvailable = false;
-                    result.StatusMessage = msg;
-                    SetState(UpdateState.Failed, msg);
-                    _latestUpdateInfo = result;
-                    return result;
+                    CrashLogger.LogMessage($"[AutoUpdate] GitHub API returned status {(int)response.StatusCode}. Using web release fallback...");
+                    return await CheckForUpdatesViaWebFallbackAsync(result, ct);
                 }
 
                 var json = await response.Content.ReadAsStringAsync(ct);
@@ -294,6 +278,59 @@ namespace VayuClient.Services.Updates
                 result.StatusMessage = $"Update check error: {ex.Message}";
                 SetState(UpdateState.Failed, result.StatusMessage);
                 _latestUpdateInfo = result;
+            }
+
+            return result;
+        }
+
+        private async Task<UpdateCheckResult> CheckForUpdatesViaWebFallbackAsync(UpdateCheckResult result, CancellationToken ct)
+        {
+            try
+            {
+                CrashLogger.LogMessage("[AutoUpdate] Attempting web redirect fallback to check latest release tag...");
+                using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+                using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(8) };
+                client.DefaultRequestHeaders.Add("User-Agent", AppInfo.UserAgent);
+
+                using var headReq = new HttpRequestMessage(HttpMethod.Head, $"https://github.com/{GitHubRepo}/releases/latest");
+                using var resp = await client.SendAsync(headReq, ct);
+
+                string? loc = resp.Headers.Location?.ToString();
+                if (!string.IsNullOrEmpty(loc) && loc.Contains("/releases/tag/"))
+                {
+                    string tag = loc.Substring(loc.LastIndexOf('/') + 1);
+                    string cleanLatestTag = tag.TrimStart('v', 'V').Trim();
+
+                    result.LatestVersion = cleanLatestTag;
+                    result.ReleaseTitle = $"VayuClient {tag}";
+                    result.HtmlUrl = $"https://github.com/{GitHubRepo}/releases/tag/{tag}";
+
+                    if (IsNewerVersion(cleanLatestTag, AppInfo.VersionString))
+                    {
+                        string downloadUrl = $"https://github.com/{GitHubRepo}/releases/download/{tag}/VayuClientSetup.exe";
+                        result.IsUpdateAvailable = true;
+                        result.DownloadUrl = downloadUrl;
+                        result.AssetName = "VayuClientSetup.exe";
+                        result.StatusMessage = $"Update v{cleanLatestTag} available";
+
+                        SetState(UpdateState.UpdateAvailable, result.StatusMessage);
+                        _latestUpdateInfo = result;
+                        UpdateAvailable?.Invoke(result);
+                        return result;
+                    }
+                    else
+                    {
+                        result.IsUpdateAvailable = false;
+                        result.StatusMessage = $"You are running the latest version of VayuClient (v{AppInfo.VersionString}).";
+                        SetState(UpdateState.UpToDate, result.StatusMessage);
+                        _latestUpdateInfo = result;
+                        return result;
+                    }
+                }
+            }
+            catch (Exception fallbackEx)
+            {
+                CrashLogger.LogMessage($"[AutoUpdate] Web fallback check failed: {fallbackEx.Message}");
             }
 
             return result;

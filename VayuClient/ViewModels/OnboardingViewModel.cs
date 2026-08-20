@@ -179,8 +179,19 @@ namespace VayuClient.ViewModels
             {
                 var progressReporter = new Progress<string>(msg =>
                 {
-                    MicrosoftAuthStatus = msg;
-                    CrashLogger.LogMessage($"[AUTH] {msg}");
+                    if (msg.StartsWith("DEVICE_CODE:"))
+                    {
+                        var parts = msg.Substring("DEVICE_CODE:".Length).Split('|');
+                        if (parts.Length > 0)
+                        {
+                            MicrosoftUserCode = parts[0].Trim();
+                        }
+                    }
+                    else
+                    {
+                        MicrosoftAuthStatus = msg;
+                        CrashLogger.LogMessage($"[AUTH] {msg}");
+                    }
                 });
 
                 var profile = await _authService.LoginInteractiveAsync(progressReporter, _msAuthCts.Token);

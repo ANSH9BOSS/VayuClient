@@ -28,6 +28,8 @@ namespace VayuClient.Models
         public string FileSizeFormatted { get; set; } = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(StatusText))]
+        [NotifyPropertyChangedFor(nameof(StatusColor))]
         private bool _isEnabled = true;
 
         [ObservableProperty]

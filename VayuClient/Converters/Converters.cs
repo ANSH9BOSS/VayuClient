@@ -40,6 +40,24 @@ namespace VayuClient.Converters
             => throw new NotImplementedException();
     }
 
+    public class BoolToActiveBorderBrushConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush ActiveBorder = new(Color.FromRgb(0x10, 0xB9, 0x81)); // Bright Emerald Green
+        private static readonly SolidColorBrush InactiveBorder = new(Color.FromRgb(0x24, 0x32, 0x47)); // Dark Slate
+
+        static BoolToActiveBorderBrushConverter()
+        {
+            ActiveBorder.Freeze();
+            InactiveBorder.Freeze();
+        }
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is true ? ActiveBorder : InactiveBorder;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
     public class InverseBoolConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
