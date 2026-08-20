@@ -186,6 +186,28 @@ namespace VayuClient.Services.Launch
             string? primaryDeployedPath = null;
             foreach (var deployDir in deployTargets)
             {
+                try
+                {
+                    // Purge any existing or outdated HUD jars in the target folder to prevent duplicates
+                    if (Directory.Exists(deployDir))
+                    {
+                        var existingHudJars = Directory.GetFiles(deployDir, "*vayuclient-hud*.jar", SearchOption.TopDirectoryOnly);
+                        foreach (var oldJar in existingHudJars)
+                        {
+                            if (!string.Equals(Path.GetFileName(oldJar), targetFileName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                try
+                                {
+                                    File.Delete(oldJar);
+                                    CrashLogger.LogMessage($"[VayuHUD Resolver] Cleaned up duplicate HUD JAR: {Path.GetFileName(oldJar)} from {deployDir}");
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+                catch { }
+
                 string dest = Path.Combine(deployDir, targetFileName);
                 try
                 {
