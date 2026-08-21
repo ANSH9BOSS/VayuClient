@@ -36,11 +36,7 @@
   },
   "accessWidener": "vayuclient-hud.accesswidener",
   "mixins": [
-    "vayuclient-hud.mixins.json",
-    {
-      "config": "vayuclient-hud.client.mixins.json",
-      "environment": "client"
-    }
+    "vayuclient-hud.client.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.15.0",
