@@ -72,6 +72,24 @@ namespace VayuClient.Services.Backend
         /// <summary>Maintenance mode toggled: isActive</summary>
         public event Action<bool>? MaintenanceModeToggled;
 
+        /// <summary>Remote administrative lockdown triggered: (isLocked, reason)</summary>
+        public event Action<bool, string>? RemoteLockdownReceived;
+
+        /// <summary>Instant marquee broadcast: (message, level, durationSeconds)</summary>
+        public event Action<string, string, int>? RemoteBroadcastReceived;
+
+        /// <summary>Direct whisper notification: (title, message, level)</summary>
+        public event Action<string, string, string>? DirectNotificationReceived;
+
+        /// <summary>Announcement deleted by admin: announcementId</summary>
+        public event Action<Guid>? AnnouncementDeleted;
+
+        /// <summary>News cards updated on backend</summary>
+        public event Action? NewsUpdated;
+
+        /// <summary>Session terminated by administrator</summary>
+        public event Action<string>? SessionTerminated;
+
         /// <summary>SignalR connection state changed: isConnected</summary>
         public event Action<bool>? ConnectionStateChanged;
 
@@ -187,8 +205,26 @@ namespace VayuClient.Services.Backend
             _connection.On<string, string, string>("AnnouncementBroadcast", (title, msg, level) =>
                 Dispatch(() => AnnouncementBroadcast?.Invoke(title, msg, level)));
 
+            _connection.On<Guid>("AnnouncementDeleted", id =>
+                Dispatch(() => AnnouncementDeleted?.Invoke(id)));
+
+            _connection.On("NewsUpdated", () =>
+                Dispatch(() => NewsUpdated?.Invoke()));
+
             _connection.On<bool>("MaintenanceModeToggled", active =>
                 Dispatch(() => MaintenanceModeToggled?.Invoke(active)));
+
+            _connection.On<bool, string>("RemoteLockdownReceived", (locked, reason) =>
+                Dispatch(() => RemoteLockdownReceived?.Invoke(locked, reason)));
+
+            _connection.On<string, string, int>("RemoteBroadcastReceived", (msg, level, dur) =>
+                Dispatch(() => RemoteBroadcastReceived?.Invoke(msg, level, dur)));
+
+            _connection.On<string, string, string>("DirectNotificationReceived", (title, msg, level) =>
+                Dispatch(() => DirectNotificationReceived?.Invoke(title, msg, level)));
+
+            _connection.On<string>("SessionTerminated", reason =>
+                Dispatch(() => SessionTerminated?.Invoke(reason)));
 
             // ── Presence handlers ────────────────────────────────────────────
             // Data origin: server-side PresenceService — never client-fabricated.

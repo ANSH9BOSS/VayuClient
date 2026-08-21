@@ -134,7 +134,7 @@ public class TitleScreenMixin {
         }
         if (!LauncherSkinPreference.isVayuClientSkinEnabled()) {
             if (LauncherRenderer.isDiscordClicked(DisplaySpace.width(), DisplaySpace.height(), mouseX, mouseY)) {
-                ConfirmLinkScreen.confirmLinkNow((Screen)((Screen)(Object)this), (String)"https://discord.gg/RGzATq3v7J", (boolean)true);
+                ConfirmLinkScreen.confirmLinkNow((Screen)((Screen)(Object)this), (String)"https://discord.gg/aXUkFajMc", (boolean)true);
                 cir.setReturnValue(true);
             }
             return;
@@ -209,7 +209,7 @@ public class TitleScreenMixin {
                 break;
             }
             case "joindiscord1": {
-                ConfirmLinkScreen.confirmLinkNow((Screen)self, (String)"https://discord.gg/RGzATq3v7J", (boolean)true);
+                ConfirmLinkScreen.confirmLinkNow((Screen)self, (String)"https://discord.gg/aXUkFajMc", (boolean)true);
                 break;
             }
             default: {

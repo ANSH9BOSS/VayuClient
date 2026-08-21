@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "vayuclient-hud",
-  "version": "1.9.3",
+  "version": "2.0.0",
   "name": "VayuClient HUD",
   "description": "Premium Glassmorphic HUD & Visual Enhancement System for VayuClient.",
   "authors": [
@@ -30,7 +30,7 @@
     "modmenu": {
       "badges": ["client"],
       "links": {
-        "modmenu.discord": "https://discord.gg/RGzATq3v7J"
+        "modmenu.discord": "https://discord.gg/aXUkFajMc"
       }
     }
   },

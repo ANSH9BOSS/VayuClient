@@ -9,7 +9,7 @@ namespace VayuClient.Services.Launch
         public int BytecodeMajor { get; set; }
         public int BytecodeMinor { get; set; }
         public int RequiredJavaMajor { get; set; }
-        public string VayuUiVersion { get; set; } = "1.9.3";
+        public string VayuUiVersion { get; set; } = "2.0.0";
         public string MinecraftCompatibility { get; set; } = string.Empty;
         public List<string> SupportedLoaders { get; set; } = new();
         public bool HasManifest { get; set; }

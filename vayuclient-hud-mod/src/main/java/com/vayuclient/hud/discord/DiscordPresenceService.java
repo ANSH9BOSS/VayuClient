@@ -165,7 +165,7 @@ public class DiscordPresenceService {
             JsonArray buttons = new JsonArray();
             JsonObject discordBtn = new JsonObject();
             discordBtn.addProperty("label", "Join Discord");
-            discordBtn.addProperty("url", "https://discord.gg/RGzATq3v7J");
+            discordBtn.addProperty("url", "https://discord.gg/aXUkFajMc");
             buttons.add(discordBtn);
             activity.add("buttons", buttons);
 

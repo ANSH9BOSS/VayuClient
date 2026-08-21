@@ -20,7 +20,7 @@ public class VayuHUDClient implements ClientModInitializer {
     public static final String MOD_ID = "vayuclient-hud";
     public static final String MC_VERSION = "26.2";
     public static final String RELEASE_ID = "ca786cd3";
-    public static final String VERSION_LABEL = "VayuClient v1.9.3";
+    public static final String VERSION_LABEL = "VayuClient v2.0.0";
     private static VayuHUDClient instance;
     private ModuleManager moduleManager;
     private KeybindManager keybindManager;
@@ -30,7 +30,7 @@ public class VayuHUDClient implements ClientModInitializer {
     public static String getModVersion() {
         return FabricLoader.getInstance().getModContainer(MOD_ID)
                 .map(container -> container.getMetadata().getVersion().getFriendlyString())
-                .orElse("1.9.3");
+                .orElse("2.0.0");
     }
 
     @Override

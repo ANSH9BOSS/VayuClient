@@ -49,7 +49,7 @@ namespace VayuClient.Core
             }
             catch { }
 
-            return "1.9.3";
+            return "2.0.0";
         }
 
         private static Version DetermineSemanticVersion(string verStr)

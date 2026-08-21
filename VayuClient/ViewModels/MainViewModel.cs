@@ -566,7 +566,7 @@ namespace VayuClient.ViewModels
         {
             try
             {
-                Process.Start(new ProcessStartInfo("https://discord.gg/minecraft") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo("https://discord.gg/aXUkFajMc") { UseShellExecute = true });
             }
             catch { }
         }

@@ -114,7 +114,7 @@ extends Screen {
         }
         if (!LauncherSkinPreference.isVayuClientSkinEnabled()) {
             if (event.button() == 0 && LauncherRenderer.isDiscordClicked(DisplaySpace.width(), DisplaySpace.height(), mouseX, mouseY)) {
-                ConfirmLinkScreen.confirmLinkNow((Screen)(Object)this, (String)"https://discord.gg/RGzATq3v7J", (boolean)true);
+                ConfirmLinkScreen.confirmLinkNow((Screen)(Object)this, (String)"https://discord.gg/aXUkFajMc", (boolean)true);
                 return true;
             }
             return super.mouseClicked(event, bl);

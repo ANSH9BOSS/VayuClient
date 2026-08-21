@@ -212,6 +212,36 @@ namespace VayuClient.ViewModels
                     LatestReleaseTag = tag;
                     _main.ShowNotification("New Update Available", $"VayuClient {tag} is available!", NotificationType.Info);
                 };
+
+                _signalR.RemoteBroadcastReceived += (msg, level, dur) =>
+                {
+                    var type = level.Equals("Critical", StringComparison.OrdinalIgnoreCase) ? NotificationType.Error :
+                               level.Equals("Warning", StringComparison.OrdinalIgnoreCase) ? NotificationType.Warning :
+                               level.Equals("Success", StringComparison.OrdinalIgnoreCase) ? NotificationType.Success : NotificationType.Info;
+                    _main.ShowNotification("📢 Broadcast Alert", msg, type);
+                };
+
+                _signalR.DirectNotificationReceived += (title, msg, level) =>
+                {
+                    var type = level.Equals("Critical", StringComparison.OrdinalIgnoreCase) ? NotificationType.Error :
+                               level.Equals("Warning", StringComparison.OrdinalIgnoreCase) ? NotificationType.Warning : NotificationType.Info;
+                    _main.ShowNotification(title, msg, type);
+                };
+
+                _signalR.AnnouncementBroadcast += (title, msg, level) =>
+                {
+                    _ = Task.Run(FetchBackendDataAsync);
+                };
+
+                _signalR.AnnouncementDeleted += id =>
+                {
+                    _ = Task.Run(FetchBackendDataAsync);
+                };
+
+                _signalR.NewsUpdated += () =>
+                {
+                    _ = Task.Run(FetchBackendDataAsync);
+                };
             }
 
             CrashLogger.LogsUpdated += () =>
@@ -568,7 +598,7 @@ namespace VayuClient.ViewModels
                 Description = "Chat with developers, report bugs, get live notifications, and join exclusive community events.",
                 ImagePath = "/Assets/Images/bg_cyber_nether.jpg",
                 ActionText = "Join Server",
-                ActionUrl = "https://discord.gg/vayuclient"
+                ActionUrl = "https://discord.gg/aXUkFajMc"
             });
 
             OnPropertyChanged(nameof(HasFeaturedCards));
@@ -668,7 +698,7 @@ namespace VayuClient.ViewModels
         {
             try
             {
-                Process.Start(new ProcessStartInfo("https://discord.gg/vayuclient") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo("https://discord.gg/aXUkFajMc") { UseShellExecute = true });
             }
             catch { }
         }

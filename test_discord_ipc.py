@@ -63,7 +63,7 @@ def test_discord():
                 "buttons": [
                     {
                         "label": "Join Discord",
-                        "url": "https://discord.gg/RGzATq3v7J"
+                        "url": "https://discord.gg/aXUkFajMc"
                     }
                 ]
             }
