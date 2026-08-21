@@ -698,78 +698,102 @@ namespace VayuClient.Services.Launch
         {
             try
             {
-                var modsDir = Path.Combine(gameDir, "mods");
-                if (!Directory.Exists(modsDir)) return;
-
-                // 1. Remove internal loader processed cache directories if leaked into mods/
-                var processedDir = Path.Combine(modsDir, "processedMods");
-                if (Directory.Exists(processedDir))
+                var candidateDirs = new List<string>
                 {
-                    try
-                    {
-                        Directory.Delete(processedDir, true);
-                        log("Cleaned internal processedMods cache folder from mods directory.");
-                    }
-                    catch { }
-                }
+                    Path.Combine(gameDir, "mods"),
+                    Path.Combine(gameDir, "game", "mods")
+                };
 
-                var jars = Directory.GetFiles(modsDir, "*.jar", SearchOption.TopDirectoryOnly);
-                if (jars.Length == 0) return;
-
-                var seenModIds = new Dictionary<string, (string FilePath, string Version, string TargetMc)>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var jarPath in jars)
+                foreach (var modsDir in candidateDirs)
                 {
-                    try
+                    if (!Directory.Exists(modsDir)) continue;
+
+                    // 1. Remove internal loader processed cache directories if leaked into mods/
+                    var processedDir = Path.Combine(modsDir, "processedMods");
+                    if (Directory.Exists(processedDir))
                     {
-                        using var zip = ZipFile.OpenRead(jarPath);
-                        var modJsonEntry = zip.GetEntry("fabric.mod.json");
-                        if (modJsonEntry != null)
+                        try
                         {
-                            using var stream = modJsonEntry.Open();
-                            using var reader = new StreamReader(stream);
-                            var jsonText = reader.ReadToEnd();
-                            var jsonObj = JObject.Parse(jsonText);
-                            var modId = jsonObj["id"]?.ToString();
-                            var modVersion = jsonObj["version"]?.ToString() ?? "1.0.0";
-                            var depends = jsonObj["depends"] as JObject;
-                            var mcDep = depends?["minecraft"]?.ToString() ?? "";
+                            Directory.Delete(processedDir, true);
+                            log("Cleaned internal processedMods cache folder from mods directory.");
+                        }
+                        catch { }
+                    }
 
-                            if (!string.IsNullOrEmpty(modId))
+                    // 2. Remove obsolete / older versions of VayuHUD JARs so only 1.9.3 runs
+                    var existingHudJars = Directory.GetFiles(modsDir, "*vayuclient-hud*.jar", SearchOption.TopDirectoryOnly);
+                    if (existingHudJars.Length > 1)
+                    {
+                        var sortedJars = existingHudJars.OrderByDescending(f => f).ToList();
+                        foreach (var olderJar in sortedJars.Skip(1))
+                        {
+                            try
                             {
-                                if (seenModIds.TryGetValue(modId, out var existing))
-                                {
-                                    bool isCurrentMatch = string.IsNullOrEmpty(mcDep) || mcDep.Contains(targetMinecraftVersion) || mcDep == "*";
-                                    bool isExistingMatch = string.IsNullOrEmpty(existing.TargetMc) || existing.TargetMc.Contains(targetMinecraftVersion) || existing.TargetMc == "*";
-
-                                    if (isCurrentMatch && !isExistingMatch)
-                                    {
-                                        DisableMod(existing.FilePath, $"Duplicate mod ID '{modId}' incompatible with MC {targetMinecraftVersion}", log);
-                                        seenModIds[modId] = (jarPath, modVersion, mcDep);
-                                    }
-                                    else
-                                    {
-                                        DisableMod(jarPath, $"Duplicate mod ID '{modId}' (retaining {Path.GetFileName(existing.FilePath)})", log);
-                                    }
-                                    continue;
-                                }
-
-                                if (!string.IsNullOrEmpty(mcDep) && mcDep != "*" && !string.IsNullOrEmpty(targetMinecraftVersion))
-                                {
-                                    if ((mcDep.StartsWith("1.21") || mcDep.Contains("1.21.4")) && targetMinecraftVersion.StartsWith("26."))
-                                    {
-                                        DisableMod(jarPath, $"Requires Minecraft {mcDep}, incompatible with target {targetMinecraftVersion}", log);
-                                        continue;
-                                    }
-                                }
-
-                                seenModIds[modId] = (jarPath, modVersion, mcDep);
+                                File.Delete(olderJar);
+                                log($"[ModSanitizer] Removed obsolete HUD version: {Path.GetFileName(olderJar)}");
                             }
+                            catch { }
                         }
                     }
-                    catch
+
+                    var jars = Directory.GetFiles(modsDir, "*.jar", SearchOption.TopDirectoryOnly);
+                    if (jars.Length == 0) continue;
+
+                    var seenModIds = new Dictionary<string, (string FilePath, string Version, string TargetMc)>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var jarPath in jars)
                     {
-                        // Ignore unreadable or native binary jars
+                        try
+                        {
+                            using var zip = ZipFile.OpenRead(jarPath);
+                            var modJsonEntry = zip.GetEntry("fabric.mod.json");
+                            if (modJsonEntry != null)
+                            {
+                                using var stream = modJsonEntry.Open();
+                                using var reader = new StreamReader(stream);
+                                var jsonText = reader.ReadToEnd();
+                                var jsonObj = JObject.Parse(jsonText);
+                                var modId = jsonObj["id"]?.ToString();
+                                var modVersion = jsonObj["version"]?.ToString() ?? "1.0.0";
+                                var depends = jsonObj["depends"] as JObject;
+                                var mcDep = depends?["minecraft"]?.ToString() ?? "";
+
+                                if (!string.IsNullOrEmpty(modId))
+                                {
+                                    if (seenModIds.TryGetValue(modId, out var existing))
+                                    {
+                                        bool isCurrentMatch = string.IsNullOrEmpty(mcDep) || mcDep.Contains(targetMinecraftVersion) || mcDep == "*";
+                                        bool isExistingMatch = string.IsNullOrEmpty(existing.TargetMc) || existing.TargetMc.Contains(targetMinecraftVersion) || existing.TargetMc == "*";
+
+                                        if (isCurrentMatch && !isExistingMatch)
+                                        {
+                                            DisableMod(existing.FilePath, $"Duplicate mod ID '{modId}' incompatible with MC {targetMinecraftVersion}", log);
+                                            seenModIds[modId] = (jarPath, modVersion, mcDep);
+                                        }
+                                        else
+                                        {
+                                            DisableMod(jarPath, $"Duplicate mod ID '{modId}' (retaining {Path.GetFileName(existing.FilePath)})", log);
+                                        }
+                                        continue;
+                                    }
+
+                                    if (!string.IsNullOrEmpty(mcDep) && mcDep != "*" && !string.IsNullOrEmpty(targetMinecraftVersion))
+                                    {
+                                        if ((mcDep.StartsWith("1.21") || mcDep.Contains("1.21.4")) && targetMinecraftVersion.StartsWith("26."))
+                                        {
+                                            DisableMod(jarPath, $"Requires Minecraft {mcDep}, incompatible with target {targetMinecraftVersion}", log);
+                                            continue;
+                                        }
+                                    }
+
+                                    seenModIds[modId] = (jarPath, modVersion, mcDep);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore unreadable or native binary jars
+                        }
                     }
                 }
             }
