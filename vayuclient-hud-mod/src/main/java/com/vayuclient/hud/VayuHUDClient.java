@@ -1,15 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.fabricmc.api.ClientModInitializer
- *  net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
- *  net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
- *  net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents
- *  net.fabricmc.loader.api.FabricLoader
- *  org.slf4j.Logger
- *  org.slf4j.LoggerFactory
- */
 package com.vayuclient.hud;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -27,13 +15,12 @@ import com.vayuclient.hud.render.WorldHealthBarRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VayuHUDClient
-implements ClientModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger((String)"VayuHUD");
+public class VayuHUDClient implements ClientModInitializer {
+    public static final Logger LOGGER = LoggerFactory.getLogger("VayuHUD");
     public static final String MOD_ID = "vayuclient-hud";
     public static final String MC_VERSION = "26.2";
     public static final String RELEASE_ID = "ca786cd3";
-    public static final String VERSION_LABEL = "VayuClient 26.2 (release/ca786cd3)";
+    public static final String VERSION_LABEL = "VayuClient (Universal HUD)";
     private static VayuHUDClient instance;
     private ModuleManager moduleManager;
     private KeybindManager keybindManager;
@@ -41,32 +28,73 @@ implements ClientModInitializer {
     private boolean joinedServer = false;
 
     public static String getModVersion() {
-        return FabricLoader.getInstance().getModContainer(MOD_ID).map(container -> container.getMetadata().getVersion().getFriendlyString()).orElse("1.0.0");
+        return FabricLoader.getInstance().getModContainer(MOD_ID)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString())
+                .orElse("1.9.1");
     }
 
+    @Override
     public void onInitializeClient() {
         instance = this;
-        LOGGER.info("VayuHUD initializing...");
-        this.moduleManager = new ModuleManager();
-        this.keybindManager = new KeybindManager();
-        this.renderManager = new RenderManager();
-        this.keybindManager.init();
-        this.renderManager.init();
-        this.moduleManager.registerModules();
+        LOGGER.info("VayuHUD initializing across Minecraft 1.21+...");
 
-        LevelRenderEvents.COLLECT_SUBMITS.register(WorldHealthBarRenderer::onCollectSubmits);
-        LevelRenderEvents.COLLECT_SUBMITS.register(BlockOverlayRenderer::onCollectSubmits);
-        LevelRenderEvents.COLLECT_SUBMITS.register(WaypointWorldRenderer::onCollectSubmits);
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (this.moduleManager != null && client.player != null) {
-                this.moduleManager.onTick();
-            }
-        });
-        VayuUserCache.getInstance();
         try {
-            com.vayuclient.hud.discord.DiscordPresenceService.getInstance().start();
-        } catch (Throwable ignored) {}
-        LOGGER.info("VayuHUD initialized!");
+            this.moduleManager = new ModuleManager();
+            this.keybindManager = new KeybindManager();
+            this.renderManager = new RenderManager();
+
+            try {
+                this.keybindManager.init();
+            } catch (Throwable t) {
+                LOGGER.warn("KeybindManager init non-fatal warning: {}", t.getMessage());
+            }
+
+            try {
+                this.renderManager.init();
+            } catch (Throwable t) {
+                LOGGER.warn("RenderManager init non-fatal warning: {}", t.getMessage());
+            }
+
+            try {
+                this.moduleManager.registerModules();
+            } catch (Throwable t) {
+                LOGGER.warn("ModuleManager registerModules non-fatal warning: {}", t.getMessage());
+            }
+
+            try {
+                LevelRenderEvents.COLLECT_SUBMITS.register(WorldHealthBarRenderer::onCollectSubmits);
+                LevelRenderEvents.COLLECT_SUBMITS.register(BlockOverlayRenderer::onCollectSubmits);
+                LevelRenderEvents.COLLECT_SUBMITS.register(WaypointWorldRenderer::onCollectSubmits);
+            } catch (Throwable t) {
+                LOGGER.warn("LevelRenderEvents registration warning: {}", t.getMessage());
+            }
+
+            try {
+                ClientTickEvents.END_CLIENT_TICK.register(client -> {
+                    if (this.moduleManager != null && client != null && client.player != null) {
+                        try {
+                            this.moduleManager.onTick();
+                        } catch (Throwable ignored) {}
+                    }
+                });
+            } catch (Throwable t) {
+                LOGGER.warn("ClientTickEvents registration warning: {}", t.getMessage());
+            }
+
+            try {
+                VayuUserCache.getInstance();
+            } catch (Throwable t) {
+                LOGGER.warn("VayuUserCache init warning: {}", t.getMessage());
+            }
+
+            try {
+                com.vayuclient.hud.discord.DiscordPresenceService.getInstance().start();
+            } catch (Throwable ignored) {}
+
+            LOGGER.info("VayuHUD successfully initialized!");
+        } catch (Throwable t) {
+            LOGGER.error("Failed to initialize VayuHUD client components cleanly", t);
+        }
     }
 
     public static VayuHUDClient getInstance() {
@@ -81,4 +109,3 @@ implements ClientModInitializer {
         return this.renderManager;
     }
 }
-

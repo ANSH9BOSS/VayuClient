@@ -86,6 +86,9 @@ if (Test-Path $stevePng) {
     Copy-Item $stevePng -Destination (Join-Path $tempPublish "steve_head.png") -Force
 }
 
+# Ensure heavy mod JARs are NEVER packaged inside installer (downloaded on demand via VPS)
+Get-ChildItem -Path $tempPublish -Filter "*.jar" -Recurse -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+
 # 4. Resolve publisher certificate and sign payload binaries BEFORE packaging into zip
 Write-Host "`n[2/4] Signing application payload binaries..." -ForegroundColor Yellow
 $cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Subject -like "*VayuClient*" -or $_.Subject -like "*ANSH9BOSS*" } | Select-Object -First 1

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2.0",
-  "generatedAt": "2026-08-20T15:14:54.235150+00:00",
+  "generatedAt": "2026-08-21T10:26:25.884975+00:00",
   "hudProductVersion": "1.9.1",
   "artifacts": [
     {
@@ -24,8 +24,8 @@
       "bytecodeMajor": 65,
       "adapter": "v26_2_0",
       "artifactFilename": "vayuclient-hud-1.9.1-mc26.2.0-universal.jar",
-      "sha256": "f83f4b70c5cb1bf135788e48ae241003791889dd52b78e52a432a96f52b17dda",
-      "fileSizeBytes": 7415511,
+      "sha256": "db9fc9c3fde3d7602ec61abe7457b2627fdb662c004ea8a43d6c98233aa80213",
+      "fileSizeBytes": 7415383,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -57,8 +57,8 @@
       "bytecodeMajor": 65,
       "adapter": "v26_2",
       "artifactFilename": "vayuclient-hud-1.9.1-mc26.2-universal.jar",
-      "sha256": "855779ee33a2f0cbe7fd81d48c344f7f2d1f74e5e86ac0d364730752c2e10865",
-      "fileSizeBytes": 7415507,
+      "sha256": "b74da55b91b82cbfa75f9c1e0ae1fc8491cb22744fdf4b59f47512e9a4cabc5b",
+      "fileSizeBytes": 7415379,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -90,8 +90,8 @@
       "bytecodeMajor": 65,
       "adapter": "v26_1_2",
       "artifactFilename": "vayuclient-hud-1.9.1-mc26.1.2-universal.jar",
-      "sha256": "5397c248ac82234442d7f35b15e6e823880227ce79e3f3140ee615f5e7622f8f",
-      "fileSizeBytes": 7415509,
+      "sha256": "54a8f06d38f0ec1f00c395a1056a6fa47a08695f33d21cedee8f241310fec694",
+      "fileSizeBytes": 7415381,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -123,8 +123,8 @@
       "bytecodeMajor": 65,
       "adapter": "v26_1",
       "artifactFilename": "vayuclient-hud-1.9.1-mc26.1-universal.jar",
-      "sha256": "e1e3b68da5bf8cfb5fbcfe792fc53929ebfcc0077e5b73b9529c23fba09ee038",
-      "fileSizeBytes": 7415507,
+      "sha256": "701657dc8029de3693bd2d98265b37755b0111282c6b657be9541a6e62368331",
+      "fileSizeBytes": 7415379,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -165,8 +165,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_9",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.9-universal.jar",
-      "sha256": "f016aa6fba69493c71f54a204dbfb5ff70a18b1cf2b1d04053d5a3612984b532",
-      "fileSizeBytes": 7415483,
+      "sha256": "1bcd05368ca94b46062fffab941b408783c6bc47a3aa536dd9a7b3bb650f2801",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -206,8 +206,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_8",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.8-universal.jar",
-      "sha256": "68c0790b6f7af817a00531b80b4ada089a808829645e0996a2b6c43683e213cc",
-      "fileSizeBytes": 7415483,
+      "sha256": "5e65c731124df9b10a9c028e57bf22516461a97c015e2622be6a42da7d3bf496",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -246,8 +246,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_7",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.7-universal.jar",
-      "sha256": "2d52618c2a13820efa6fb2a4095c99f04e28380dc459fb20e4830ecdf67ea86e",
-      "fileSizeBytes": 7415483,
+      "sha256": "52625a1a550292c3bf1bc49d1a2f4bf0205162281a795c956f4730e856fdaec7",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -285,8 +285,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_6",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.6-universal.jar",
-      "sha256": "578b4ffa3a9c2a30806538a2b14cfba6771b24ec168cd51e2668acbb3bf44042",
-      "fileSizeBytes": 7415483,
+      "sha256": "613e417f8a16b0d54486359f2295206e0461a9738e1ab83ae76e971836680007",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -323,8 +323,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_5",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.5-universal.jar",
-      "sha256": "96262d409b6185175c2b30fc39cfb37fbb2aafe0fbd2afe316635c6dfa7aceaf",
-      "fileSizeBytes": 7415483,
+      "sha256": "5d796400878ecb53f4ba1c161eb960b9198f4a351d9bc31f8d436b9b89a19662",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -360,8 +360,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_4",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.4-universal.jar",
-      "sha256": "7fe23900825f8a07159d98871caa6531cd91bfb5cfdd6b6d34c0a14545ee539b",
-      "fileSizeBytes": 7415483,
+      "sha256": "47e1fae16055dda3311f7cf59ecca311de990d68d5ab96b52e6c5da3eb080a2c",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -396,8 +396,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_3",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.3-universal.jar",
-      "sha256": "7f43ad208fb9281cd1d5adf6d9d8966b30e63687987e23b4091fd21a578b1aa7",
-      "fileSizeBytes": 7415483,
+      "sha256": "616b6b35cbe24599a73e913cd1e60e65b1aea1a9f278c4e6f078314601b936e0",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -431,8 +431,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_2",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.2-universal.jar",
-      "sha256": "80ee08d2c8ddfdaba53dcacce2b1b3647414109e407d4f21b6af0405bbb422fb",
-      "fileSizeBytes": 7415483,
+      "sha256": "32159f78ac9ee7132115f9311f7eaf94156102574414f2a5c99f8ab78506dc65",
+      "fileSizeBytes": 7415402,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -475,8 +475,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_11",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.11-universal.jar",
-      "sha256": "a376b4bb3f9467827428db0fcdab42f85db52dec0b2026d3bc72e56e8b1a1430",
-      "fileSizeBytes": 7415478,
+      "sha256": "7ac7c6e78d02fb8aa1c6abd1eb7d1c91c539ad58849199870cfc0256be9e9b33",
+      "fileSizeBytes": 7415397,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -518,8 +518,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_10",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.10-universal.jar",
-      "sha256": "5420264bb8586dc96bf9632aa020662e2d18b231ee3e488a0b8f193e57bbe624",
-      "fileSizeBytes": 7415484,
+      "sha256": "afab73294448b28c8e0e610d8258ab469c7c81861010ccbddbb3429188d886a9",
+      "fileSizeBytes": 7415403,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -552,8 +552,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21_1",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21.1-universal.jar",
-      "sha256": "aa69a5f2ff42765f2c048c515377c6c576b55c3a0f3a42494924d6d67b11a7b8",
-      "fileSizeBytes": 7415482,
+      "sha256": "747c348b22283473914785abbd83606a5a7679f34fcc8e9234aaf99c184f4f93",
+      "fileSizeBytes": 7415401,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
@@ -585,8 +585,8 @@
       "bytecodeMajor": 65,
       "adapter": "v1_21",
       "artifactFilename": "vayuclient-hud-1.9.1-mc1.21-universal.jar",
-      "sha256": "6cadf2ccd06b01d2ceca53588c1ba94c7121bca623d7be580ef73b7f23e7f5e4",
-      "fileSizeBytes": 7415479,
+      "sha256": "244c97dfcbc3c8bdf9912b98e89740c10f9ba234daa6223c366bc41a36a71df5",
+      "fileSizeBytes": 7415398,
       "compatibilityStatus": "Verified",
       "entrypoints": [
         "com.vayuclient.hud.VayuHUDClient",
