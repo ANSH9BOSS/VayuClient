@@ -313,13 +313,15 @@ namespace VayuClient.Services.Launch
                 }
 
                 // 8.7 Apply Instance Performance Settings (options.txt and mod configs)
+                SetState(LaunchState.Installing, "Applying performance configurations...");
                 await _performanceService.ApplyInstanceOptionsAsync(instance, _performanceService.CurrentSettings);
 
                 // 8.8 Auto-deploy and validate version-compatible VayuClient In-Game UI Mod
+                SetState(LaunchState.Downloading, "Deploying Vayu HUD in-game enhancements...");
                 await EnsureVayuClientUiModAsync(instance, javaRuntime, Log).ConfigureAwait(false);
 
                 // 9. Build Classpath (Deduplicating loader vs vanilla conflicting libraries)
-                SetState(LaunchState.Preparing, "Building classpath and launch arguments...");
+                SetState(LaunchState.Launching, "Building classpath and launch arguments...");
                 Log("Resolving complete classpath with artifact deduplication...");
                 var baseClasspath = _minecraftInstaller.ResolveClasspath(pkg, nativesDir);
                 var fullClasspath = MergeClasspath(loaderResult.AdditionalLibraries, baseClasspath);

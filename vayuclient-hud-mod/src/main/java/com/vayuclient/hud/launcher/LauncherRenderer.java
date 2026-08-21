@@ -81,7 +81,7 @@ public final class LauncherRenderer {
         g.pose().popMatrix();
 
         // Subtitle badge
-        String sub = "v1.9.1 - FABRIC 26.2";
+        String sub = "v" + com.vayuclient.hud.VayuHUDClient.getModVersion() + " - FABRIC " + com.vayuclient.hud.VayuHUDClient.MC_VERSION;
         int subW = font.width(sub);
         int badgePad = 8;
         int badgeX = centerX - (subW + badgePad * 2) / 2;
@@ -266,7 +266,7 @@ public final class LauncherRenderer {
 
         // Header Title in Box
         g.text(font, "GAME PAUSED", panelX + 16, panelY + 14, VayuTheme.PRIMARY, true);
-        g.text(font, "VayuClient v1.9.1 - Fabric 26.2", panelX + 16, panelY + 26, VayuTheme.TEXT_MUTED, false);
+        g.text(font, "VayuClient v" + com.vayuclient.hud.VayuHUDClient.getModVersion() + " - Fabric " + com.vayuclient.hud.VayuHUDClient.MC_VERSION, panelX + 16, panelY + 26, VayuTheme.TEXT_MUTED, false);
 
         // World Telemetry Readout Box
         int statBoxW = panelW - 32;

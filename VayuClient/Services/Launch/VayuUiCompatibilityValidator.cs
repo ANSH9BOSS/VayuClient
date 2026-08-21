@@ -39,7 +39,7 @@ namespace VayuClient.Services.Launch
                         var json = reader.ReadToEnd();
                         var obj = JObject.Parse(json);
 
-                        info.VayuUiVersion = obj["version"]?.ToString() ?? "1.7.0";
+                        info.VayuUiVersion = obj["version"]?.ToString() ?? "1.9.3";
                         info.MinecraftCompatibility = obj["depends"]?["minecraft"]?.ToString() ?? string.Empty;
                         info.SupportedLoaders.Add("Fabric");
                         info.SupportedLoaders.Add("Quilt");
