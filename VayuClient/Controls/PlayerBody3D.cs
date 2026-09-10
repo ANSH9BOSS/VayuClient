@@ -181,21 +181,27 @@ namespace VayuClient.Controls
         {
             if (DisplayMode == PlayerModelMode.HeadOnly)
             {
-                // Tight camera framing on head only
+                // Eye-level tight framing directly on head center (Y = 1.6)
                 Camera = new PerspectiveCamera(
-                    new Point3D(0.5, 1.55, 3.4),
-                    new Vector3D(-0.5, -0.35, -3.4),
+                    new Point3D(0.35, 1.6, 2.5),
+                    new Vector3D(-0.35, 0.0, -2.5),
                     new Vector3D(0, 1, 0),
-                    25);
+                    28);
+                
+                _characterYawRotation.Angle = -14;
+                _runningLeanRotation.Angle = 0;
             }
             else
             {
-                // Full Body Heroic Running Camera (Frames entire 3.2-unit character with high vertical presence)
+                // Full Body Heroic Camera (mathematical center Y = 0.42, full 3.25 unit height visible with no clipping)
                 Camera = new PerspectiveCamera(
-                    new Point3D(0.48, 0.25, 3.8),
-                    new Vector3D(-0.48, -0.25, -3.8),
+                    new Point3D(0.42, 0.42, 4.4),
+                    new Vector3D(-0.42, 0.0, -4.4),
                     new Vector3D(0, 1, 0),
                     44);
+                
+                _characterYawRotation.Angle = -22;
+                _runningLeanRotation.Angle = 8;
             }
         }
 
@@ -813,7 +819,7 @@ namespace VayuClient.Controls
         {
             StopAnimations();
 
-            if (!IsLoaded || !IsVisible || !IsRunning)
+            if (!IsLoaded || !IsVisible || !IsRunning || DisplayMode == PlayerModelMode.HeadOnly)
                 return;
 
             var runningCycleDuration = TimeSpan.FromSeconds(0.68);

@@ -249,262 +249,238 @@
     <Grid Background="#06070B">
 
         <!-- ═══ 3D PURPLE AMBIENT LIGHT LAYER ═══ -->
-        <Ellipse Width="700" Height="500" HorizontalAlignment="Left" VerticalAlignment="Center"
-                 Margin="-150,0,0,40" IsHitTestVisible="False" Opacity="0.08">
+        <Ellipse Width="800" Height="600" HorizontalAlignment="Left" VerticalAlignment="Center"
+                 Margin="-200,0,0,0" IsHitTestVisible="False" Opacity="0.07">
             <Ellipse.Fill>
                 <RadialGradientBrush>
                     <GradientStop Color="#A855F7" Offset="0.0"/>
-                    <GradientStop Color="#7C3AED" Offset="0.4"/>
+                    <GradientStop Color="#7C3AED" Offset="0.5"/>
                     <GradientStop Color="Transparent" Offset="1.0"/>
                 </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
 
         <!-- ═══ TOP HEADER ═══ -->
-        <StackPanel Margin="48,28,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <TextBlock Text="ACCOUNTS &amp; PROFILES"
-                       FontSize="15" FontWeight="Black" Foreground="#FFFFFF"/>
-            <TextBlock Text="Active Minecraft authentication session and offline identity management"
+        <StackPanel Margin="48,24,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="ACCOUNTS" FontSize="16" FontWeight="Black" Foreground="#FFFFFF"/>
+                <TextBlock Text="&amp; PROFILES" FontSize="16" FontWeight="Black" Foreground="#A855F7" Margin="6,0,0,0"/>
+            </StackPanel>
+            <TextBlock Text="Manage your authenticated Microsoft accounts and offline player identities"
                        FontSize="11" Foreground="#64748B" Margin="0,3,0,0"/>
         </StackPanel>
 
-        <!-- ═══ MAIN ASYMMETRIC 3D CONTENT AREA ═══ -->
-        <Grid Margin="48,76,48,76" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <!-- ═══ MAIN 2-COLUMN STUDIO LAYOUT ═══ -->
+        <Grid Margin="48,68,48,76" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="60"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="32"/>
+                <ColumnDefinition Width="480"/>
             </Grid.ColumnDefinitions>
 
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!-- 1. LEFT: 3D ACTIVE ACCOUNT SHOWCASE PEDESTAL                    -->
+            <!-- 1. LEFT COLUMN: 3D ACTIVE HEROIC PLAYER SHOWCASE                -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <Grid Grid.Column="0" VerticalAlignment="Center">
-                
-                <!-- 3D Shadow Layer -->
-                <Border Width="470" Height="240" CornerRadius="16" Background="#000000" Opacity="0.6"
-                        Margin="0,8,-6,-8"/>
+            <Border Grid.Column="0" CornerRadius="18" Background="#0B0817" BorderBrush="#2F1B4E" BorderThickness="1.2"
+                    Padding="16,18">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="28" ShadowDepth="0" Opacity="0.22"/>
+                </Border.Effect>
+                <Grid>
+                    <!-- Top Bevel Accent -->
+                    <Border CornerRadius="16,16,0,0" Height="2" VerticalAlignment="Top">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#A855F7" Offset="0.0"/>
+                                <GradientStop Color="#C084FC" Offset="0.5"/>
+                                <GradientStop Color="#7C3AED" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
 
-                <!-- 3D Obsidian Pedestal Card -->
-                <Border Width="470" Height="240" CornerRadius="16"
-                        Background="#0A0D16" BorderBrush="#3B1C66" BorderThickness="1.5">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#7C3AED" BlurRadius="24" ShadowDepth="0" Opacity="0.25"/>
-                    </Border.Effect>
-                    
-                    <Grid>
-                        <!-- Top Bevel Highlight Edge -->
-                        <Border CornerRadius="15,15,0,0" Height="2" VerticalAlignment="Top">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#A855F7" Offset="0.0"/>
-                                    <GradientStop Color="#C084FC" Offset="0.5"/>
-                                    <GradientStop Color="#7C3AED" Offset="1.0"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        
+                        <!-- 3D Running Player Stage (Unconfined & Unclipped) -->
+                        <Grid Width="260" Height="290" Margin="0,4,0,10" HorizontalAlignment="Center">
+                            <!-- Glowing Purple Floor Halo Under Feet -->
+                            <Ellipse Width="180" Height="30" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4" IsHitTestVisible="False">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#80A855F7" Offset="0.0"/>
+                                        <GradientStop Color="#257C3AED" Offset="0.5"/>
+                                        <GradientStop Color="#00000000" Offset="1.0"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+
+                            <!-- Subtle Ambient Backlight -->
+                            <Ellipse Width="200" Height="220" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.3">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#50A855F7" Offset="0.0"/>
+                                        <GradientStop Color="#00000000" Offset="1.0"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+
+                            <!-- 3D Player Body Model -->
+                            <controls:PlayerBody3D Profile="{Binding ActiveProfile}" 
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Width="260" Height="290"/>
+                        </Grid>
+
+                        <!-- Account Type Badge -->
+                        <Border Background="#1C1335" BorderBrush="#7C3AED" BorderThickness="1" CornerRadius="5"
+                                HorizontalAlignment="Center" Padding="8,3" Margin="0,0,0,6">
+                            <TextBlock Text="{Binding ActiveProfileAccountTypeDisplay}" FontSize="9.5" FontWeight="Black" Foreground="#C084FC"/>
                         </Border>
 
-                        <!-- Active Account Content -->
-                        <Grid Margin="24,0,24,0" VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <!-- Active Username -->
+                        <TextBlock Text="{Binding ActiveProfileUsername}"
+                                   FontSize="22" FontWeight="Black" Foreground="#FFFFFF"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" MaxWidth="280"/>
 
-                            <!-- 3D Running Player Model Showcase Vessel -->
-                            <Grid Grid.Column="0" Width="170" Height="200" VerticalAlignment="Center" Margin="0,0,24,0">
-                                <!-- Ambient Purple Rim Glow -->
-                                <Border CornerRadius="16" Background="#7C3AED" Opacity="0.3" Margin="-3">
-                                    <Border.Effect>
-                                        <BlurEffect Radius="14"/>
-                                    </Border.Effect>
-                                </Border>
+                        <!-- Active Status Dot -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                    Visibility="{Binding HasActiveProfile, Converter={StaticResource BoolToVis}}">
+                            <Ellipse Width="7" Height="7" Fill="#A855F7" Margin="0,0,6,0" VerticalAlignment="Center">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.9"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
+                            <TextBlock Text="ACTIVE &amp; READY TO PLAY" FontSize="10.5" FontWeight="Black" Foreground="#D8B4FE" VerticalAlignment="Center"/>
+                        </StackPanel>
 
-                                <!-- 3D Dark Avatar Vessel -->
-                                <Border CornerRadius="14" Background="#120E20" BorderBrush="#A855F7" BorderThickness="1.5"
-                                        ClipToBounds="True">
-                                    <Grid>
-                                        <controls:PlayerBody3D Profile="{Binding ActiveProfile}"/>
-                                        <!-- Subtle bottom gradient vignette -->
-                                        <Border VerticalAlignment="Bottom" Height="36" IsHitTestVisible="False">
-                                            <Border.Background>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                    <GradientStop Color="Transparent" Offset="0.0"/>
-                                                    <GradientStop Color="#8006070B" Offset="1.0"/>
-                                                </LinearGradientBrush>
-                                            </Border.Background>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </Grid>
+                        <!-- Empty active state prompt -->
+                        <TextBlock Text="No active profile selected." FontSize="11" Foreground="#64748B"
+                                   HorizontalAlignment="Center" Margin="0,6,0,0"
+                                   Visibility="{Binding HasActiveProfile, Converter={StaticResource InverseBoolToVis}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                            <!-- Active Account Metadata -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                
-                                <Border Background="#1C1335" BorderBrush="#7C3AED" BorderThickness="1" CornerRadius="4"
-                                        HorizontalAlignment="Left" Padding="6,2" Margin="0,0,0,8">
-                                    <TextBlock Text="PRIMARY PROFILE" FontSize="9" FontWeight="Black" Foreground="#C084FC"/>
-                                </Border>
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 2. RIGHT COLUMN: SAVED ACCOUNTS & AUTHENTICATION ACTIONS        -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Grid Grid.Column="2" VerticalAlignment="Center">
+                <StackPanel>
 
-                                <!-- Real Username -->
-                                <TextBlock Text="{Binding ActiveProfileUsername}"
-                                           FontSize="26" FontWeight="Black" Foreground="#FFFFFF"
-                                           TextTrimming="CharacterEllipsis" MaxWidth="210"/>
+                    <!-- Section Top Action Header -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                                <!-- Account Type Display -->
-                                <TextBlock Text="{Binding ActiveProfileAccountTypeDisplay}"
-                                           FontSize="11.5" FontWeight="Bold" Foreground="#858099"
-                                           Margin="0,4,0,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="SAVED PROFILES" FontSize="13" FontWeight="Black" Foreground="#FFFFFF"/>
+                            <TextBlock Text="Switch between Microsoft and Offline identities" FontSize="10" Foreground="#7D7596" Margin="0,1,0,0"/>
+                        </StackPanel>
 
-                                <!-- Glowing Active Dot Status -->
-                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0"
-                                            Visibility="{Binding HasActiveProfile, Converter={StaticResource BoolToVis}}">
-                                    <Ellipse Width="8" Height="8" Fill="#A855F7" Margin="0,0,8,0" VerticalAlignment="Center">
-                                        <Ellipse.Effect>
-                                            <DropShadowEffect Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
-                                        </Ellipse.Effect>
-                                    </Ellipse>
-                                    <TextBlock Text="ACTIVE &amp; READY" FontSize="11" FontWeight="Black" Foreground="#C084FC" VerticalAlignment="Center"/>
-                                </StackPanel>
-
-                                <!-- Empty active state prompt -->
-                                <StackPanel Margin="0,10,0,0"
-                                            Visibility="{Binding HasActiveProfile, Converter={StaticResource InverseBoolToVis}}">
-                                    <TextBlock Text="No active profile selected." FontSize="11" Foreground="#64748B"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
+                        <!-- Add / Login Action Buttons -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="+ OFFLINE" Style="{StaticResource Vayu3DDarkActionBtn}"
+                                    Command="{Binding ShowCreateProfileCommand}" Margin="0,0,8,0" Padding="12,5" FontSize="10.5"/>
+                            <Button Content="SIGN IN MICROSOFT" Style="{StaticResource Vayu3DPurplePrimaryBtn}"
+                                    Command="{Binding SignInMicrosoftCommand}" Padding="14,6" FontSize="10.5"/>
+                        </StackPanel>
                     </Grid>
-                </Border>
+
+                    <!-- Scrollable Account List Container -->
+                    <ScrollViewer MaxHeight="380" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+
+                            <!-- ─── MICROSOFT ACCOUNTS SECTION ─── -->
+                            <ItemsControl ItemsSource="{Binding OtherMicrosoftAccounts}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0D0A18" BorderBrush="#251D38" BorderThickness="1" CornerRadius="10"
+                                                Padding="12,8" Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Minecraft Avatar -->
+                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8"
+                                                        Background="#141021" BorderBrush="#3B2E58" BorderThickness="1"
+                                                        ClipToBounds="True" Margin="0,0,12,0">
+                                                    <controls:PlayerBody3D Profile="{Binding}" DisplayMode="HeadOnly"/>
+                                                </Border>
+
+                                                <!-- Username & Type -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="{Binding Username}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="MICROSOFT AUTH" FontSize="9" FontWeight="Black" Foreground="#A855F7" Margin="0,2,0,0"/>
+                                                </StackPanel>
+
+                                                <!-- Actions -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="SELECT" Style="{StaticResource Vayu3DSelectButton}"
+                                                            Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding Id}" Margin="0,0,6,0"/>
+                                                    <Button Content="DELETE" Style="{StaticResource Vayu3DDeleteButton}"
+                                                            Command="{Binding DataContext.DeleteProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding Id}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- ─── OFFLINE PROFILES SECTION ─── -->
+                            <ItemsControl ItemsSource="{Binding OtherOfflineProfiles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0D0A18" BorderBrush="#251D38" BorderThickness="1" CornerRadius="10"
+                                                Padding="12,8" Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Minecraft Avatar -->
+                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8"
+                                                        Background="#141021" BorderBrush="#3B2E58" BorderThickness="1"
+                                                        ClipToBounds="True" Margin="0,0,12,0">
+                                                    <controls:PlayerBody3D Profile="{Binding}" DisplayMode="HeadOnly"/>
+                                                </Border>
+
+                                                <!-- Username & Type -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="{Binding Username}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="OFFLINE PROFILE" FontSize="9" FontWeight="Black" Foreground="#64748B" Margin="0,2,0,0"/>
+                                                </StackPanel>
+
+                                                <!-- Actions -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="SELECT" Style="{StaticResource Vayu3DSelectButton}"
+                                                            Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding Id}" Margin="0,0,6,0"/>
+                                                    <Button Content="DELETE" Style="{StaticResource Vayu3DDeleteButton}"
+                                                            Command="{Binding DataContext.DeleteProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding Id}" Margin="0,0,6,0"/>
+                                                    <Button Content="···" Style="{StaticResource Vayu3DMoreBtn}"
+                                                            Command="{Binding DataContext.StartRenameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding Id}" ToolTip="Rename Offline Profile"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                </StackPanel>
             </Grid>
-
-            <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!-- 2. CONNECTING 3D LASER CIRCUIT TRACE                           -->
-            <!-- ═══════════════════════════════════════════════════════════════ -->
-            <Canvas Grid.Column="1" Width="60" Height="280" VerticalAlignment="Center" IsHitTestVisible="False">
-                <Path Data="M 0,140 L 25,140 L 35,42 L 60,42" Stroke="#7C3AED" StrokeThickness="1.2" Opacity="0.7"/>
-                <Path Data="M 35,42 L 35,102 L 60,102" Stroke="#7C3AED" StrokeThickness="1.2" Opacity="0.7"/>
-                <Path Data="M 0,140 L 25,140 L 35,178 L 60,178" Stroke="#7C3AED" StrokeThickness="1.2" Opacity="0.7"/>
-                <Path Data="M 35,178 L 35,238 L 60,238" Stroke="#7C3AED" StrokeThickness="1.2" Opacity="0.7"/>
-                
-                <!-- Glowing node dots -->
-                <Ellipse Canvas.Left="-2" Canvas.Top="138" Width="5" Height="5" Fill="#C084FC"/>
-                <Ellipse Canvas.Left="58" Canvas.Top="40" Width="4" Height="4" Fill="#A855F7"/>
-                <Ellipse Canvas.Left="58" Canvas.Top="100" Width="4" Height="4" Fill="#A855F7"/>
-                <Ellipse Canvas.Left="58" Canvas.Top="176" Width="4" Height="4" Fill="#A855F7"/>
-                <Ellipse Canvas.Left="58" Canvas.Top="236" Width="4" Height="4" Fill="#A855F7"/>
-            </Canvas>
-
-            <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!-- 3. RIGHT: 3D SECONDARY ACCOUNTS & ACTIONS LIST                  -->
-            <!-- ═══════════════════════════════════════════════════════════════ -->
-            <StackPanel Grid.Column="2" VerticalAlignment="Center" MinWidth="370" MaxWidth="440">
-
-                <!-- ─── MICROSOFT ACCOUNTS SECTION ─── -->
-                <StackPanel Margin="0,0,0,16">
-
-                    <!-- List of other Microsoft Accounts -->
-                    <ItemsControl ItemsSource="{Binding OtherMicrosoftAccounts}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="#0D0A18" BorderBrush="#251D38" BorderThickness="1" CornerRadius="10"
-                                        Padding="12,8" Margin="0,0,0,10">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <!-- Minecraft Avatar -->
-                                        <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6"
-                                                Background="#141021" BorderBrush="#3B2E58" BorderThickness="1"
-                                                ClipToBounds="True" Margin="0,0,12,0">
-                                            <controls:PlayerBody3D Profile="{Binding}" DisplayMode="HeadOnly"/>
-                                        </Border>
-
-                                        <!-- Username & Type -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="{Binding Username}" FontSize="13.5" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="MICROSOFT AUTH" FontSize="9" FontWeight="Black" Foreground="#7C3AED" Margin="0,2,0,0"/>
-                                        </StackPanel>
-
-                                        <!-- Actions -->
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="SELECT" Style="{StaticResource Vayu3DSelectButton}"
-                                                    Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Id}" Margin="0,0,6,0"/>
-                                            <Button Content="DELETE" Style="{StaticResource Vayu3DDeleteButton}"
-                                                    Command="{Binding DataContext.DeleteProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Id}"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                </StackPanel>
-
-                <!-- ─── OFFLINE PROFILES SECTION ─── -->
-                <StackPanel Margin="0,8,0,0">
-
-                    <!-- List of other Offline Profiles -->
-                    <ItemsControl ItemsSource="{Binding OtherOfflineProfiles}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="#0D0A18" BorderBrush="#251D38" BorderThickness="1" CornerRadius="10"
-                                        Padding="12,8" Margin="0,0,0,10">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <!-- Minecraft Avatar -->
-                                        <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6"
-                                                Background="#141021" BorderBrush="#3B2E58" BorderThickness="1"
-                                                ClipToBounds="True" Margin="0,0,12,0">
-                                            <controls:PlayerBody3D Profile="{Binding}" DisplayMode="HeadOnly"/>
-                                        </Border>
-
-                                        <!-- Username & Type -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="{Binding Username}" FontSize="13.5" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="OFFLINE PROFILE" FontSize="9" FontWeight="Black" Foreground="#64748B" Margin="0,2,0,0"/>
-                                        </StackPanel>
-
-                                        <!-- Actions -->
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="SELECT" Style="{StaticResource Vayu3DSelectButton}"
-                                                    Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Id}" Margin="0,0,6,0"/>
-                                            <Button Content="DELETE" Style="{StaticResource Vayu3DDeleteButton}"
-                                                    Command="{Binding DataContext.DeleteProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Id}" Margin="0,0,6,0"/>
-                                            <Button Content="···" Style="{StaticResource Vayu3DMoreBtn}"
-                                                    Command="{Binding DataContext.StartRenameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Id}" ToolTip="Rename Offline Profile"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                </StackPanel>
-
-                <!-- One shared entry point for all account types.  It intentionally lives
-                     outside both account collections, so it can never be rendered once per group. -->
-                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                    <Button Content="+ ADD ACCOUNT" Style="{StaticResource Vayu3DDarkActionBtn}"
-                            Command="{Binding ShowCreateProfileCommand}" Margin="0,0,10,0"/>
-                    <Button Content="SIGN IN WITH MICROSOFT" Style="{StaticResource Vayu3DPurplePrimaryBtn}"
-                            Command="{Binding SignInMicrosoftCommand}"/>
-                </StackPanel>
-
-            </StackPanel>
         </Grid>
 
 
