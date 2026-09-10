@@ -30,15 +30,16 @@ namespace VayuClient.Controls
         Combat,      // PvP battle-ready guard with attack swing arc
         Waving,      // Friendly greeting wave with raised arm
         CrossArms,   // Confident folded-arms stance
-        Celebration  // Victorious arms-up jump & cheer
+        Celebration, // Victorious arms-up jump & cheer
+        Love         // Loving cuddle holding mini player companion in lap
     }
 
     /// <summary>
     /// Renders a full 3D animated Minecraft player model textured with real player skin.
     /// Features:
     /// - Authentic official Minecraft Steve skin byte data with genuine pixel shading.
-    /// - 6 Animated 3D Poses (Running, Idle, Combat, Waving, CrossArms, Celebration).
-    /// - Interactive click-to-cycle pose switching.
+    /// - 7 Animated 3D Poses (Running, Idle, Combat, Waving, CrossArms, Celebration, Love/Lap Cradle).
+    /// - Interactive 360° Mouse Orbit Dragging + Click-to-cycle pose switching.
     /// - Ultra-sharp isolated face extraction (32x Nearest-Neighbor replication, zero blur/bleed).
     /// - Full support for modern 64x64 dual-layer skins (Hat, Jacket, Sleeves, Pants 3D overlays).
     /// - Official Mojang textures.minecraft.net direct high-res downloader + multi-CDN fallback.
@@ -76,6 +77,7 @@ namespace VayuClient.Controls
         private readonly Model3DGroup _leftArmGroup = new();
         private readonly Model3DGroup _rightLegGroup = new();
         private readonly Model3DGroup _leftLegGroup = new();
+        private readonly Model3DGroup _miniPlayerGroup = new();
 
         // Limb Rotation Angles for Poses
         private readonly AxisAngleRotation3D _rightArmRotation = new(new Vector3D(1, 0, 0), 0);
@@ -84,10 +86,17 @@ namespace VayuClient.Controls
         private readonly AxisAngleRotation3D _leftLegRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _headNodRotation = new(new Vector3D(1, 0, 0), 3);
         private readonly TranslateTransform3D _bodyBounceTransform = new(0, 0, 0);
+        private readonly ScaleTransform3D _miniPlayerScaleTransform = new(0, 0, 0);
+        private readonly TranslateTransform3D _miniPlayerBounceTransform = new(0, 0, 0);
 
-        // Overall Character Orientation (Heroic 3/4 Isometric Perspective)
+        // Overall Character Orientation (Heroic 3/4 Isometric Perspective + 360° Orbit)
         private readonly AxisAngleRotation3D _characterYawRotation = new(new Vector3D(0, 1, 0), -22);
         private readonly AxisAngleRotation3D _runningLeanRotation = new(new Vector3D(1, 0, 0), 8);
+
+        // Mouse Drag Orbit state
+        private bool _isMouseOrbitDragging;
+        private Point _lastOrbitMousePos;
+        private bool _hasDraggedSignificantly;
 
         private int _skinRequestId;
         private BitmapSource? _currentSkinSource;
@@ -99,7 +108,7 @@ namespace VayuClient.Controls
             ApplySkin(SteveSkinSource);
 
             Cursor = Cursors.Hand;
-            ToolTip = "Click to cycle 3D pose (Running / Idle / Combat / Waving / CrossArms / Victory)";
+            ToolTip = "Drag left/right to rotate 360° • Click to cycle poses";
 
             IsVisibleChanged += (_, _) => UpdateAnimations();
             Loaded += (_, _) => UpdateAnimations();
@@ -111,10 +120,49 @@ namespace VayuClient.Controls
             base.OnMouseLeftButtonDown(e);
             if (DisplayMode == PlayerModelMode.FullBody)
             {
-                // Smoothly cycle to the next pose on user click
-                var allPoses = (PlayerPose[])Enum.GetValues(typeof(PlayerPose));
-                int nextIndex = ((int)Pose + 1) % allPoses.Length;
-                Pose = allPoses[nextIndex];
+                _isMouseOrbitDragging = true;
+                _hasDraggedSignificantly = false;
+                _lastOrbitMousePos = e.GetPosition(this);
+                CaptureMouse();
+                e.Handled = true;
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (_isMouseOrbitDragging)
+            {
+                Point currentPos = e.GetPosition(this);
+                double deltaX = currentPos.X - _lastOrbitMousePos.X;
+                if (Math.Abs(deltaX) > 2.0 || _hasDraggedSignificantly)
+                {
+                    _hasDraggedSignificantly = true;
+                    // Stop background yaw drift to give crisp user 360 orbit control
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+                    _characterYawRotation.Angle += deltaX * 0.85;
+                }
+                _lastOrbitMousePos = currentPos;
+                e.Handled = true;
+            }
+        }
+
+        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            if (_isMouseOrbitDragging)
+            {
+                _isMouseOrbitDragging = false;
+                ReleaseMouseCapture();
+
+                if (!_hasDraggedSignificantly && DisplayMode == PlayerModelMode.FullBody)
+                {
+                    // Clean single click (not a drag) -> cycle to next pose!
+                    var allPoses = (PlayerPose[])Enum.GetValues(typeof(PlayerPose));
+                    int nextIndex = ((int)Pose + 1) % allPoses.Length;
+                    Pose = allPoses[nextIndex];
+                }
+                e.Handled = true;
             }
         }
 
@@ -223,6 +271,13 @@ namespace VayuClient.Controls
             _bodyGroup.Children.Add(_leftArmGroup);
             _bodyGroup.Children.Add(_rightLegGroup);
             _bodyGroup.Children.Add(_leftLegGroup);
+
+            // Assemble Mini Companion Group (cradled in lap for Love pose)
+            var miniTransform = new Transform3DGroup();
+            miniTransform.Children.Add(_miniPlayerBounceTransform);
+            miniTransform.Children.Add(_miniPlayerScaleTransform);
+            _miniPlayerGroup.Transform = miniTransform;
+            _bodyGroup.Children.Add(_miniPlayerGroup);
 
             // Root Transform Group (Running forward lean + 3/4 Isometric Yaw + Vertical Stride Bounce)
             var rootTransform = new Transform3DGroup();
@@ -597,6 +652,7 @@ namespace VayuClient.Controls
             _leftArmGroup.Children.Clear();
             _rightLegGroup.Children.Clear();
             _leftLegGroup.Children.Clear();
+            _miniPlayerGroup.Children.Clear();
         }
 
         private void ApplySkin(BitmapSource skinBitmap)
@@ -805,6 +861,85 @@ namespace VayuClient.Controls
                     bmX: 8, bmY: 16, bmW: 4, bmH: 4,
                     isOuterLayer: false);
             }
+
+            // ═══════════════════════════════════════════════════════════════
+            // 7. MINI PLAYER COMPANION (For Love / Lap Cradle Pose)
+            // ═══════════════════════════════════════════════════════════════
+            // Mini Head
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                -0.11, 0.36, 0.26, 0.11, 0.58, 0.48,
+                fX: 8, fY: 8, fW: 8, fH: 8,
+                bkX: 24, bkY: 8, bkW: 8, bkH: 8,
+                rX: 0, rY: 8, rW: 8, rH: 8,
+                lX: 16, lY: 8, lW: 8, lH: 8,
+                tX: 8, tY: 0, tW: 8, tH: 8,
+                bmX: 16, bmY: 0, bmW: 8, bmH: 8,
+                isOuterLayer: false);
+
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                -0.12, 0.35, 0.25, 0.12, 0.59, 0.49,
+                fX: 40, fY: 8, fW: 8, fH: 8,
+                bkX: 56, bkY: 8, bkW: 8, bkH: 8,
+                rX: 32, rY: 8, rW: 8, rH: 8,
+                lX: 48, lY: 8, lW: 8, lH: 8,
+                tX: 40, tY: 0, tW: 8, tH: 8,
+                bmX: 48, bmY: 0, bmW: 8, bmH: 8,
+                isOuterLayer: true);
+
+            // Mini Torso
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                -0.11, 0.08, 0.30, 0.11, 0.36, 0.44,
+                fX: 20, fY: 20, fW: 8, fH: 12,
+                bkX: 32, bkY: 20, bkW: 8, bkH: 12,
+                rX: 16, rY: 20, rW: 4, rH: 12,
+                lX: 28, lY: 20, lW: 4, lH: 12,
+                tX: 20, tY: 16, tW: 8, tH: 4,
+                bmX: 28, bmY: 16, bmW: 8, bmH: 4,
+                isOuterLayer: false);
+
+            // Mini Right Arm
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                -0.18, 0.10, 0.30, -0.11, 0.36, 0.44,
+                fX: 44, fY: 20, fW: 4, fH: 12,
+                bkX: 52, bkY: 20, bkW: 4, bkH: 12,
+                rX: 40, rY: 20, rW: 4, rH: 12,
+                lX: 48, lY: 20, lW: 4, lH: 12,
+                tX: 44, tY: 16, tW: 4, tH: 4,
+                bmX: 48, bmY: 16, bmW: 4, bmH: 4,
+                isOuterLayer: false);
+
+            // Mini Left Arm
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                0.11, 0.10, 0.30, 0.18, 0.36, 0.44,
+                fX: 36, fY: 52, fW: 4, fH: 12,
+                bkX: 44, bkY: 52, bkW: 4, bkH: 12,
+                rX: 32, rY: 52, rW: 4, rH: 12,
+                lX: 40, lY: 52, lW: 4, lH: 12,
+                tX: 36, tY: 48, tW: 4, tH: 4,
+                bmX: 40, bmY: 48, bmW: 4, bmH: 4,
+                isOuterLayer: false);
+
+            // Mini Right Leg (forward lap cradle)
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                -0.11, 0.00, 0.30, -0.01, 0.10, 0.54,
+                fX: 4, fY: 20, fW: 4, fH: 12,
+                bkX: 12, bkY: 20, bkW: 4, bkH: 12,
+                rX: 0, rY: 20, rW: 4, rH: 12,
+                lX: 8, lY: 20, lW: 4, lH: 12,
+                tX: 4, tY: 16, tW: 4, tH: 4,
+                bmX: 8, bmY: 16, bmW: 4, bmH: 4,
+                isOuterLayer: false);
+
+            // Mini Left Leg (forward lap cradle)
+            AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
+                0.01, 0.00, 0.30, 0.11, 0.10, 0.54,
+                fX: 20, fY: 52, fW: 4, fH: 12,
+                bkX: 28, bkY: 52, bkW: 4, bkH: 12,
+                rX: 16, rY: 52, rW: 4, rH: 12,
+                lX: 24, lY: 52, lW: 4, lH: 12,
+                tX: 20, tY: 48, tW: 4, tH: 4,
+                bmX: 24, bmY: 48, bmW: 4, bmH: 4,
+                isOuterLayer: false);
         }
 
         private void AddCuboid(Model3DGroup parentGroup, uint[] skin, int skinW, int skinH,
@@ -887,6 +1022,71 @@ namespace VayuClient.Controls
 
             switch (Pose)
             {
+                case PlayerPose.Love:
+                {
+                    // Sitting posture with mini player in lap
+                    _runningLeanRotation.Angle = 6;
+                    _rightLegRotation.Angle = 82;
+                    _leftLegRotation.Angle = 82;
+
+                    // Arms gently cradling the mini player
+                    var armRightAnim = new DoubleAnimation(-64, -70, TimeSpan.FromSeconds(2.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armRightAnim);
+
+                    var armLeftAnim = new DoubleAnimation(-64, -70, TimeSpan.FromSeconds(2.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armLeftAnim);
+
+                    // Loving gaze looking down at lap
+                    var headGaze = new DoubleAnimation(12, 16, TimeSpan.FromSeconds(2.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headGaze);
+
+                    // Gentle rocking lap bounce
+                    var rockAnim = new DoubleAnimation(-0.16, -0.13, TimeSpan.FromSeconds(2.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, rockAnim);
+
+                    // Make mini companion visible and animate breathing in lap
+                    _miniPlayerScaleTransform.ScaleX = 1.0;
+                    _miniPlayerScaleTransform.ScaleY = 1.0;
+                    _miniPlayerScaleTransform.ScaleZ = 1.0;
+
+                    var miniBob = new DoubleAnimation(0.0, 0.02, TimeSpan.FromSeconds(2.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _miniPlayerBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, miniBob);
+
+                    var yawAnim = new DoubleAnimation(-24, -16, TimeSpan.FromSeconds(4.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+
                 case PlayerPose.Idle:
                 {
                     _runningLeanRotation.Angle = 0;
@@ -1205,6 +1405,11 @@ namespace VayuClient.Controls
             _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, null);
             _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _runningLeanRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+
+            _miniPlayerScaleTransform.ScaleX = 0;
+            _miniPlayerScaleTransform.ScaleY = 0;
+            _miniPlayerScaleTransform.ScaleZ = 0;
+            _miniPlayerBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, null);
         }
     }
 }

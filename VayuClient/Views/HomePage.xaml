@@ -58,21 +58,45 @@
     <Grid Background="#06070B" ClipToBounds="True">
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- DYNAMIC ATMOSPHERIC OBSIDIAN BACKGROUND WORLD                       -->
+        <!-- DYNAMIC ATMOSPHERIC OBSIDIAN / FROST WHITE BACKGROUND WORLD         -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <Grid IsHitTestVisible="False">
-            <Image Source="{Binding HeroBackgroundPath}" Stretch="UniformToFill" 
+            <!-- Layer 1: Primary Crossfade Image -->
+            <Image x:Name="BgImagePrimary" Source="{Binding HeroBackgroundPath}" Stretch="UniformToFill" 
                    Opacity="0.55" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+            <!-- Layer 2: Secondary Crossfade Image -->
+            <Image x:Name="BgImageSecondary" Stretch="UniformToFill" 
+                   Opacity="0.0" RenderOptions.BitmapScalingMode="HighQuality"/>
             
-            <!-- Soft Radial Dark Obsidian Vignette for UI Text Contrast -->
+            <!-- Dynamic Radial Obsidian / Frost White Vignette for UI Text Contrast -->
             <Rectangle>
-                <Rectangle.Fill>
-                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.8" RadiusY="0.8">
-                        <GradientStop Color="#4006070B" Offset="0.0"/>
-                        <GradientStop Color="#B006070B" Offset="0.7"/>
-                        <GradientStop Color="#F006070B" Offset="1.0"/>
-                    </RadialGradientBrush>
-                </Rectangle.Fill>
+                <Rectangle.Style>
+                    <Style TargetType="Rectangle">
+                        <Setter Property="Fill">
+                            <Setter.Value>
+                                <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.85" RadiusY="0.85">
+                                    <GradientStop Color="#4006070B" Offset="0.0"/>
+                                    <GradientStop Color="#B506070B" Offset="0.65"/>
+                                    <GradientStop Color="#F506070B" Offset="1.0"/>
+                                </RadialGradientBrush>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsWhiteTheme}" Value="True">
+                                <Setter Property="Fill">
+                                    <Setter.Value>
+                                        <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.85" RadiusY="0.85">
+                                            <GradientStop Color="#20FFFFFF" Offset="0.0"/>
+                                            <GradientStop Color="#90FFFFFF" Offset="0.65"/>
+                                            <GradientStop Color="#E8F1F8FF" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Rectangle.Style>
             </Rectangle>
         </Grid>
 
@@ -102,17 +126,17 @@
         </Canvas>
 
         <!-- Main Home Layout -->
-        <Grid Margin="48,20,48,76">
+        <Grid Margin="48,18,48,76">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Row 0: Top Manifesto & System Telemetry -->
-                <RowDefinition Height="*"/>    <!-- Row 1: Centerpiece (3D Icon + Active Instance + Drag to Play + News) -->
+                <RowDefinition Height="Auto"/> <!-- Row 0: Top Controls & System Telemetry -->
+                <RowDefinition Height="*"/>    <!-- Row 1: Centerpiece (3D Player + Instance Info + Shortcuts + Drag to Play) -->
                 <RowDefinition Height="Auto"/> <!-- Row 2: Bottom Instance Switcher Carousel -->
             </Grid.RowDefinitions>
 
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!-- ROW 0: TOP BRAND MANIFESTO & SYSTEM PERFORMANCE TELEMETRY       -->
+            <!-- ROW 0: TOP BRAND MANIFESTO, WALLPAPER CONTROLLER & TELEMETRY     -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid Grid.Row="0" Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -129,9 +153,76 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Right: Real Hardware Performance Telemetry -->
+                <!-- Center/Right: Wallpaper Controller, Theme Switcher & System Telemetry -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     
+                    <!-- 🌌 Dynamic Wallpaper Slideshow Controls Pill -->
+                    <Border CornerRadius="8" Background="#0C0A14" BorderBrush="#1C172B" BorderThickness="1" Padding="6,4" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Prev Wallpaper Button -->
+                            <Button Command="{Binding PreviousWallpaperCommand}" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4,2" ToolTip="Previous Atmospheric Wallpaper">
+                                <TextBlock Text="◀" FontSize="9" Foreground="#A855F7" VerticalAlignment="Center"/>
+                            </Button>
+                            
+                            <!-- Wallpaper Icon & Name -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0">
+                                <TextBlock Text="🌌" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding CurrentWallpaperName}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" MaxWidth="105" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+
+                            <!-- Next Wallpaper Button -->
+                            <Button Command="{Binding NextWallpaperCommand}" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4,2" ToolTip="Next Atmospheric Wallpaper">
+                                <TextBlock Text="▶" FontSize="9" Foreground="#A855F7" VerticalAlignment="Center"/>
+                            </Button>
+
+                            <!-- Slideshow Play/Pause Toggle -->
+                            <Button Command="{Binding ToggleWallpaperSlideshowCommand}" Background="#161224" BorderThickness="0" Cursor="Hand" Padding="6,2" Margin="4,0,0,0" ToolTip="Toggle Slideshow Auto-Cycle">
+                                <TextBlock FontSize="9" Foreground="#C084FC" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="⏸"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsWallpaperSlideshowRunning}" Value="False">
+                                                    <Setter Property="Text" Value="▶"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ☀️/🌙 Black & White Theme Toggle Button -->
+                    <Button Command="{Binding ToggleThemeCommand}" Style="{StaticResource VayuDarkButton}" Padding="8,5" Margin="0,0,8,0" ToolTip="Toggle Obsidian Dark / Frost White Theme">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock FontSize="10" Margin="0,0,4,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="🌙"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsWhiteTheme}" Value="True">
+                                                <Setter Property="Text" Value="☀️"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock FontSize="10" FontWeight="Bold" Foreground="#FFFFFF">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Obsidian"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsWhiteTheme}" Value="True">
+                                                <Setter Property="Text" Value="Frost"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Button>
+
                     <!-- CPU Chip -->
                     <Border CornerRadius="8" Background="#0C0A14" BorderBrush="#1C172B" BorderThickness="1" Padding="10,5" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -177,47 +268,96 @@
             <!-- ═══════════════════════════════════════════════════════════════ -->
             <!-- ROW 1: CENTER ACTIVE INSTANCE PRESENTATION & SIGNATURE PLAY     -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,6,0,10">
+            <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,8">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
 
-                    <!-- ─── 1. LEFT: 3D RUNNING PLAYER SKIN HERO SHOWCASE (OPEN & UNCONFINED) ─── -->
-                    <Grid Width="280" Height="360" Margin="0,0,40,0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <!-- ─── 1. LEFT: 3D PLAYER SKIN HERO SHOWCASE + FLOATING POSE SELECTOR ─── -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,36,0">
                         
-                        <!-- Soft Ambient Purple World Floor Halo Underneath Player Feet -->
-                        <Ellipse Width="200" Height="38" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" IsHitTestVisible="False">
-                            <Ellipse.Fill>
-                                <RadialGradientBrush>
-                                    <GradientStop Color="#70A855F7" Offset="0.0"/>
-                                    <GradientStop Color="#207C3AED" Offset="0.5"/>
-                                    <GradientStop Color="#00000000" Offset="1.0"/>
-                                </RadialGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
+                        <Grid Width="280" Height="320" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <!-- Soft Ambient Purple World Floor Halo Underneath Player Feet -->
+                            <Ellipse Width="200" Height="36" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,6" IsHitTestVisible="False">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#70A855F7" Offset="0.0"/>
+                                        <GradientStop Color="#207C3AED" Offset="0.5"/>
+                                        <GradientStop Color="#00000000" Offset="1.0"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
 
-                        <!-- Subtle Radial Ambient Backlight for Character Silhouette Definition -->
-                        <Ellipse Width="240" Height="280" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.35">
-                            <Ellipse.Fill>
-                                <RadialGradientBrush>
-                                    <GradientStop Color="#40A855F7" Offset="0.0"/>
-                                    <GradientStop Color="#157C3AED" Offset="0.5"/>
-                                    <GradientStop Color="#00000000" Offset="1.0"/>
-                                </RadialGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
+                            <!-- Subtle Radial Ambient Backlight for Character Silhouette Definition -->
+                            <Ellipse Width="240" Height="260" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.35">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#40A855F7" Offset="0.0"/>
+                                        <GradientStop Color="#157C3AED" Offset="0.5"/>
+                                        <GradientStop Color="#00000000" Offset="1.0"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
 
-                        <!-- Free-Standing Heroic 3D Running Player Model -->
-                        <controls:PlayerBody3D Profile="{Binding ActiveProfile}" 
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                               Width="280" Height="360"/>
-                    </Grid>
+                            <!-- Free-Standing Heroic 3D Player Model (Supports 360° Drag & 7 Animated Poses) -->
+                            <controls:PlayerBody3D Profile="{Binding ActiveProfile}" 
+                                                   Pose="{Binding CurrentPose, Mode=TwoWay}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Width="280" Height="320"/>
+                        </Grid>
 
-                    <!-- ─── 2. RIGHT: INSTANCE NAME, SPEC CHIPS & DRAG TO PLAY ─── -->
+                        <!-- Floating 7-Pose Selector Pill Capsule -->
+                        <Border Background="#0C0818" BorderBrush="#22173B" BorderThickness="1" 
+                                CornerRadius="14" Padding="5,3" Margin="0,4,0,0" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Pose 1: Running -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="Running"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="Sprint Running Pose">
+                                    <TextBlock Text="🏃" FontSize="11"/>
+                                </Button>
+                                <!-- Pose 2: Idle -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="Idle"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="Heroic Idle Pose">
+                                    <TextBlock Text="🧘" FontSize="11"/>
+                                </Button>
+                                <!-- Pose 3: Combat -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="Combat"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="PvP Combat Stance">
+                                    <TextBlock Text="⚔️" FontSize="11"/>
+                                </Button>
+                                <!-- Pose 4: Waving -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="Waving"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="Greeting Wave">
+                                    <TextBlock Text="👋" FontSize="11"/>
+                                </Button>
+                                <!-- Pose 5: CrossArms -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="CrossArms"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="Folded Arms Guard">
+                                    <TextBlock Text="🛡️" FontSize="11"/>
+                                </Button>
+                                <!-- Pose 6: Celebration -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="Celebration"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="Victory Cheer">
+                                    <TextBlock Text="🏆" FontSize="11"/>
+                                </Button>
+                                <!-- Pose 7: Love (Holding Mini Player Companion in Lap) -->
+                                <Button Command="{Binding SelectPoseCommand}" CommandParameter="Love"
+                                        Background="#2D0A24" BorderBrush="#F43F5E" BorderThickness="1"
+                                        Style="{StaticResource VayuDarkButton}" Padding="5,2" Margin="2,0" ToolTip="Love / Mini Companion Lap Cradle">
+                                    <TextBlock Text="💕" FontSize="11"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="🖱️ 360° Orbit Drag • Click to Cycle" FontSize="9" Foreground="#645C7D" 
+                                   HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                    </StackPanel>
+
+                    <!-- ─── 2. RIGHT: INSTANCE NAME, SPEC CHIPS, GAMER SHORTCUTS & DRAG TO PLAY ─── -->
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
                         
                         <!-- Active Instance Name Header + Status Dot -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,18">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
                             <TextBlock Text="{Binding ActiveInstanceName}" 
-                                       FontSize="34" FontWeight="Black" Foreground="#FFFFFF" 
+                                       FontSize="30" FontWeight="Black" Foreground="#FFFFFF" 
                                        TextOptions.TextRenderingMode="ClearType"/>
                             <Ellipse Width="9" Height="9" Fill="#A855F7" Margin="12,0,0,0" VerticalAlignment="Center">
                                 <Ellipse.Effect>
@@ -226,48 +366,92 @@
                             </Ellipse>
                         </StackPanel>
 
-                        <!-- 4 Technical Information Spec Chips in a Horizontal Row -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,26">
+                        <!-- 5 Technical Information Spec Chips in a Horizontal Row -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14">
                             
                             <!-- Chip 1: Minecraft Version -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,32,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,0">
                                 <Path Data="M 12,2 L 2,7 L 12,12 L 22,7 Z M 2,17 L 12,22 L 22,17 L 22,14.5 L 12,19.5 L 2,14.5 Z" 
-                                      Fill="#A855F7" Width="14" Height="14" Stretch="Uniform" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                      Fill="#A855F7" Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding ActiveInstanceVersion}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="Minecraft Version" FontSize="9.5" Foreground="#7D7596" Margin="0,1,0,0"/>
+                                    <TextBlock Text="{Binding ActiveInstanceVersion}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Version" FontSize="9" Foreground="#7D7596" Margin="0,1,0,0"/>
                                 </StackPanel>
                             </StackPanel>
 
                             <!-- Chip 2: Mod Loader -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,32,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,0">
                                 <Path Data="M 12,2 C 6.48,2 2,6.48 2,12 C 2,17.52 6.48,22 12,22 C 17.52,22 22,17.52 22,12 Z" 
-                                      Fill="#A855F7" Width="13" Height="13" Stretch="Uniform" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                      Fill="#A855F7" Width="12" Height="12" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding ActiveInstanceLoaderUpper}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="Mod Loader" FontSize="9.5" Foreground="#7D7596" Margin="0,1,0,0"/>
+                                    <TextBlock Text="{Binding ActiveInstanceLoaderUpper}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Loader" FontSize="9" Foreground="#7D7596" Margin="0,1,0,0"/>
                                 </StackPanel>
                             </StackPanel>
 
                             <!-- Chip 3: Mods Count -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,32,0">
-                                <Path Data="{StaticResource VayuIconMods}" Fill="#A855F7" Width="13" Height="13" Stretch="Uniform" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,0">
+                                <Path Data="{StaticResource VayuIconMods}" Fill="#A855F7" Width="12" Height="12" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding ActiveInstanceModCountNumber}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="Mods" FontSize="9.5" Foreground="#7D7596" Margin="0,1,0,0"/>
+                                    <TextBlock Text="{Binding ActiveInstanceModCountNumber}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Mods" FontSize="9" Foreground="#7D7596" Margin="0,1,0,0"/>
                                 </StackPanel>
                             </StackPanel>
 
                             <!-- Chip 4: RAM -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,0">
                                 <Path Data="M 17,2 H 7 C 5.9,2 5,2.9 5,4 V 20 C 5,21.1 5.9,22 7,22 H 17 C 18.1,22 19,21.1 19,20 V 4 C 19,2.9 18.1,2 17,2 Z M 17,20 H 7 V 4 H 17 Z" 
-                                      Fill="#A855F7" Width="12" Height="12" Stretch="Uniform" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                      Fill="#A855F7" Width="11" Height="11" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding ActiveInstanceRamGbDisplay}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="RAM" FontSize="9.5" Foreground="#7D7596" Margin="0,1,0,0"/>
+                                    <TextBlock Text="{Binding ActiveInstanceRamGbDisplay}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="RAM" FontSize="9" Foreground="#7D7596" Margin="0,1,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Chip 5: Playtime & Last Played -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="⏱️" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ActiveInstancePlaytimeDisplay}" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="{Binding ActiveInstanceLastPlayedDisplay}" FontSize="9" Foreground="#7D7596" Margin="0,1,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>
+
+                        <!-- 1-Click Gamer Shortcuts Bar -->
+                        <Border Background="#0D0A18" BorderBrush="#1C162E" BorderThickness="1" 
+                                CornerRadius="12" Padding="6,4" Margin="0,0,0,16" HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Open Folder -->
+                                <Button Command="{Binding OpenInstanceFolderCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" Margin="0,0,6,0" ToolTip="Open Game Directory in File Explorer">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📁" FontSize="10" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Folder" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
+                                    </StackPanel>
+                                </Button>
+                                <!-- Screenshots -->
+                                <Button Command="{Binding OpenScreenshotsFolderCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" Margin="0,0,6,0" ToolTip="Open Screenshots Gallery">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📸" FontSize="10" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Screenshots" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
+                                    </StackPanel>
+                                </Button>
+                                <!-- Add Mods -->
+                                <Button Command="{Binding OpenModsFolderCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" Margin="0,0,6,0" ToolTip="Open Mods Folder">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📦" FontSize="10" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Mods" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
+                                    </StackPanel>
+                                </Button>
+                                <!-- Instance Settings -->
+                                <Button Command="{Binding OpenInstanceSettingsCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" ToolTip="Configure Client &amp; Java Settings">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⚙️" FontSize="10" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Settings" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
 
                         <!-- ═══════════════════════════════════════════════════════════ -->
                         <!-- SIGNATURE "DRAG TO PLAY" INTERACTIVE CAPSULE CONTROL        -->

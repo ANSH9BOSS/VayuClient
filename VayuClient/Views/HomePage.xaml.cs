@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using VayuClient.ViewModels;
 
 namespace VayuClient.Views
@@ -12,15 +13,82 @@ namespace VayuClient.Views
         private bool _isDragging;
         private Point _startMousePoint;
         private double _startHandleX;
+        private bool _isPrimaryVisible = true;
+        private HomeViewModel? _subscribedVm;
 
         public HomePage()
         {
             InitializeComponent();
+            DataContextChanged += HomePage_DataContextChanged;
+            Unloaded += HomePage_Unloaded;
+        }
+
+        private void HomePage_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (_subscribedVm != null)
+            {
+                _subscribedVm.WallpaperTransitionRequested -= OnWallpaperTransitionRequested;
+                _subscribedVm = null;
+            }
+
+            if (DataContext is HomeViewModel vm)
+            {
+                _subscribedVm = vm;
+                _subscribedVm.WallpaperTransitionRequested += OnWallpaperTransitionRequested;
+            }
+        }
+
+        private void HomePage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (_subscribedVm != null)
+            {
+                _subscribedVm.WallpaperTransitionRequested -= OnWallpaperTransitionRequested;
+                _subscribedVm = null;
+            }
         }
 
         private void HomePage_Loaded(object sender, RoutedEventArgs e)
         {
             ResetDragHandle(animated: false);
+            if (_subscribedVm == null && DataContext is HomeViewModel vm)
+            {
+                _subscribedVm = vm;
+                _subscribedVm.WallpaperTransitionRequested += OnWallpaperTransitionRequested;
+            }
+        }
+
+        private void OnWallpaperTransitionRequested(string newPath)
+        {
+            try
+            {
+                var targetImage = _isPrimaryVisible ? BgImageSecondary : BgImagePrimary;
+                var currentImage = _isPrimaryVisible ? BgImagePrimary : BgImageSecondary;
+
+                if (targetImage == null || currentImage == null) return;
+
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(newPath, UriKind.RelativeOrAbsolute);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+
+                targetImage.Source = bmp;
+
+                var fadeIn = new DoubleAnimation(0.55, TimeSpan.FromMilliseconds(700))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+                };
+                var fadeOut = new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(700))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+                };
+
+                targetImage.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+                currentImage.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+
+                _isPrimaryVisible = !_isPrimaryVisible;
+            }
+            catch { }
         }
 
         private void PlayHandle_MouseDown(object sender, MouseButtonEventArgs e)

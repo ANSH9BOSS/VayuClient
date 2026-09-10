@@ -69,6 +69,10 @@ namespace VayuClient.Models
         public DateTime? LastPlayedAt { get; set; }
 
         [ObservableProperty]
+        [JsonProperty("playtimeMinutes")]
+        private int _playtimeMinutes = 0;
+
+        [ObservableProperty]
         [JsonProperty("isFavorite")]
         private bool _isFavorite;
 
@@ -109,9 +113,36 @@ namespace VayuClient.Models
         public string DisplayRam => $"{RamMB} MB ({(RamMB / 1024.0):F1} GB)";
 
         [JsonIgnore]
+        public string DisplayPlaytime
+        {
+            get
+            {
+                if (PlaytimeMinutes <= 0) return "0 hrs";
+                if (PlaytimeMinutes < 60) return $"{PlaytimeMinutes} mins";
+                double hours = PlaytimeMinutes / 60.0;
+                return $"{hours:0.0} hrs";
+            }
+        }
+
+        [JsonIgnore]
         public string DisplayLastPlayed => LastPlayedAt.HasValue
             ? LastPlayedAt.Value.ToString("MMM d, yyyy")
             : "Never played";
+
+        [JsonIgnore]
+        public string DisplayLastPlayedRelative
+        {
+            get
+            {
+                if (!LastPlayedAt.HasValue) return "Never played";
+                var span = DateTime.UtcNow - LastPlayedAt.Value.ToUniversalTime();
+                if (span.TotalMinutes < 5) return "Just now";
+                if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+                if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+                if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+                return LastPlayedAt.Value.ToString("MMM d, yyyy");
+            }
+        }
 
         [JsonIgnore]
         public int ModCount

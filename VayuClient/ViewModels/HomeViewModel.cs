@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VayuClient.Controls;
 using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Account;
@@ -46,10 +47,15 @@ namespace VayuClient.ViewModels
         [NotifyPropertyChangedFor(nameof(ActiveInstanceRamGbDisplay))]
         [NotifyPropertyChangedFor(nameof(ActiveInstanceModCountDisplay))]
         [NotifyPropertyChangedFor(nameof(ActiveInstanceModCountNumber))]
+        [NotifyPropertyChangedFor(nameof(ActiveInstancePlaytimeDisplay))]
+        [NotifyPropertyChangedFor(nameof(ActiveInstanceLastPlayedDisplay))]
         [NotifyPropertyChangedFor(nameof(ActiveInstanceHeroSubtitle))]
         [NotifyPropertyChangedFor(nameof(ActiveInstanceBadgeDetails))]
         [NotifyPropertyChangedFor(nameof(HasActiveInstance))]
         private MinecraftInstance? _activeInstance;
+
+        public string ActiveInstancePlaytimeDisplay => ActiveInstance != null ? ActiveInstance.DisplayPlaytime : "0 hrs";
+        public string ActiveInstanceLastPlayedDisplay => ActiveInstance != null ? ActiveInstance.DisplayLastPlayedRelative : "Never played";
 
         public string ActiveInstanceName => ActiveInstance != null 
             ? ActiveInstance.Name 
@@ -225,24 +231,41 @@ namespace VayuClient.ViewModels
 
         // ─── Dynamic Hero Background Wallpaper System ──────────────────────────
 
-        private static readonly string[] _availableWallpapers = new[]
+        public record WallpaperInfo(string Path, string Name);
+
+        private static readonly WallpaperInfo[] _availableWallpapersList = new[]
         {
-            "/Assets/Images/vayu_bg_abstractworld.jpg",
-            "/Assets/Images/vayu_bg_forest.jpg",
-            "/Assets/Images/vayu_bg_mountains.jpg",
-            "/Assets/Images/vayu_bg_nightsky.jpg",
-            "/Assets/Images/vayu_bg_voxelcity.jpg",
-            "/Assets/Images/vayu_bg_endvoid.jpg",
-            "/Assets/Images/vayu_bg_nether.jpg",
-            "/Assets/Images/vayu_bg_iceworld.jpg",
-            "/Assets/Images/vayu_bg_deepcave.jpg",
-            "/Assets/Images/vayu_bg_islands.jpg"
+            new WallpaperInfo("/Assets/Images/vayu_bg_abstractworld.jpg", "Abstract Cyber"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_endvoid.jpg", "End Void"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_nether.jpg", "Deep Nether"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_voxelcity.jpg", "Voxel City"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_deepcave.jpg", "Deep Cave"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_iceworld.jpg", "Ice World"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_forest.jpg", "Lush Forest"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_islands.jpg", "Floating Islands"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_nightsky.jpg", "Night Sky"),
+            new WallpaperInfo("/Assets/Images/vayu_bg_mountains.jpg", "Epic Mountains")
         };
+
         private int _currentWallpaperIndex = 0;
-        private bool _userManuallyOverrodeWallpaper = false;
+        private readonly DispatcherTimer _wallpaperTimer;
+
+        public event Action<string>? WallpaperTransitionRequested;
 
         [ObservableProperty]
         private string _heroBackgroundPath = "/Assets/Images/vayu_bg_abstractworld.jpg";
+
+        [ObservableProperty]
+        private string _currentWallpaperName = "Abstract Cyber";
+
+        [ObservableProperty]
+        private bool _isWallpaperSlideshowRunning = true;
+
+        [ObservableProperty]
+        private bool _isWhiteTheme = false;
+
+        [ObservableProperty]
+        private PlayerPose _currentPose = PlayerPose.Running;
 
         // ─── Lunar-Style Content Dashboard Collections ─────────────────────────
 
@@ -262,8 +285,19 @@ namespace VayuClient.ViewModels
             _instanceService = ServiceLocator.Resolve<IInstanceService>();
             _javaService = ServiceLocator.Resolve<IJavaRuntimeService>();
             _serverService = ServiceLocator.Resolve<IServerService>();
+
             _telemetryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
             _telemetryTimer.Tick += (_, _) => RefreshHardwareTelemetry();
+
+            _wallpaperTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+            _wallpaperTimer.Tick += (_, _) =>
+            {
+                if (IsWallpaperSlideshowRunning && _isActivePage)
+                {
+                    NextWallpaper();
+                }
+            };
+            _wallpaperTimer.Start();
 
             try { _backendApi = ServiceLocator.Resolve<BackendApiClient>(); } catch { }
             try { _signalR = ServiceLocator.Resolve<SignalRClientService>(); } catch { }
@@ -374,11 +408,7 @@ namespace VayuClient.ViewModels
             RefreshProfile();
             RefreshHardwareTelemetry();
             _telemetryTimer.Start();
-            if (IsConsoleExpanded)
-            {
-                LauncherLogs = CrashLogger.GetLiveLogsText();
-            }
-
+            if (IsWallpaperSlideshowRunning) _wallpaperTimer?.Start();
             _ = Task.Run(FetchBackendDataAsync);
             _ = Task.Run(PingPartneredServersAsync);
         }
@@ -387,6 +417,7 @@ namespace VayuClient.ViewModels
         {
             _isActivePage = false;
             _telemetryTimer.Stop();
+            _wallpaperTimer?.Stop();
             _partnerPingCts?.Cancel();
         }
 
@@ -396,6 +427,7 @@ namespace VayuClient.ViewModels
             _disposed = true;
             _isActivePage = false;
             _telemetryTimer.Stop();
+            _wallpaperTimer?.Stop();
             _partnerPingCts?.Cancel();
             _partnerPingCts?.Dispose();
         }
@@ -431,6 +463,8 @@ namespace VayuClient.ViewModels
             OnPropertyChanged(nameof(ActiveInstanceRamGbDisplay));
             OnPropertyChanged(nameof(ActiveInstanceModCountDisplay));
             OnPropertyChanged(nameof(ActiveInstanceModCountNumber));
+            OnPropertyChanged(nameof(ActiveInstancePlaytimeDisplay));
+            OnPropertyChanged(nameof(ActiveInstanceLastPlayedDisplay));
             OnPropertyChanged(nameof(ActiveInstanceHeroSubtitle));
             OnPropertyChanged(nameof(ActiveInstanceBadgeDetails));
             OnPropertyChanged(nameof(HasActiveInstance));
@@ -439,7 +473,7 @@ namespace VayuClient.ViewModels
 
             SystemStatusText = HasRunningSessions ? "Playing" : (IsBusy ? "Launching" : "Idle");
 
-            if (ActiveInstance != null && !_userManuallyOverrodeWallpaper)
+            if (ActiveInstance != null && !IsWallpaperSlideshowRunning)
             {
                 HeroBackgroundPath = ResolveArtworkForInstance(ActiveInstance);
             }
@@ -464,7 +498,6 @@ namespace VayuClient.ViewModels
                 RamUsageDisplay = "N/A";
             }
         }
-
         [RelayCommand]
         public void SelectNextInstance()
         {
@@ -517,12 +550,103 @@ namespace VayuClient.ViewModels
         }
 
         [RelayCommand]
-        public void CycleWallpaper()
+        public void ToggleTheme()
         {
-            _userManuallyOverrodeWallpaper = true;
-            _currentWallpaperIndex = (_currentWallpaperIndex + 1) % _availableWallpapers.Length;
-            HeroBackgroundPath = _availableWallpapers[_currentWallpaperIndex];
-            _main.ShowNotification("Theme Wallpaper", $"Wallpaper theme updated ({_currentWallpaperIndex + 1}/{_availableWallpapers.Length})", NotificationType.Info);
+            IsWhiteTheme = !IsWhiteTheme;
+        }
+
+        [RelayCommand]
+        public void NextWallpaper()
+        {
+            _currentWallpaperIndex = (_currentWallpaperIndex + 1) % _availableWallpapersList.Length;
+            ApplyWallpaperTransition(_availableWallpapersList[_currentWallpaperIndex]);
+        }
+
+        [RelayCommand]
+        public void CycleWallpaper() => NextWallpaper();
+
+        [RelayCommand]
+        public void PreviousWallpaper()
+        {
+            _currentWallpaperIndex = (_currentWallpaperIndex - 1 + _availableWallpapersList.Length) % _availableWallpapersList.Length;
+            ApplyWallpaperTransition(_availableWallpapersList[_currentWallpaperIndex]);
+        }
+
+        [RelayCommand]
+        public void ToggleWallpaperSlideshow()
+        {
+            IsWallpaperSlideshowRunning = !IsWallpaperSlideshowRunning;
+            if (IsWallpaperSlideshowRunning)
+                _wallpaperTimer.Start();
+            else
+                _wallpaperTimer.Stop();
+        }
+
+        private void ApplyWallpaperTransition(WallpaperInfo info)
+        {
+            HeroBackgroundPath = info.Path;
+            CurrentWallpaperName = info.Name;
+            WallpaperTransitionRequested?.Invoke(info.Path);
+        }
+
+        [RelayCommand]
+        public void SelectPose(string poseName)
+        {
+            if (Enum.TryParse<PlayerPose>(poseName, true, out var pose))
+            {
+                CurrentPose = pose;
+            }
+        }
+
+        [RelayCommand]
+        public void OpenInstanceFolder()
+        {
+            if (ActiveInstance == null) return;
+            try
+            {
+                Directory.CreateDirectory(ActiveInstance.GameDirectory);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = ActiveInstance.GameDirectory,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _main.ShowNotification("Folder Error", $"Could not open folder: {ex.Message}", NotificationType.Error);
+            }
+        }
+
+        [RelayCommand]
+        public void OpenScreenshotsFolder()
+        {
+            if (ActiveInstance == null) return;
+            try
+            {
+                var screenshotsDir = Path.Combine(ActiveInstance.GameDirectory, "screenshots");
+                Directory.CreateDirectory(screenshotsDir);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = screenshotsDir,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _main.ShowNotification("Screenshots Error", $"Could not open screenshots: {ex.Message}", NotificationType.Error);
+            }
+        }
+
+        [RelayCommand]
+        public void OpenMods()
+        {
+            _main.NavigateToCommand.Execute("Mods");
+        }
+
+        [RelayCommand]
+        public void OpenSettings()
+        {
+            _main.NavigateToCommand.Execute("Settings");
         }
 
         // ─── Play / Launch Logic ──────────────────────────────────────────────
