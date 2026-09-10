@@ -742,31 +742,42 @@
     </Style>
 
     <!-- ═══════════════════════════════════════════════ -->
-    <!-- 9. LUNAR-STYLE TOP NAVIGATION PILL BUTTONS      -->
+    <!-- 9. FLOATING BOTTOM DOCK NAVIGATION BUTTONS      -->
     <!-- ═══════════════════════════════════════════════ -->
 
-    <Style x:Key="LunarNavButton" TargetType="RadioButton">
+    <Style x:Key="VayuDockNavButton" TargetType="RadioButton">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="#94A3B8"/>
         <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
-        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="FontSize" Value="11.5"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="Padding" Value="14,7"/>
+        <Setter Property="Margin" Value="2,0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" Margin="2,0">
+                    <ControlTemplate.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                            <Setter Property="FontSize" Value="{Binding FontSize, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                            <Setter Property="FontWeight" Value="{Binding FontWeight, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                            <Setter Property="FontFamily" Value="{Binding FontFamily, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                        </Style>
+                    </ControlTemplate.Resources>
+                    <Border x:Name="Bd" CornerRadius="18" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1" Padding="{TemplateBinding Padding}" Margin="{TemplateBinding Margin}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#152033"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#1D1430"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#4A2B78"/>
                             <Setter Property="Foreground" Value="#FFFFFF"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#2563EB"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#2E174D"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#A855F7"/>
                             <Setter Property="Foreground" Value="#FFFFFF"/>
                             <Setter Property="FontWeight" Value="Bold"/>
                         </Trigger>
@@ -775,6 +786,8 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style x:Key="LunarNavButton" TargetType="RadioButton" BasedOn="{StaticResource VayuDockNavButton}"/>
 
     <!-- ═══════════════════════════════════════════════ -->
     <!-- 9b. VAYU TAB RADIO BUTTON (FOR DIALOGS & PAGES)  -->

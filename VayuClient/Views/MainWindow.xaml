@@ -52,106 +52,35 @@
 
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="54"/>
+                    <RowDefinition Height="46"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <!-- ═══════════════════════════════════════════════ -->
-                <!-- 1. TOP LUNAR-STYLE GAMING HEADER BAR            -->
+                <!-- 1. SLEEK MINIMALIST WINDOW HEADER (DRAGGABLE)   -->
                 <!-- ═══════════════════════════════════════════════ -->
-                <Grid Grid.Row="0" Background="#0A101D" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Grid.Row="0" Background="#0A0E18" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="260"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="340"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Brand Title & Official Logo -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                        <Image Source="/Assets/Images/vayu_logo.png" Width="26" Height="26" 
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <Image Source="/Assets/Images/vayu_logo.png" Width="24" Height="24" 
                                RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <StackPanel VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="VAYU" FontSize="14" FontWeight="Black" Foreground="#FFFFFF"/>
-                                <TextBlock Text="CLIENT" FontSize="14" FontWeight="Black" Foreground="{StaticResource VayuBrightBlueBrush}" Margin="4,0,0,0"/>
+                                <TextBlock Text="VAYU" FontSize="13.5" FontWeight="Black" Foreground="#FFFFFF"/>
+                                <TextBlock Text="CLIENT" FontSize="13.5" FontWeight="Black" Foreground="#A855F7" Margin="4,0,0,0"/>
                             </StackPanel>
-                            <TextBlock Text="{x:Static core:AppInfo.DisplayVersion}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,-1,0,0"/>
+                            <TextBlock Text="{x:Static core:AppInfo.DisplayVersion}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,-1,0,0"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Center: Floating Gaming Navigation Pill Bar -->
-                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="20" Padding="4,3">
-                        <StackPanel Orientation="Horizontal">
-                            
-                            <!-- HOME TAB -->
-                            <RadioButton Style="{StaticResource LunarNavButton}" 
-                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Home', Mode=OneWay}"
-                                         Command="{Binding NavigateToCommand}" CommandParameter="Home" ToolTip="Home Screen">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconHome}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
-                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="HOME" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-
-                            <!-- INSTANCES TAB -->
-                            <RadioButton Style="{StaticResource LunarNavButton}" 
-                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='InstallationManager', Mode=OneWay}"
-                                         Command="{Binding NavigateToCommand}" CommandParameter="InstallationManager" ToolTip="Instances &amp; Modpacks">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconInstances}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
-                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="INSTANCES" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-
-                            <!-- MODS TAB -->
-                            <RadioButton Style="{StaticResource LunarNavButton}" 
-                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Mods', Mode=OneWay}"
-                                         Command="{Binding NavigateToCommand}" CommandParameter="Mods" ToolTip="Mods Management">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconMods}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
-                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="MODS" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-
-                            <!-- SERVERS TAB -->
-                            <RadioButton Style="{StaticResource LunarNavButton}"
-                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Servers', Mode=OneWay}"
-                                         Command="{Binding NavigateToCommand}" CommandParameter="Servers" ToolTip="Server Manager — Real-time SLP Ping">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconServer}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
-                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="SERVERS" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-
-                            <!-- ACCOUNTS TAB -->
-                            <RadioButton Style="{StaticResource LunarNavButton}" 
-                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Accounts', Mode=OneWay}"
-                                         Command="{Binding NavigateToCommand}" CommandParameter="Accounts" ToolTip="Player Profiles &amp; Microsoft Accounts">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconAccounts}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
-                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="ACCOUNTS" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-
-                            <!-- SETTINGS TAB -->
-                            <RadioButton Style="{StaticResource LunarNavButton}" 
-                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Settings', Mode=OneWay}"
-                                         Command="{Binding NavigateToCommand}" CommandParameter="Settings" ToolTip="Launcher &amp; Game Settings">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource VayuIconSettings}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
-                                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="SETTINGS" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </RadioButton>
-
-                        </StackPanel>
-                    </Border>
+                    <!-- Center: Clear Draggable Title Bar Space -->
+                    <Grid Grid.Column="1" Background="Transparent"/>
 
                     <!-- Right: Active Profile Pill + Window Controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
@@ -172,19 +101,19 @@
                                             <!-- Username & Status Dot -->
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding ActiveProfileUsernameDisplay, FallbackValue='No Profile'}" 
-                                                           FontSize="11.5" FontWeight="Bold" Foreground="#FFFFFF" MaxWidth="110" TextTrimming="CharacterEllipsis"/>
+                                                           FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" MaxWidth="110" TextTrimming="CharacterEllipsis"/>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Ellipse Width="5" Height="5" Fill="{Binding HasActiveProfile, Converter={StaticResource BoolToOnlineStatusBrush}}" Margin="0,0,4,0" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{Binding ActiveProfileAccountTypeDisplay, FallbackValue='Not Logged In'}" 
-                                                               FontSize="9.5" Foreground="{StaticResource VayuTextDimBrush}"/>
+                                                               FontSize="9" Foreground="{StaticResource VayuTextDimBrush}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="PillBd" Property="Background" Value="#152033"/>
-                                            <Setter TargetName="PillBd" Property="BorderBrush" Value="#3B82F6"/>
+                                            <Setter TargetName="PillBd" Property="Background" Value="#1C1430"/>
+                                            <Setter TargetName="PillBd" Property="BorderBrush" Value="#A855F7"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -283,6 +212,88 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- 3. FLOATING BOTTOM NAVIGATION DOCK              -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <Border VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                            Margin="0,0,0,22" Panel.ZIndex="85"
+                            Background="#EB0A0D16" BorderBrush="#2D1F45" BorderThickness="1.2"
+                            CornerRadius="24" Padding="6,5">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#7C3AED" BlurRadius="24" ShadowDepth="2" Opacity="0.32" RenderingBias="Performance"/>
+                        </Border.Effect>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            
+                            <!-- HOME TAB -->
+                            <RadioButton Style="{StaticResource VayuDockNavButton}" 
+                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Home', Mode=OneWay}"
+                                         Command="{Binding NavigateToCommand}" CommandParameter="Home" ToolTip="Home Dashboard">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource VayuIconHome}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13.5" Height="13.5" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="HOME" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                            <!-- INSTANCES TAB -->
+                            <RadioButton Style="{StaticResource VayuDockNavButton}" 
+                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='InstallationManager', Mode=OneWay}"
+                                         Command="{Binding NavigateToCommand}" CommandParameter="InstallationManager" ToolTip="Instances &amp; Versions">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource VayuIconInstances}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13.5" Height="13.5" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="INSTANCES" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                            <!-- MODS TAB -->
+                            <RadioButton Style="{StaticResource VayuDockNavButton}" 
+                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Mods', Mode=OneWay}"
+                                         Command="{Binding NavigateToCommand}" CommandParameter="Mods" ToolTip="Modifications &amp; Add-ons">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource VayuIconMods}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13.5" Height="13.5" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="MODS" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                            <!-- SERVERS TAB -->
+                            <RadioButton Style="{StaticResource VayuDockNavButton}"
+                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Servers', Mode=OneWay}"
+                                         Command="{Binding NavigateToCommand}" CommandParameter="Servers" ToolTip="Server Browser &amp; Multiplayer">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource VayuIconServer}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13.5" Height="13.5" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="SERVERS" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                            <!-- ACCOUNTS TAB -->
+                            <RadioButton Style="{StaticResource VayuDockNavButton}" 
+                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Accounts', Mode=OneWay}"
+                                         Command="{Binding NavigateToCommand}" CommandParameter="Accounts" ToolTip="Player Accounts &amp; Profiles">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource VayuIconAccounts}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13.5" Height="13.5" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="ACCOUNTS" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                            <!-- SETTINGS TAB -->
+                            <RadioButton Style="{StaticResource VayuDockNavButton}" 
+                                         IsChecked="{Binding CurrentPage, Converter={StaticResource StringEqualConverter}, ConverterParameter='Settings', Mode=OneWay}"
+                                         Command="{Binding NavigateToCommand}" CommandParameter="Settings" ToolTip="Launcher &amp; Game Settings">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource VayuIconSettings}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" 
+                                          Width="13.5" Height="13.5" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="SETTINGS" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                        </StackPanel>
+                    </Border>
 
                 </Grid>
             </Grid>

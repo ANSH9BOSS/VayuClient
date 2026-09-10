@@ -1,0 +1,125 @@
+<UserControl x:Class="VayuClient.Controls.GlobalBottomDock"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VayuClient.Converters"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <converters:EqualValueToBoolConverter x:Key="EqualValueToBool"/>
+
+        <!-- Futuristic Floating Navigation Item RadioButton Style -->
+        <Style x:Key="DockItemStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" CornerRadius="16"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="1"
+                                BorderBrush="Transparent"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#161424"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E1933"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#7C3AED"/>
+                                <Setter Property="Foreground" Value="#D8B4FE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Floating Capsule Container -->
+    <Border HorizontalAlignment="Center" VerticalAlignment="Bottom"
+            Background="#0C0B12" BorderBrush="#201C2E" BorderThickness="1"
+            CornerRadius="20" Padding="5,4" Margin="0,0,0,20">
+        <Border.Effect>
+            <DropShadowEffect Color="#7C3AED" BlurRadius="24" ShadowDepth="0" Opacity="0.16" RenderingBias="Performance"/>
+        </Border.Effect>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            
+            <!-- 1. HOME -->
+            <RadioButton Style="{StaticResource DockItemStyle}"
+                         IsChecked="{Binding CurrentPage, Converter={StaticResource EqualValueToBool}, ConverterParameter='Home', Mode=OneWay}"
+                         Command="{Binding NavigateToCommand}" CommandParameter="Home" ToolTip="Home Screen">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="{StaticResource VayuIconHome}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="HOME" VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
+            <!-- 2. INSTALLATION MANAGER -->
+            <RadioButton Style="{StaticResource DockItemStyle}"
+                         IsChecked="{Binding CurrentPage, Converter={StaticResource EqualValueToBool}, ConverterParameter='InstallationManager', Mode=OneWay}"
+                         Command="{Binding NavigateToCommand}" CommandParameter="InstallationManager" ToolTip="Installation Manager &amp; Instances">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="{StaticResource VayuIconInstances}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="INSTALLATION MANAGER" VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
+            <!-- 3. MODS -->
+            <RadioButton Style="{StaticResource DockItemStyle}"
+                         IsChecked="{Binding CurrentPage, Converter={StaticResource EqualValueToBool}, ConverterParameter='Mods', Mode=OneWay}"
+                         Command="{Binding NavigateToCommand}" CommandParameter="Mods" ToolTip="Mod Manager">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="{StaticResource VayuIconMods}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="MODS" VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
+            <!-- 4. SERVERS -->
+            <RadioButton Style="{StaticResource DockItemStyle}"
+                         IsChecked="{Binding CurrentPage, Converter={StaticResource EqualValueToBool}, ConverterParameter='Servers', Mode=OneWay}"
+                         Command="{Binding NavigateToCommand}" CommandParameter="Servers" ToolTip="Multiplayer Servers">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="{StaticResource VayuIconServer}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="SERVERS" VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
+            <!-- 5. SETTINGS -->
+            <RadioButton Style="{StaticResource DockItemStyle}"
+                         IsChecked="{Binding CurrentPage, Converter={StaticResource EqualValueToBool}, ConverterParameter='Settings', Mode=OneWay}"
+                         Command="{Binding NavigateToCommand}" CommandParameter="Settings" ToolTip="Settings">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="{StaticResource VayuIconSettings}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="SETTINGS" VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
+            <!-- 6. ACCOUNT -->
+            <RadioButton Style="{StaticResource DockItemStyle}"
+                         IsChecked="{Binding CurrentPage, Converter={StaticResource EqualValueToBool}, ConverterParameter='Accounts', Mode=OneWay}"
+                         Command="{Binding NavigateToCommand}" CommandParameter="Accounts" ToolTip="Accounts &amp; Profiles">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="{StaticResource VayuIconAccounts}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                          Width="13" Height="13" Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="ACCOUNT" VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
+        </StackPanel>
+    </Border>
+</UserControl>
