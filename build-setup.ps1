@@ -221,7 +221,7 @@ if ($setupExists -and $appExists) {
         $pubScript = Join-Path $scriptDir "publish_github_release.py"
         if (Test-Path $pubScript) {
             Write-Host "`n[GITHUB] Publishing official GitHub Release v$activeVersion with assets..." -ForegroundColor Cyan
-            python $pubScript
+            python $pubScript "v$activeVersion"
         }
     } catch {
         Write-Host "-> [GitHub Push Notice]: $($_.Exception.Message)" -ForegroundColor Yellow

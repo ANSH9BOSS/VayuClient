@@ -8,21 +8,24 @@ import mimetypes
 
 REPO = "ANSH9BOSS/VayuClient"
 
+
 def get_version():
     if len(sys.argv) > 1 and sys.argv[1].strip():
         v = sys.argv[1].strip()
         return v if v.startswith("v") else f"v{v}"
     try:
-        vjson = os.path.join(os.path.dirname(__file__), "version.json")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        vjson = os.path.join(base_dir, "version.json")
         with open(vjson, "r") as f:
             data = json.load(f)
-            v = data.get("version", "2.1.0")
+            v = data.get("version", "3.1.0")
             return v if v.startswith("v") else f"v{v}"
-    except:
-        return "v2.1.0"
+    except Exception as e:
+        print(f"[Warning] Could not read version.json: {e}", flush=True)
+        return "v3.1.0"
 
 VERSION_TAG = get_version()
-RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Hardware 3D Installation Manager & Next-Gen Game Library"
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Next-Gen 3D Game Library & Setup"
 RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
@@ -39,12 +42,11 @@ RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
   - Multi-image pack URI loading with smooth crossfade animations across 10+ themes.
 * **Universal Modrinth Sync & Mod Loader Suite**:
   - 1-click downloads for Mods, Modpacks, Resource Packs, Shaders, and Data Packs with automatic `.jar` icon extraction.
-* **Fully Signed Windows Setup Installer**:
-  - Authenticode-signed standalone setup package (`VayuClientSetup.exe`) and portable executable (`VayuClient.exe`).
+* **Official Windows Setup Package**:
+  - Authenticode SHA256-signed standalone installer with desktop shortcuts, start menu registration, and automatic update capabilities.
 
 ### 📦 Assets Included
 * `VayuClientSetup.exe` (Standalone Windows Setup Installer)
-* `VayuClient.exe` (Standalone Launcher Binary)
 """
 
 def get_github_token():
@@ -117,7 +119,7 @@ def main():
             print(f"[Error] Failed creating release: {e}", flush=True)
             sys.exit(1)
     else:
-        # Update release to make sure it is marked latest
+        # Update release to make sure it is marked latest and has updated notes
         update_url = f"https://api.github.com/repos/{REPO}/releases/{release['id']}"
         payload = {
             "name": RELEASE_TITLE,
@@ -139,14 +141,35 @@ def main():
 
     upload_base = upload_url_template.split("{")[0]
 
-    # 2. Upload Binaries
-    dist_dir = os.path.join(os.path.dirname(__file__), "dist")
+    # 2. Upload Binaries (ONLY VayuClientSetup.exe)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    dist_dir = os.path.join(base_dir, "dist")
     files_to_upload = [
-        os.path.join(dist_dir, "VayuClientSetup.exe"),
-        os.path.join(dist_dir, "VayuClient.exe")
+        os.path.join(dist_dir, "VayuClientSetup.exe")
     ]
+    target_filenames = {os.path.basename(p) for p in files_to_upload}
 
-    # Get existing assets
+    # Clean up any unexpected / unwanted assets (e.g. VayuClient.exe)
+    for asset in release.get("assets", []):
+        asset_name = asset["name"]
+        asset_id = asset["id"]
+        if asset_name not in target_filenames:
+            print(f"[GitHub] Removing unwanted asset {asset_name} (ID: {asset_id})...", flush=True)
+            del_url = f"https://api.github.com/repos/{REPO}/releases/assets/{asset_id}"
+            del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
+            try:
+                with urllib.request.urlopen(del_req):
+                    print(f"-> Removed {asset_name} from release!", flush=True)
+            except Exception as e:
+                print(f"[Warning] Failed deleting {asset_name}: {e}", flush=True)
+
+    # Re-fetch release asset list
+    try:
+        with urllib.request.urlopen(urllib.request.Request(get_url, headers=headers)) as resp:
+            release = json.loads(resp.read().decode())
+    except:
+        pass
+
     existing_assets = {a["name"]: a["id"] for a in release.get("assets", [])}
 
     for file_path in files_to_upload:
@@ -156,10 +179,10 @@ def main():
 
         filename = os.path.basename(file_path)
 
-        # Delete existing asset if present
+        # Delete existing asset if present to ensure fresh overwrite
         if filename in existing_assets:
             asset_id = existing_assets[filename]
-            print(f"[GitHub] Removing existing asset {filename} (ID: {asset_id})...", flush=True)
+            print(f"[GitHub] Removing existing asset {filename} (ID: {asset_id}) for fresh upload...", flush=True)
             del_url = f"https://api.github.com/repos/{REPO}/releases/assets/{asset_id}"
             del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
             try:
@@ -168,38 +191,27 @@ def main():
             except Exception as e:
                 print(f"[Warning] Failed deleting asset: {e}", flush=True)
 
-        success = False
-        for attempt in range(1, 4):
-            print(f"[GitHub] Uploading {filename} ({os.path.getsize(file_path)} bytes, attempt {attempt}/3)...", flush=True)
-            upload_url = f"{upload_base}?name={urllib.parse.quote(filename)}"
-            
-            with open(file_path, "rb") as f:
-                file_data = f.read()
+        upload_url = f"{upload_base}?name={urllib.parse.quote(filename)}"
+        print(f"[GitHub] Uploading {filename} ({os.path.getsize(file_path)} bytes) via curl...", flush=True)
 
-            upload_headers = {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/octet-stream",
-                "Content-Length": str(len(file_data)),
-                "User-Agent": "VayuClient-ReleaseBot"
-            }
+        curl_cmd = [
+            "curl.exe",
+            "-X", "POST",
+            "-H", f"Authorization: Bearer {token}",
+            "-H", "Content-Type: application/octet-stream",
+            "--data-binary", f"@{file_path}",
+            "--progress-bar",
+            upload_url
+        ]
 
-            up_req = urllib.request.Request(upload_url, data=file_data, headers=upload_headers, method="POST")
-            try:
-                with urllib.request.urlopen(up_req, timeout=300) as resp:
-                    asset_resp = json.loads(resp.read().decode())
-                    print(f"[GitHub] Successfully uploaded {filename}! (Asset ID: {asset_resp.get('id')})", flush=True)
-                    success = True
-                    break
-            except Exception as e:
-                print(f"[Warning] Attempt {attempt} failed uploading {filename}: {e}", flush=True)
-                import time
-                time.sleep(2)
-
-        if not success:
-            print(f"[Error] Failed uploading {filename} after 3 attempts.", flush=True)
+        try:
+            res = subprocess.run(curl_cmd, capture_output=True, text=True, check=True)
+            print(f"[GitHub] Successfully uploaded {filename}!", flush=True)
+        except subprocess.CalledProcessError as err:
+            print(f"[Error] Failed uploading {filename}: {err.stderr or err.stdout}", flush=True)
 
     print("\n==========================================================", flush=True)
-    print(f" SUCCESS: GitHub Release {VERSION_TAG} is now LIVE as LATEST!", flush=True)
+    print(f" SUCCESS: GitHub Release {VERSION_TAG} is now LIVE with ONLY VayuClientSetup.exe!", flush=True)
     print(f" URL: https://github.com/{REPO}/releases/tag/{VERSION_TAG}", flush=True)
     print("==========================================================\n", flush=True)
 
