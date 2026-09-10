@@ -6,11 +6,12 @@
     <!-- Developer: ANSH9BOSS                                           -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
 
-    <!-- 1. Global Font Families (Pack URI embedded + Clean Fallback Chain) -->
-    <FontFamily x:Key="VayuFontFamily">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
-    <FontFamily x:Key="VayuFontPrimary">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
-    <FontFamily x:Key="VayuFontDisplay">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
-    <FontFamily x:Key="VayuFontMono">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#JetBrains Mono, Cascadia Code, Consolas, Courier New, monospace</FontFamily>
+    <!-- 1. Global Font Families (Modern Clean Sans-Serif + Minecraft Display) -->
+    <FontFamily x:Key="VayuFontFamily">Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Arial, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontPrimary">Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Arial, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontDisplay">Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Arial, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontMinecraft">pack://application:,,,/Assets/Fonts/#minecrafter, pack://application:,,,/Assets/Fonts/#Minecrafter, pack://application:,,,/Assets/Fonts/#Minecraft Evenings, Segoe UI, sans-serif</FontFamily>
+    <FontFamily x:Key="VayuFontMono">Cascadia Code, Consolas, JetBrains Mono, Courier New, monospace</FontFamily>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- 2. Typography Styles Hierarchy                                  -->

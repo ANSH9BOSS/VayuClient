@@ -26,18 +26,29 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
                         <Border x:Name="Bd" CornerRadius="4"
                                 Background="{TemplateBinding Background}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
                                 BorderThickness="0"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#E2E8F0"/>
+                                <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#CBD5E1"/>
+                                <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -59,12 +70,21 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
                         <Border x:Name="Bd" CornerRadius="4"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -95,12 +115,21 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
                         <Border x:Name="Bd" CornerRadius="4"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -130,18 +159,29 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
                         <Border x:Name="Bd" CornerRadius="4"
                                 Background="{TemplateBinding Background}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
                                 BorderThickness="0"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#E2E8F0"/>
+                                <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#CBD5E1"/>
+                                <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -163,12 +203,21 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
                         <Border x:Name="Bd" CornerRadius="4"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -195,11 +244,20 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
                         <Border x:Name="Bd" CornerRadius="16"
                                 Background="{TemplateBinding Background}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
                                 BorderThickness="0"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -218,11 +276,27 @@
         <!-- Active Dock Navigation Item -->
         <Style x:Key="DockActiveNavButton" TargetType="Button" BasedOn="{StaticResource DockNavButton}">
             <Setter Property="Foreground" Value="#D8B4FE"/>
+            <Setter Property="Background" Value="#1E1933"/>
+            <Setter Property="BorderBrush" Value="#7C3AED"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border CornerRadius="16" Background="#26173D" BorderBrush="#8B5CF6" BorderThickness="1" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ControlTemplate.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </ControlTemplate.Resources>
+                        <Border x:Name="Bd" CornerRadius="16"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                TextElement.Foreground="{TemplateBinding Foreground}"
+                                TextBlock.Foreground="{TemplateBinding Foreground}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>

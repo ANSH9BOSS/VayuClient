@@ -38,25 +38,27 @@
 
     <Style TargetType="Window">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
     </Style>
 
     <Style TargetType="UserControl">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
     </Style>
 
     <Style TargetType="Page">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
     </Style>
 
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
-        <Setter Property="Foreground" Value="{StaticResource VayuTextBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
     </Style>
