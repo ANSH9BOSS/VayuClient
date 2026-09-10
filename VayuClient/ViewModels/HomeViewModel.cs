@@ -138,9 +138,6 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private string _systemStatusText = "Idle";
 
-        public string LatestReleaseNewsTitle => $"Vayu Client v{AppInfo.VersionString} Released";
-        public string LatestReleaseNewsSummary => "Performance improvements, high-FPS optimization, and low-memory engine.";
-
         // ─── Profile & Header Properties ──────────────────────────────────────
 
         [ObservableProperty]
@@ -215,20 +212,22 @@ namespace VayuClient.ViewModels
 
         private static readonly string[] _availableWallpapers = new[]
         {
-            "/Assets/Images/bg_pvp_arena.jpg",
-            "/Assets/Images/vayu_minecraft_hero.jpg",
-            "/Assets/Images/bg_mountain_aurora.jpg",
-            "/Assets/Images/bg_cherry_grove.jpg",
-            "/Assets/Images/bg_cyber_nether.jpg",
-            "/Assets/Images/bg_lush_caves.jpg",
-            "/Assets/Images/bg_ocean_monument.jpg",
-            "/Assets/Images/bg_fantasy_islands.jpg"
+            "/Assets/Images/vayu_bg_abstractworld.jpg",
+            "/Assets/Images/vayu_bg_forest.jpg",
+            "/Assets/Images/vayu_bg_mountains.jpg",
+            "/Assets/Images/vayu_bg_nightsky.jpg",
+            "/Assets/Images/vayu_bg_voxelcity.jpg",
+            "/Assets/Images/vayu_bg_endvoid.jpg",
+            "/Assets/Images/vayu_bg_nether.jpg",
+            "/Assets/Images/vayu_bg_iceworld.jpg",
+            "/Assets/Images/vayu_bg_deepcave.jpg",
+            "/Assets/Images/vayu_bg_islands.jpg"
         };
         private int _currentWallpaperIndex = 0;
         private bool _userManuallyOverrodeWallpaper = false;
 
         [ObservableProperty]
-        private string _heroBackgroundPath = "/Assets/Images/bg_pvp_arena.jpg";
+        private string _heroBackgroundPath = "/Assets/Images/vayu_bg_abstractworld.jpg";
 
         // ─── Lunar-Style Content Dashboard Collections ─────────────────────────
 
@@ -457,30 +456,29 @@ namespace VayuClient.ViewModels
             SelectInstance(Instances[prevIndex]);
         }
 
-        [RelayCommand]
-        public void OpenAllUpdates()
-        {
-            _main.NavigateTo("Settings");
-            _main.OpenAbout();
-        }
-
         private static string ResolveArtworkForInstance(MinecraftInstance instance)
         {
             string ver = instance.MinecraftVersion ?? string.Empty;
             string name = (instance.Name ?? string.Empty).ToLowerInvariant();
 
             if (ver.StartsWith("26.2") || name.Contains("pvp") || name.Contains("combat"))
-                return "/Assets/Images/bg_pvp_arena.jpg";
+                return "/Assets/Images/vayu_bg_abstractworld.jpg";
             if (ver.StartsWith("26.1") || ver.Contains("26.1.2"))
-                return "/Assets/Images/bg_mountain_aurora.jpg";
-            if (ver.StartsWith("1.21"))
-                return "/Assets/Images/bg_cherry_grove.jpg";
-            if (name.Contains("survival") || name.Contains("smp"))
-                return "/Assets/Images/bg_lush_caves.jpg";
-            if (name.Contains("ocean") || name.Contains("monument"))
-                return "/Assets/Images/bg_ocean_monument.jpg";
+                return "/Assets/Images/vayu_bg_mountains.jpg";
+            if (ver.StartsWith("1.21") || name.Contains("forest"))
+                return "/Assets/Images/vayu_bg_forest.jpg";
+            if (name.Contains("void") || name.Contains("end"))
+                return "/Assets/Images/vayu_bg_endvoid.jpg";
+            if (name.Contains("nether"))
+                return "/Assets/Images/vayu_bg_nether.jpg";
+            if (name.Contains("ice") || name.Contains("snow"))
+                return "/Assets/Images/vayu_bg_iceworld.jpg";
+            if (name.Contains("cave") || name.Contains("mining"))
+                return "/Assets/Images/vayu_bg_deepcave.jpg";
+            if (name.Contains("sky") || name.Contains("skyblock"))
+                return "/Assets/Images/vayu_bg_islands.jpg";
 
-            return "/Assets/Images/vayu_minecraft_hero.jpg";
+            return "/Assets/Images/vayu_bg_nightsky.jpg";
         }
 
         [RelayCommand]
@@ -489,7 +487,6 @@ namespace VayuClient.ViewModels
             if (instance == null) return;
             _instanceService.SetActiveInstance(instance.InstanceId);
             RefreshProfile();
-            _main.ShowNotification("Instance Selected", $"Active installation set to {instance.Name}", NotificationType.Info);
         }
 
         [RelayCommand]

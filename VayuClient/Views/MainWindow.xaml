@@ -186,25 +186,31 @@
                         </Border>
                     </Border>
 
-                    <!-- Floating Toast Notifications (Top Right) -->
+                    <!-- Floating Toast Notifications (Top Right, Below Header) -->
                     <ItemsControl ItemsSource="{Binding Notifications}" 
                                   HorizontalAlignment="Right" VerticalAlignment="Top" 
-                                  Margin="0,16,20,0" IsHitTestVisible="True" Panel.ZIndex="50">
+                                  Margin="0,56,24,0" IsHitTestVisible="True" Panel.ZIndex="99">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="8" Background="#0F172A" BorderBrush="{StaticResource VayuAccentBrush}" BorderThickness="1.5"
-                                        Padding="14,10" Margin="0,0,0,10" Width="320">
-                                    <!-- Shadow removed from toast items: each item gets its own software raster — costly when animating in/out. The BorderBrush provides sufficient visual depth. -->
+                                <Border CornerRadius="10" Background="#140D26" BorderBrush="#4C2882" BorderThickness="1.2"
+                                        Padding="14,10" Margin="0,0,0,10" Width="300">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#7C3AED" BlurRadius="16" ShadowDepth="0" Opacity="0.35" RenderingBias="Performance"/>
+                                    </Border.Effect>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource VayuBrightBlueBrush}" 
-                                                 VerticalAlignment="Top" Margin="0,4,10,0"/>
+                                        <Ellipse Grid.Column="0" Width="8" Height="8" Fill="#A855F7" 
+                                                 VerticalAlignment="Top" Margin="0,4,10,0">
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                                            </Ellipse.Effect>
+                                        </Ellipse>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                            <TextBlock Text="{Binding Message}" FontSize="11" Foreground="{StaticResource VayuTextDimBrush}" 
+                                            <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#A89FC0" 
                                                        TextWrapping="Wrap" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Grid>

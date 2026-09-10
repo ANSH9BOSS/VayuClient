@@ -53,9 +53,28 @@
         </Style>
     </UserControl.Resources>
 
-    <!-- Main Container with Diagonal Geometric Accents -->
+    <!-- Main Container with Diagonal Geometric Accents & Atmospheric Wallpaper -->
     <Grid Background="#06070B" ClipToBounds="True">
-        
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- DYNAMIC ATMOSPHERIC OBSIDIAN BACKGROUND WORLD                       -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <Grid IsHitTestVisible="False">
+            <Image Source="{Binding HeroBackgroundPath}" Stretch="UniformToFill" 
+                   Opacity="0.55" RenderOptions.BitmapScalingMode="HighQuality"/>
+            
+            <!-- Soft Radial Dark Obsidian Vignette for UI Text Contrast -->
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.8" RadiusY="0.8">
+                        <GradientStop Color="#4006070B" Offset="0.0"/>
+                        <GradientStop Color="#B006070B" Offset="0.7"/>
+                        <GradientStop Color="#F006070B" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <!-- SUBTLE GEOMETRIC FACETED BACKGROUND ACCENTS                         -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -159,9 +178,8 @@
             <!-- ═══════════════════════════════════════════════════════════════ -->
             <Grid Grid.Row="1" VerticalAlignment="Center" Margin="0,10,0,10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="220"/> <!-- Left: 3D Faceted Diamond Artwork -->
+                    <ColumnDefinition Width="240"/> <!-- Left: 3D Faceted Diamond Artwork -->
                     <ColumnDefinition Width="*"/>   <!-- Center: Info & Drag To Play -->
-                    <ColumnDefinition Width="260"/> <!-- Right: Latest News -->
                 </Grid.ColumnDefinitions>
 
                 <!-- ─── 1. LEFT: 3D FACETED DIAMOND AVATAR FRAMING ─── -->
@@ -388,36 +406,6 @@
                         </Border>
 
                     </Grid>
-                </StackPanel>
-
-                <!-- ─── 3. RIGHT: LATEST NEWS / UPDATES ─── -->
-                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left">
-                    
-                    <!-- Section Header -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
-                        <TextBlock Text="/ " FontSize="12" FontWeight="Black" Foreground="#A855F7"/>
-                        <TextBlock Text="LATEST NEWS" FontSize="11" FontWeight="Black" Foreground="#8B85A4"/>
-                    </StackPanel>
-
-                    <!-- Latest News Card -->
-                    <Border CornerRadius="12" Background="#0C0A14" BorderBrush="#1C172B" BorderThickness="1" Padding="14,12">
-                        <StackPanel>
-                            <!-- Title with Purple Dot -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
-                                <Ellipse Width="6" Height="6" Fill="#A855F7" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding LatestReleaseNewsTitle}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis" MaxWidth="190"/>
-                            </StackPanel>
-
-                            <!-- Summary Description -->
-                            <TextBlock Text="{Binding LatestReleaseNewsSummary}" FontSize="10.5" Foreground="#7D7596" TextWrapping="Wrap" Margin="0,0,0,12"/>
-
-                            <!-- View All Updates Link Button -->
-                            <Button Command="{Binding OpenAllUpdatesCommand}"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="0" HorizontalAlignment="Left">
-                                <TextBlock Text="View all updates →" FontSize="11" FontWeight="Bold" Foreground="#C084FC"/>
-                            </Button>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
             </Grid>
 
