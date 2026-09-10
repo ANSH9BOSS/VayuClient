@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -22,15 +23,25 @@ namespace VayuClient.Controls
         HeadOnly
     }
 
+    public enum PlayerPose
+    {
+        Running,     // Sprint cycle with swinging limbs and stride bounce
+        Idle,        // Heroic standing with gentle breathing and head sway
+        Combat,      // PvP battle-ready guard with attack swing arc
+        Waving,      // Friendly greeting wave with raised arm
+        CrossArms,   // Confident folded-arms stance
+        Celebration  // Victorious arms-up jump & cheer
+    }
+
     /// <summary>
-    /// Renders a full 3D animated running Minecraft player model textured with real player skin.
+    /// Renders a full 3D animated Minecraft player model textured with real player skin.
     /// Features:
-    /// - Ultra-sharp isolated face extraction (32x Nearest-Neighbor replication, zero bilinear bleed).
+    /// - Authentic official Minecraft Steve skin byte data with genuine pixel shading.
+    /// - 6 Animated 3D Poses (Running, Idle, Combat, Waving, CrossArms, Celebration).
+    /// - Interactive click-to-cycle pose switching.
+    /// - Ultra-sharp isolated face extraction (32x Nearest-Neighbor replication, zero blur/bleed).
     /// - Full support for modern 64x64 dual-layer skins (Hat, Jacket, Sleeves, Pants 3D overlays).
     /// - Official Mojang textures.minecraft.net direct high-res downloader + multi-CDN fallback.
-    /// - Built-in Steve skin generator for cracked/offline players.
-    /// - 6-part humanoid mesh: Head, Torso, Left Arm, Right Arm, Left Leg, Right Leg.
-    /// - Animated running motion: forward sprinting lean, counter-swinging limbs, vertical stride bobbing.
     /// </summary>
     public class PlayerBody3D : Viewport3D
     {
@@ -43,13 +54,18 @@ namespace VayuClient.Controls
         public static readonly DependencyProperty DisplayModeProperty = DependencyProperty.Register(
             nameof(DisplayMode), typeof(PlayerModelMode), typeof(PlayerBody3D), new PropertyMetadata(PlayerModelMode.FullBody, OnDisplayModeChanged));
 
+        public static readonly DependencyProperty PoseProperty = DependencyProperty.Register(
+            nameof(Pose), typeof(PlayerPose), typeof(PlayerBody3D), new PropertyMetadata(PlayerPose.Running, OnPoseChanged));
+
         private static readonly HttpClient SkinClient = CreateSkinClient();
         private static readonly ConcurrentDictionary<string, Task<BitmapSource?>> SkinRequests = new(StringComparer.OrdinalIgnoreCase);
         private static readonly string SkinCacheDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VayuClient", "Cache", "Skins");
 
-        // Built-in 100% crisp Steve skin for cracked / offline players
-        private static readonly BitmapSource SteveSkinSource = GenerateSteveSkin();
+        // Canonical Official 64x64 Minecraft Steve Skin (Byte-for-byte original Mojang texture with authentic pixel shading)
+        private const string OfficialSteveSkinBase64 = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAEwElEQVR4Xu1av2sUURgMqCABQQVBBK0SCdooMQQD5jSFkNgpKdIEwSZoZ6GYJohNUmlhqrSxsUlhYZM/If/TmdncrLOz3+7drcneXtyB4f36bvNm3vd2l32ZmOiD+3eudMHZqWtJyTrbn189LqVfb+xAwZ17N1LxqLsBH17MZniuDFDBXn5b6+TEkxjz640dXLSmP8r/wgDd+74VILJoC5wLA3TFNRsgHqRQv/mh7+v64vkwwO8BSoiE4KLSrzd2UNF+QwQpdnn6aobs9+s1DpraFDZ183Im5ZkFSjVBf6PX0WtEcSh9PrUjmiBIIVpX8V7yd5Foxvn10efzqR0qwifMvr03y91fn9a7v7+8S8qf79eSvkfT13OxINvs0zpNYJ/Pp3ZwQjpRXUkIhWAIp3gSY5Go6JqsM55tn0/t0ImxxCMM4iACQoGXT3ZS0agDaCMGffhNdC0aGhnUCAN8hShIyRV/+/RBQs0AJUX5yuv9QQ1B2+dTOzgRlFx5PsO/v15MX2jwaPu4NJdw6fZkJoaPPGaCXtMN8LbPp3bwrU3FuwkoIRomsKRoGqS/5fX0zfDurckM2e/zGTkWHu50lfPz8wlnZmYSenwOR0fp9lBj0Ycxv77TL5fDwUE34f5+Znt6WGX4hCicRnh8DsciVbyacNoGqNEeVhk+oSoZcNYGTB4epgY0MgPOdAscC9ct8M8Z8Gxurwvij6N8vvAjJftYkjp+cXc3Q0/PVHxv4kXxYKafQpW9uLS9tZWlxg4KChzUAB0HMdlL29sJU0E9oUxP74/iMyK9j/2RARsbJ6QBHB8UZQI9O3wchJALm5sJUdcURel9Hu8muFkZ8WJGMlZkADgoygQWGaB1iiH7CfL4UJi0c2mupHg1gRwULpDtqE/HSBeUWXEzQFc/MiC39/f/3uh4s9N6RI67zkK4Ab7CkSHa9pRODegJcQM83jMkFd9r66OON1Rtq+hKj8XIAN8GZeMURXoK66p6bBTvv3VhKj4ygKXrLASFFQnsZwAmqWKSDNAVZTb0BHl8aIDED2oAykoZ4OmtwpUeR1KQiqNwF8cYj8sYIOIR4yvrBqgRlQxYWVnpgn5zczLOqaIiM1Sgx6YGiGgVD6rgoizQLTC0AXi97XQ6GVGrq6s5oYjxWNR1i6hhmjk0gsI8RrePxiATIwM0K9wAlq6zEHzHpzgXSOFRHOpqAKnbiCVX1OP9XsMY9pcJ1/3vRrjOFi1atGjRosX4AR9Ai5h5fT44+ViajrVo0aJFixYtWtQN/5Q29OGqfELTDyEe1li4AUMfr4sBmZPlcYEbUCUD+JrLDBhrAypnwHFZ6airbujXX//I6WM6zpjcgaefEbDtbAoGEcls8DEwPOJWA9wEtpsCNwClG6Dj/QxID0vcCK83BS7QRfq49iUGlJ3xl5HQTOmZ498NnKdqoItnO+rTMdLP9/XG5wce2u/zGBmKBPtq67jGu1h99Hm7kY/FSGC/LaB0A4pEs5+lz2NkcIEoIwMic8DofM/Fq/DGZYCnv6+09kfbJNrnkXDv93mMDDxJpsAi+nE7WSY+Et44A3hcrqKG+f+CyAAV7Qaw7fMYGaL/G1CBFB7FoQ5BRfeByAiO+zyq4g8lK5z2I+oYkQAAAABJRU5ErkJggg==";
+
+        private static readonly BitmapSource SteveSkinSource = LoadOfficialSteveSkin();
 
         // Transforms & Animation groups
         private readonly Model3DGroup _rootModelGroup = new();
@@ -61,7 +77,7 @@ namespace VayuClient.Controls
         private readonly Model3DGroup _rightLegGroup = new();
         private readonly Model3DGroup _leftLegGroup = new();
 
-        // Limb Rotation Angles for Running Motion
+        // Limb Rotation Angles for Poses
         private readonly AxisAngleRotation3D _rightArmRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _leftArmRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _rightLegRotation = new(new Vector3D(1, 0, 0), 0);
@@ -82,9 +98,24 @@ namespace VayuClient.Controls
             BuildSceneHierarchy();
             ApplySkin(SteveSkinSource);
 
+            Cursor = Cursors.Hand;
+            ToolTip = "Click to cycle 3D pose (Running / Idle / Combat / Waving / CrossArms / Victory)";
+
             IsVisibleChanged += (_, _) => UpdateAnimations();
             Loaded += (_, _) => UpdateAnimations();
             Unloaded += (_, _) => StopAnimations();
+        }
+
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            if (DisplayMode == PlayerModelMode.FullBody)
+            {
+                // Smoothly cycle to the next pose on user click
+                var allPoses = (PlayerPose[])Enum.GetValues(typeof(PlayerPose));
+                int nextIndex = ((int)Pose + 1) % allPoses.Length;
+                Pose = allPoses[nextIndex];
+            }
         }
 
         public object? Profile
@@ -105,16 +136,46 @@ namespace VayuClient.Controls
             set => SetValue(DisplayModeProperty, value);
         }
 
+        public PlayerPose Pose
+        {
+            get => (PlayerPose)GetValue(PoseProperty);
+            set => SetValue(PoseProperty, value);
+        }
+
         private static void OnProfileChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
             ((PlayerBody3D)d).LoadSkinForProfile(e.NewValue);
 
         private static void OnIsRunningChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
             ((PlayerBody3D)d).UpdateAnimations();
 
+        private static void OnPoseChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+            ((PlayerBody3D)d).UpdateAnimations();
+
         private static void OnDisplayModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (PlayerBody3D)d;
             control.RebuildCameraAndMeshes();
+        }
+
+        private static BitmapSource LoadOfficialSteveSkin()
+        {
+            try
+            {
+                var bytes = Convert.FromBase64String(OfficialSteveSkinBase64);
+                var img = new BitmapImage();
+                img.BeginInit();
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.StreamSource = new MemoryStream(bytes);
+                img.EndInit();
+                img.Freeze();
+                return img;
+            }
+            catch
+            {
+                var fallback = BitmapSource.Create(64, 64, 96, 96, PixelFormats.Bgra32, null, new byte[64 * 64 * 4], 64 * 4);
+                fallback.Freeze();
+                return fallback;
+            }
         }
 
         private void BuildSceneHierarchy()
@@ -822,62 +883,316 @@ namespace VayuClient.Controls
             if (!IsLoaded || !IsVisible || !IsRunning || DisplayMode == PlayerModelMode.HeadOnly)
                 return;
 
-            var runningCycleDuration = TimeSpan.FromSeconds(0.68);
             var sineEase = new SineEase { EasingMode = EasingMode.EaseInOut };
 
-            // 1. Right Arm Running Swing (-34° to +34°)
-            var rightArmAnim = new DoubleAnimation(-34, 34, runningCycleDuration)
+            switch (Pose)
             {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                EasingFunction = sineEase
-            };
-            _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, rightArmAnim);
+                case PlayerPose.Idle:
+                {
+                    _runningLeanRotation.Angle = 0;
+                    _rightLegRotation.Angle = 2;
+                    _leftLegRotation.Angle = -2;
 
-            // 2. Left Arm Running Swing (+34° to -34°)
-            var leftArmAnim = new DoubleAnimation(34, -34, runningCycleDuration)
-            {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                EasingFunction = sineEase
-            };
-            _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, leftArmAnim);
+                    // Subtle breathing arm sway
+                    var armAnim = new DoubleAnimation(-2, 4, TimeSpan.FromSeconds(2.5))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armAnim);
 
-            // 3. Right Leg Running Swing (+32° to -32°)
-            var rightLegAnim = new DoubleAnimation(32, -32, runningCycleDuration)
-            {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                EasingFunction = sineEase
-            };
-            _rightLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, rightLegAnim);
+                    var leftArmAnim = new DoubleAnimation(4, -2, TimeSpan.FromSeconds(2.5))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, leftArmAnim);
 
-            // 4. Left Leg Running Swing (-32° to +32°)
-            var leftLegAnim = new DoubleAnimation(-32, 32, runningCycleDuration)
-            {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                EasingFunction = sineEase
-            };
-            _leftLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, leftLegAnim);
+                    // Gentle breathing chest rise
+                    var breathAnim = new DoubleAnimation(0.0, 0.015, TimeSpan.FromSeconds(1.8))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, breathAnim);
 
-            // 5. Vertical Running Stride Bobbing (Y: 0.0 to 0.06)
-            var bobbingAnim = new DoubleAnimation(0.0, 0.06, TimeSpan.FromSeconds(0.34))
-            {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                EasingFunction = sineEase
-            };
-            _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, bobbingAnim);
+                    // Relaxed head sway
+                    var headAnim = new DoubleAnimation(-2, 3, TimeSpan.FromSeconds(2.5))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headAnim);
 
-            // 6. Character Subtle Yaw Drift (-26° to -18°)
-            var yawAnim = new DoubleAnimation(-26, -18, TimeSpan.FromSeconds(3.5))
-            {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                EasingFunction = sineEase
-            };
-            _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    // Gentle panoramic yaw
+                    var yawAnim = new DoubleAnimation(-24, -14, TimeSpan.FromSeconds(4.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+
+                case PlayerPose.Combat:
+                {
+                    _runningLeanRotation.Angle = 10;
+                    _rightLegRotation.Angle = 18;
+                    _leftLegRotation.Angle = -15;
+                    _headNodRotation.Angle = 5;
+
+                    // Sword attack swing arc (-55° to -32°)
+                    var attackAnim = new DoubleAnimation(-55, -32, TimeSpan.FromSeconds(0.75))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, attackAnim);
+
+                    // Shield guard raised (+22° to +28°)
+                    var shieldAnim = new DoubleAnimation(22, 28, TimeSpan.FromSeconds(1.2))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, shieldAnim);
+
+                    // Battle bounce
+                    var bounceAnim = new DoubleAnimation(0.0, 0.025, TimeSpan.FromSeconds(0.45))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, bounceAnim);
+
+                    // Battle yaw angle
+                    var yawAnim = new DoubleAnimation(-32, -22, TimeSpan.FromSeconds(2.8))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+
+                case PlayerPose.Waving:
+                {
+                    _runningLeanRotation.Angle = 2;
+                    _leftArmRotation.Angle = 2;
+                    _rightLegRotation.Angle = 0;
+                    _leftLegRotation.Angle = 0;
+
+                    // Right arm raised high (-142°) and waving side-to-side (-156° to -128°)
+                    var waveAnim = new DoubleAnimation(-156, -128, TimeSpan.FromSeconds(0.35))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, waveAnim);
+
+                    // Cheerful bob
+                    var waveBounce = new DoubleAnimation(0.0, 0.02, TimeSpan.FromSeconds(0.35))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, waveBounce);
+
+                    // Cheerful head tilt
+                    var headTilt = new DoubleAnimation(-5, 5, TimeSpan.FromSeconds(0.7))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headTilt);
+
+                    var yawAnim = new DoubleAnimation(-20, -10, TimeSpan.FromSeconds(3.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+
+                case PlayerPose.CrossArms:
+                {
+                    _runningLeanRotation.Angle = -2;
+                    _rightArmRotation.Angle = -48;
+                    _leftArmRotation.Angle = -48;
+                    _rightLegRotation.Angle = 4;
+                    _leftLegRotation.Angle = -4;
+
+                    // Confident breathing rise
+                    var breathAnim = new DoubleAnimation(0.0, 0.012, TimeSpan.FromSeconds(2.2))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, breathAnim);
+
+                    // Calm head tilt
+                    var headAnim = new DoubleAnimation(-2, 3, TimeSpan.FromSeconds(2.5))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headAnim);
+
+                    var yawAnim = new DoubleAnimation(-22, -14, TimeSpan.FromSeconds(3.5))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+
+                case PlayerPose.Celebration:
+                {
+                    _runningLeanRotation.Angle = 4;
+
+                    // Both arms raised high (-145° to -165°)
+                    var armRightAnim = new DoubleAnimation(-145, -165, TimeSpan.FromSeconds(0.42))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armRightAnim);
+
+                    var armLeftAnim = new DoubleAnimation(-145, -165, TimeSpan.FromSeconds(0.42))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armLeftAnim);
+
+                    // Jumping leg stride
+                    var legR = new DoubleAnimation(20, -15, TimeSpan.FromSeconds(0.42))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, legR);
+
+                    var legL = new DoubleAnimation(-20, 15, TimeSpan.FromSeconds(0.42))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, legL);
+
+                    // High victory jump bounce (Y: 0.0 to 0.10)
+                    var jumpAnim = new DoubleAnimation(0.0, 0.10, TimeSpan.FromSeconds(0.42))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, jumpAnim);
+
+                    // Joyful head tilt
+                    var headJoy = new DoubleAnimation(-8, 2, TimeSpan.FromSeconds(0.84))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headJoy);
+
+                    var yawAnim = new DoubleAnimation(-26, -12, TimeSpan.FromSeconds(2.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+
+                case PlayerPose.Running:
+                default:
+                {
+                    _runningLeanRotation.Angle = 8;
+                    _headNodRotation.Angle = 3;
+                    var runningCycleDuration = TimeSpan.FromSeconds(0.68);
+
+                    // 1. Right Arm Running Swing (-34° to +34°)
+                    var rightArmAnim = new DoubleAnimation(-34, 34, runningCycleDuration)
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, rightArmAnim);
+
+                    // 2. Left Arm Running Swing (+34° to -34°)
+                    var leftArmAnim = new DoubleAnimation(34, -34, runningCycleDuration)
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, leftArmAnim);
+
+                    // 3. Right Leg Running Swing (+32° to -32°)
+                    var rightLegAnim = new DoubleAnimation(32, -32, runningCycleDuration)
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _rightLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, rightLegAnim);
+
+                    // 4. Left Leg Running Swing (-32° to +32°)
+                    var leftLegAnim = new DoubleAnimation(-32, 32, runningCycleDuration)
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _leftLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, leftLegAnim);
+
+                    // 5. Vertical Running Stride Bobbing (Y: 0.0 to 0.06)
+                    var bobbingAnim = new DoubleAnimation(0.0, 0.06, TimeSpan.FromSeconds(0.34))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, bobbingAnim);
+
+                    // 6. Character Subtle Yaw Drift (-26° to -18°)
+                    var yawAnim = new DoubleAnimation(-26, -18, TimeSpan.FromSeconds(3.5))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, yawAnim);
+                    break;
+                }
+            }
         }
 
         private void StopAnimations()
@@ -886,8 +1201,10 @@ namespace VayuClient.Controls
             _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _rightLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _leftLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, null);
             _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _runningLeanRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
         }
     }
 }
