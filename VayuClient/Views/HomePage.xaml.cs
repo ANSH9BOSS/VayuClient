@@ -35,6 +35,7 @@ namespace VayuClient.Views
             {
                 _subscribedVm = vm;
                 _subscribedVm.WallpaperTransitionRequested += OnWallpaperTransitionRequested;
+                EnsureInitialBackground(vm.HeroBackgroundPath);
             }
         }
 
@@ -54,6 +55,55 @@ namespace VayuClient.Views
             {
                 _subscribedVm = vm;
                 _subscribedVm.WallpaperTransitionRequested += OnWallpaperTransitionRequested;
+                EnsureInitialBackground(vm.HeroBackgroundPath);
+            }
+        }
+
+        private void EnsureInitialBackground(string path)
+        {
+            try
+            {
+                if (BgImagePrimary.Source == null && !string.IsNullOrEmpty(path))
+                {
+                    var bmp = LoadBitmapFromPath(path);
+                    if (bmp != null)
+                    {
+                        BgImagePrimary.Source = bmp;
+                        BgImagePrimary.Opacity = 0.55;
+                        BgImageSecondary.Opacity = 0.0;
+                        _isPrimaryVisible = true;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private static BitmapImage? LoadBitmapFromPath(string path)
+        {
+            try
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                if (path.StartsWith("pack://", StringComparison.OrdinalIgnoreCase))
+                {
+                    bmp.UriSource = new Uri(path, UriKind.Absolute);
+                }
+                else if (path.StartsWith("/"))
+                {
+                    bmp.UriSource = new Uri($"pack://application:,,,{path}", UriKind.Absolute);
+                }
+                else
+                {
+                    bmp.UriSource = new Uri(path, UriKind.RelativeOrAbsolute);
+                }
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -66,21 +116,20 @@ namespace VayuClient.Views
 
                 if (targetImage == null || currentImage == null) return;
 
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(newPath, UriKind.RelativeOrAbsolute);
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.EndInit();
+                var bmp = LoadBitmapFromPath(newPath);
+                if (bmp == null) return;
 
                 targetImage.Source = bmp;
 
-                var fadeIn = new DoubleAnimation(0.55, TimeSpan.FromMilliseconds(700))
+                var ease = new SineEase { EasingMode = EasingMode.EaseInOut };
+
+                var fadeIn = new DoubleAnimation(0.0, 0.55, TimeSpan.FromMilliseconds(850))
                 {
-                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+                    EasingFunction = ease
                 };
-                var fadeOut = new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(700))
+                var fadeOut = new DoubleAnimation(currentImage.Opacity, 0.0, TimeSpan.FromMilliseconds(850))
                 {
-                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+                    EasingFunction = ease
                 };
 
                 targetImage.BeginAnimation(UIElement.OpacityProperty, fadeIn);

@@ -62,7 +62,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <Grid IsHitTestVisible="False">
             <!-- Layer 1: Primary Crossfade Image -->
-            <Image x:Name="BgImagePrimary" Source="{Binding HeroBackgroundPath}" Stretch="UniformToFill" 
+            <Image x:Name="BgImagePrimary" Stretch="UniformToFill" 
                    Opacity="0.55" RenderOptions.BitmapScalingMode="HighQuality"/>
 
             <!-- Layer 2: Secondary Crossfade Image -->
@@ -437,14 +437,14 @@
                                     </StackPanel>
                                 </Button>
                                 <!-- Add Mods -->
-                                <Button Command="{Binding OpenModsFolderCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" Margin="0,0,6,0" ToolTip="Open Mods Folder">
+                                <Button Command="{Binding OpenModsCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" Margin="0,0,6,0" ToolTip="Manage Mods &amp; Shaders">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="📦" FontSize="10" Margin="0,0,5,0"/>
                                         <TextBlock Text="Mods" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>
                                     </StackPanel>
                                 </Button>
                                 <!-- Instance Settings -->
-                                <Button Command="{Binding OpenInstanceSettingsCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" ToolTip="Configure Client &amp; Java Settings">
+                                <Button Command="{Binding OpenSettingsCommand}" Style="{StaticResource VayuDarkButton}" Padding="9,4" ToolTip="Configure Client &amp; Java Settings">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="⚙️" FontSize="10" Margin="0,0,5,0"/>
                                         <TextBlock Text="Settings" FontSize="10" FontWeight="Bold" Foreground="#E2E8F0"/>

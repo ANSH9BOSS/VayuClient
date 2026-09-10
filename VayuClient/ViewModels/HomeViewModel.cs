@@ -640,14 +640,20 @@ namespace VayuClient.ViewModels
         [RelayCommand]
         public void OpenMods()
         {
-            _main.NavigateToCommand.Execute("Mods");
+            _main.NavigateTo("Mods");
         }
+
+        [RelayCommand]
+        public void OpenModsFolder() => OpenMods();
 
         [RelayCommand]
         public void OpenSettings()
         {
-            _main.NavigateToCommand.Execute("Settings");
+            _main.NavigateTo("Settings");
         }
+
+        [RelayCommand]
+        public void OpenInstanceSettings() => OpenSettings();
 
         // ─── Play / Launch Logic ──────────────────────────────────────────────
 

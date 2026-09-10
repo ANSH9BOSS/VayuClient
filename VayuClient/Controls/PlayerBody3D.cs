@@ -82,9 +82,12 @@ namespace VayuClient.Controls
         // Limb Rotation Angles for Poses
         private readonly AxisAngleRotation3D _rightArmRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _leftArmRotation = new(new Vector3D(1, 0, 0), 0);
+        private readonly AxisAngleRotation3D _rightArmInwardRotation = new(new Vector3D(0, 0, 1), 0);
+        private readonly AxisAngleRotation3D _leftArmInwardRotation = new(new Vector3D(0, 0, 1), 0);
         private readonly AxisAngleRotation3D _rightLegRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _leftLegRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _headNodRotation = new(new Vector3D(1, 0, 0), 3);
+        private readonly AxisAngleRotation3D _headTiltRotation = new(new Vector3D(0, 0, 1), 0);
         private readonly TranslateTransform3D _bodyBounceTransform = new(0, 0, 0);
         private readonly ScaleTransform3D _miniPlayerScaleTransform = new(0, 0, 0);
         private readonly TranslateTransform3D _miniPlayerBounceTransform = new(0, 0, 0);
@@ -242,11 +245,13 @@ namespace VayuClient.Controls
             // Right arm pivot at shoulder: (-0.6, 0.95, 0)
             var rightArmTransform = new Transform3DGroup();
             rightArmTransform.Children.Add(new RotateTransform3D(_rightArmRotation, new Point3D(-0.6, 0.95, 0)));
+            rightArmTransform.Children.Add(new RotateTransform3D(_rightArmInwardRotation, new Point3D(-0.6, 0.95, 0)));
             _rightArmGroup.Transform = rightArmTransform;
 
             // Left arm pivot at shoulder: (+0.6, 0.95, 0)
             var leftArmTransform = new Transform3DGroup();
             leftArmTransform.Children.Add(new RotateTransform3D(_leftArmRotation, new Point3D(0.6, 0.95, 0)));
+            leftArmTransform.Children.Add(new RotateTransform3D(_leftArmInwardRotation, new Point3D(0.6, 0.95, 0)));
             _leftArmGroup.Transform = leftArmTransform;
 
             // Right leg pivot at hip: (-0.2, 0.0, 0)
@@ -262,6 +267,7 @@ namespace VayuClient.Controls
             // Head pivot: (0, 1.2, 0)
             var headTransform = new Transform3DGroup();
             headTransform.Children.Add(new RotateTransform3D(_headNodRotation, new Point3D(0, 1.2, 0)));
+            headTransform.Children.Add(new RotateTransform3D(_headTiltRotation, new Point3D(0, 1.2, 0)));
             _headGroup.Transform = headTransform;
 
             // Assemble Body Group
@@ -865,9 +871,9 @@ namespace VayuClient.Controls
             // ═══════════════════════════════════════════════════════════════
             // 7. MINI PLAYER COMPANION (For Love / Lap Cradle Pose)
             // ═══════════════════════════════════════════════════════════════
-            // Mini Head
+            // Mini Head: X [-0.14, 0.14], Y [0.38, 0.64], Z [0.20, 0.46]
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                -0.11, 0.36, 0.26, 0.11, 0.58, 0.48,
+                -0.14, 0.38, 0.20, 0.14, 0.64, 0.46,
                 fX: 8, fY: 8, fW: 8, fH: 8,
                 bkX: 24, bkY: 8, bkW: 8, bkH: 8,
                 rX: 0, rY: 8, rW: 8, rH: 8,
@@ -876,8 +882,9 @@ namespace VayuClient.Controls
                 bmX: 16, bmY: 0, bmW: 8, bmH: 8,
                 isOuterLayer: false);
 
+            // Mini Outer Hat / Helmet
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                -0.12, 0.35, 0.25, 0.12, 0.59, 0.49,
+                -0.15, 0.37, 0.19, 0.15, 0.65, 0.47,
                 fX: 40, fY: 8, fW: 8, fH: 8,
                 bkX: 56, bkY: 8, bkW: 8, bkH: 8,
                 rX: 32, rY: 8, rW: 8, rH: 8,
@@ -886,9 +893,9 @@ namespace VayuClient.Controls
                 bmX: 48, bmY: 0, bmW: 8, bmH: 8,
                 isOuterLayer: true);
 
-            // Mini Torso
+            // Mini Torso: X [-0.13, 0.13], Y [0.06, 0.38], Z [0.23, 0.39]
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                -0.11, 0.08, 0.30, 0.11, 0.36, 0.44,
+                -0.13, 0.06, 0.23, 0.13, 0.38, 0.39,
                 fX: 20, fY: 20, fW: 8, fH: 12,
                 bkX: 32, bkY: 20, bkW: 8, bkH: 12,
                 rX: 16, rY: 20, rW: 4, rH: 12,
@@ -897,9 +904,9 @@ namespace VayuClient.Controls
                 bmX: 28, bmY: 16, bmW: 8, bmH: 4,
                 isOuterLayer: false);
 
-            // Mini Right Arm
+            // Mini Right Arm: X [-0.21, -0.13], Y [0.08, 0.38], Z [0.23, 0.39]
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                -0.18, 0.10, 0.30, -0.11, 0.36, 0.44,
+                -0.21, 0.08, 0.23, -0.13, 0.38, 0.39,
                 fX: 44, fY: 20, fW: 4, fH: 12,
                 bkX: 52, bkY: 20, bkW: 4, bkH: 12,
                 rX: 40, rY: 20, rW: 4, rH: 12,
@@ -908,9 +915,9 @@ namespace VayuClient.Controls
                 bmX: 48, bmY: 16, bmW: 4, bmH: 4,
                 isOuterLayer: false);
 
-            // Mini Left Arm
+            // Mini Left Arm: X [0.13, 0.21], Y [0.08, 0.38], Z [0.23, 0.39]
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                0.11, 0.10, 0.30, 0.18, 0.36, 0.44,
+                0.13, 0.08, 0.23, 0.21, 0.38, 0.39,
                 fX: 36, fY: 52, fW: 4, fH: 12,
                 bkX: 44, bkY: 52, bkW: 4, bkH: 12,
                 rX: 32, rY: 52, rW: 4, rH: 12,
@@ -919,9 +926,9 @@ namespace VayuClient.Controls
                 bmX: 40, bmY: 48, bmW: 4, bmH: 4,
                 isOuterLayer: false);
 
-            // Mini Right Leg (forward lap cradle)
+            // Mini Right Leg (forward lap cradle): X [-0.13, -0.01], Y [-0.01, 0.09], Z [0.23, 0.52]
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                -0.11, 0.00, 0.30, -0.01, 0.10, 0.54,
+                -0.13, -0.01, 0.23, -0.01, 0.09, 0.52,
                 fX: 4, fY: 20, fW: 4, fH: 12,
                 bkX: 12, bkY: 20, bkW: 4, bkH: 12,
                 rX: 0, rY: 20, rW: 4, rH: 12,
@@ -930,9 +937,9 @@ namespace VayuClient.Controls
                 bmX: 8, bmY: 16, bmW: 4, bmH: 4,
                 isOuterLayer: false);
 
-            // Mini Left Leg (forward lap cradle)
+            // Mini Left Leg (forward lap cradle): X [0.01, 0.13], Y [-0.01, 0.09], Z [0.23, 0.52]
             AddCuboid(_miniPlayerGroup, rawPixels, skinW, skinH,
-                0.01, 0.00, 0.30, 0.11, 0.10, 0.54,
+                0.01, -0.01, 0.23, 0.13, 0.09, 0.52,
                 fX: 20, fY: 52, fW: 4, fH: 12,
                 bkX: 28, bkY: 52, bkW: 4, bkH: 12,
                 rX: 16, rY: 52, rW: 4, rH: 12,
@@ -1024,13 +1031,16 @@ namespace VayuClient.Controls
             {
                 case PlayerPose.Love:
                 {
-                    // Sitting posture with mini player in lap
-                    _runningLeanRotation.Angle = 6;
-                    _rightLegRotation.Angle = 82;
-                    _leftLegRotation.Angle = 82;
+                    // Big player sits down comfortably on lap
+                    _runningLeanRotation.Angle = 8;
+                    _rightLegRotation.Angle = 85;
+                    _leftLegRotation.Angle = 85;
 
-                    // Arms gently cradling the mini player
-                    var armRightAnim = new DoubleAnimation(-64, -70, TimeSpan.FromSeconds(2.0))
+                    // Arms curve forward (+46°) and fold inward (±28°) to cradle the mini player
+                    _rightArmInwardRotation.Angle = -28;
+                    _leftArmInwardRotation.Angle = 28;
+
+                    var armRightAnim = new DoubleAnimation(44, 48, TimeSpan.FromSeconds(2.4))
                     {
                         AutoReverse = true,
                         RepeatBehavior = RepeatBehavior.Forever,
@@ -1038,7 +1048,7 @@ namespace VayuClient.Controls
                     };
                     _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armRightAnim);
 
-                    var armLeftAnim = new DoubleAnimation(-64, -70, TimeSpan.FromSeconds(2.0))
+                    var armLeftAnim = new DoubleAnimation(44, 48, TimeSpan.FromSeconds(2.4))
                     {
                         AutoReverse = true,
                         RepeatBehavior = RepeatBehavior.Forever,
@@ -1046,8 +1056,8 @@ namespace VayuClient.Controls
                     };
                     _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, armLeftAnim);
 
-                    // Loving gaze looking down at lap
-                    var headGaze = new DoubleAnimation(12, 16, TimeSpan.FromSeconds(2.0))
+                    // Loving downward gaze looking right into lap
+                    var headGaze = new DoubleAnimation(28, 33, TimeSpan.FromSeconds(2.4))
                     {
                         AutoReverse = true,
                         RepeatBehavior = RepeatBehavior.Forever,
@@ -1055,8 +1065,17 @@ namespace VayuClient.Controls
                     };
                     _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headGaze);
 
-                    // Gentle rocking lap bounce
-                    var rockAnim = new DoubleAnimation(-0.16, -0.13, TimeSpan.FromSeconds(2.0))
+                    // Gentle lullaby head tilt sway
+                    var headTilt = new DoubleAnimation(-3, 3, TimeSpan.FromSeconds(3.0))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever,
+                        EasingFunction = sineEase
+                    };
+                    _headTiltRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, headTilt);
+
+                    // Gentle rocking lap cradle bounce
+                    var rockAnim = new DoubleAnimation(-0.12, -0.09, TimeSpan.FromSeconds(2.4))
                     {
                         AutoReverse = true,
                         RepeatBehavior = RepeatBehavior.Forever,
@@ -1064,12 +1083,12 @@ namespace VayuClient.Controls
                     };
                     _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, rockAnim);
 
-                    // Make mini companion visible and animate breathing in lap
+                    // Make mini companion visible and animate peaceful breathing in lap
                     _miniPlayerScaleTransform.ScaleX = 1.0;
                     _miniPlayerScaleTransform.ScaleY = 1.0;
                     _miniPlayerScaleTransform.ScaleZ = 1.0;
 
-                    var miniBob = new DoubleAnimation(0.0, 0.02, TimeSpan.FromSeconds(2.0))
+                    var miniBob = new DoubleAnimation(0.0, 0.015, TimeSpan.FromSeconds(2.0))
                     {
                         AutoReverse = true,
                         RepeatBehavior = RepeatBehavior.Forever,
@@ -1077,7 +1096,7 @@ namespace VayuClient.Controls
                     };
                     _miniPlayerBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, miniBob);
 
-                    var yawAnim = new DoubleAnimation(-24, -16, TimeSpan.FromSeconds(4.0))
+                    var yawAnim = new DoubleAnimation(-22, -14, TimeSpan.FromSeconds(5.0))
                     {
                         AutoReverse = true,
                         RepeatBehavior = RepeatBehavior.Forever,
@@ -1399,9 +1418,17 @@ namespace VayuClient.Controls
         {
             _rightArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _leftArmRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _rightArmInwardRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _leftArmInwardRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _rightArmInwardRotation.Angle = 0;
+            _leftArmInwardRotation.Angle = 0;
+
             _rightLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _leftLegRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _headNodRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _headTiltRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
+            _headTiltRotation.Angle = 0;
+
             _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, null);
             _characterYawRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
             _runningLeanRotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, null);
