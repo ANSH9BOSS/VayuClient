@@ -25,6 +25,25 @@ namespace VayuClient.ViewModels
         private bool _disposed;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasActiveProfile))]
+        [NotifyPropertyChangedFor(nameof(ActiveProfileUsername))]
+        [NotifyPropertyChangedFor(nameof(ActiveProfileAccountTypeDisplay))]
+        [NotifyPropertyChangedFor(nameof(IsActiveProfileMicrosoft))]
+        private UserProfile? _activeProfile;
+
+        public bool HasActiveProfile => ActiveProfile != null;
+
+        public string ActiveProfileUsername => ActiveProfile != null 
+            ? (!string.IsNullOrWhiteSpace(ActiveProfile.Username) ? ActiveProfile.Username : "Player")
+            : "No Account Selected";
+
+        public string ActiveProfileAccountTypeDisplay => ActiveProfile != null
+            ? (ActiveProfile.AccountType == AccountType.Microsoft ? "MICROSOFT ACCOUNT" : "OFFLINE PROFILE")
+            : "NOT LOGGED IN";
+
+        public bool IsActiveProfileMicrosoft => ActiveProfile?.AccountType == AccountType.Microsoft;
+
+        [ObservableProperty]
         private string _newProfileUsername = string.Empty;
 
         [ObservableProperty]
@@ -35,6 +54,9 @@ namespace VayuClient.ViewModels
 
         [ObservableProperty]
         private string _renameText = string.Empty;
+
+        [ObservableProperty]
+        private bool _isRenaming;
 
         [ObservableProperty]
         private bool _isLoggingInMicrosoft;
@@ -51,8 +73,24 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private bool _hasMicrosoftAccounts;
 
-        public ObservableCollection<UserProfile> OfflineProfiles { get; } = new();
+        [ObservableProperty]
+        private bool _hasOtherMicrosoftAccounts;
+
+        [ObservableProperty]
+        private bool _hasOtherOfflineProfiles;
+
+        public bool HasAnyAccounts => MicrosoftAccounts.Count > 0 || OfflineProfiles.Count > 0;
+
         public ObservableCollection<UserProfile> MicrosoftAccounts { get; } = new();
+        public ObservableCollection<UserProfile> OfflineProfiles { get; } = new();
+        public ObservableCollection<UserProfile> OtherMicrosoftAccounts { get; } = new();
+        public ObservableCollection<UserProfile> OtherOfflineProfiles { get; } = new();
+
+        [RelayCommand]
+        public void Navigate(object? page)
+        {
+            _main.NavigateTo(page);
+        }
 
         public AccountsViewModel(MainViewModel main)
         {
@@ -60,6 +98,11 @@ namespace VayuClient.ViewModels
             _authService = ServiceLocator.Resolve<IAuthenticationService>();
             _profileService = ServiceLocator.Resolve<IProfileService>();
             _accountService = ServiceLocator.Resolve<IAccountService>();
+
+            _accountService.ActiveProfileChanged += p =>
+            {
+                Dispatch(LoadProfiles);
+            };
 
             LoadProfiles();
         }
@@ -110,21 +153,47 @@ namespace VayuClient.ViewModels
             try
             {
                 var profiles = _profileService.GetAllProfiles();
+                var active = _accountService.ActiveProfile;
+
                 Dispatch(() =>
                 {
+                    ActiveProfile = active;
+
                     OfflineProfiles.Clear();
                     MicrosoftAccounts.Clear();
+                    OtherMicrosoftAccounts.Clear();
+                    OtherOfflineProfiles.Clear();
 
                     foreach (var p in profiles)
                     {
                         if (p.AccountType == AccountType.Offline)
+                        {
                             OfflineProfiles.Add(p);
+                            if (active == null || p.Id != active.Id)
+                            {
+                                OtherOfflineProfiles.Add(p);
+                            }
+                        }
                         else
+                        {
                             MicrosoftAccounts.Add(p);
+                            if (active == null || p.Id != active.Id)
+                            {
+                                OtherMicrosoftAccounts.Add(p);
+                            }
+                        }
                     }
 
                     HasOfflineProfiles = OfflineProfiles.Count > 0;
                     HasMicrosoftAccounts = MicrosoftAccounts.Count > 0;
+                    HasOtherMicrosoftAccounts = OtherMicrosoftAccounts.Count > 0;
+                    HasOtherOfflineProfiles = OtherOfflineProfiles.Count > 0;
+
+                    OnPropertyChanged(nameof(HasActiveProfile));
+                    OnPropertyChanged(nameof(HasAnyAccounts));
+                    OnPropertyChanged(nameof(ActiveProfileUsername));
+                    OnPropertyChanged(nameof(ActiveProfileAccountTypeDisplay));
+                    OnPropertyChanged(nameof(IsActiveProfileMicrosoft));
                 });
             }
             catch { }
@@ -189,9 +258,6 @@ namespace VayuClient.ViewModels
             }
         }
 
-        [ObservableProperty]
-        private bool _isRenaming;
-
         [RelayCommand]
         private void SelectProfile(object? profileIdObj)
         {
@@ -202,6 +268,8 @@ namespace VayuClient.ViewModels
             {
                 _accountService.SetActiveProfile(profileId);
                 LoadProfiles();
+                _main.HomeVM.RefreshProfile();
+                _main.ActiveProfile = _accountService.ActiveProfile;
 
                 var selected = OfflineProfiles.FirstOrDefault(p => p.Id == profileId) ?? MicrosoftAccounts.FirstOrDefault(p => p.Id == profileId);
                 var name = selected?.Username ?? "Selected Profile";
