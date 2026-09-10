@@ -1,9 +1,17 @@
-# Build results
+# Closed-Source Distribution: Exclude Source Directories
+VayuClient/
+VayuClientSetup/
+vayuclient-hud-mod/
+vayuclient-ui-mod/
+vayu-hud-decompiled/
+tests/
+temp-publish/
+
+# Build results & Binaries
 [Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
-temp-publish/
 dist/
 *.user
 *.userosscache
@@ -28,8 +36,3 @@ VayuClientSetup/Resources/*.zip
 upload_to_github.ps1
 *.secret
 scratch/
-vayuclient-ui-mod/build/
-vayuclient-ui-mod/dist/
-vayuclient-hud-mod/build/
-vayuclient-hud-mod/dist/
-vayu-hud-decompiled/
