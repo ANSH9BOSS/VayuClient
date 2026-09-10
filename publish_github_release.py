@@ -47,6 +47,8 @@ RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### 📦 Assets Included
 * `VayuClientSetup.exe` (Standalone Windows Setup Installer)
+* `vayu_hud_manifest.json` (HUD Artifact Manifest v2.1.0)
+* `vayuclient-hud-2.1.0-mc*.jar` — Universal HUD JARs for all supported Minecraft versions (1.21 – 1.21.11, 26.x)
 """
 
 def get_github_token():
@@ -141,15 +143,31 @@ def main():
 
     upload_base = upload_url_template.split("{")[0]
 
-    # 2. Upload Binaries (ONLY VayuClientSetup.exe)
+    # 2. Upload Binaries: VayuClientSetup.exe + all HUD JARs + manifest
     base_dir = os.path.dirname(os.path.abspath(__file__))
     dist_dir = os.path.join(base_dir, "dist")
+    mods_dir = os.path.join(base_dir, "VayuClient", "Assets", "Mods")
+
+    # Primary installer
     files_to_upload = [
         os.path.join(dist_dir, "VayuClientSetup.exe")
     ]
-    target_filenames = {os.path.basename(p) for p in files_to_upload}
 
-    # Clean up any unexpected / unwanted assets (e.g. VayuClient.exe)
+    # Add the HUD manifest
+    manifest_path = os.path.join(mods_dir, "vayu_hud_manifest.json")
+    if os.path.exists(manifest_path):
+        files_to_upload.append(manifest_path)
+
+    # Add all HUD JAR files
+    if os.path.isdir(mods_dir):
+        for f in sorted(os.listdir(mods_dir)):
+            if f.endswith(".jar") and "vayuclient-hud" in f:
+                files_to_upload.append(os.path.join(mods_dir, f))
+
+    target_filenames = {os.path.basename(p) for p in files_to_upload}
+    print(f"[Info] Will upload {len(files_to_upload)} assets: VayuClientSetup.exe + {len(files_to_upload)-1} HUD files", flush=True)
+
+    # Clean up any unexpected / unwanted assets (things NOT in our target set)
     for asset in release.get("assets", []):
         asset_name = asset["name"]
         asset_id = asset["id"]
@@ -211,7 +229,8 @@ def main():
             print(f"[Error] Failed uploading {filename}: {err.stderr or err.stdout}", flush=True)
 
     print("\n==========================================================", flush=True)
-    print(f" SUCCESS: GitHub Release {VERSION_TAG} is now LIVE with ONLY VayuClientSetup.exe!", flush=True)
+    print(f" SUCCESS: GitHub Release {VERSION_TAG} is now LIVE!", flush=True)
+    print(f"   VayuClientSetup.exe + HUD JARs + manifest uploaded.", flush=True)
     print(f" URL: https://github.com/{REPO}/releases/tag/{VERSION_TAG}", flush=True)
     print("==========================================================\n", flush=True)
 
