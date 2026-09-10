@@ -287,7 +287,12 @@ namespace VayuClient.Services.Loaders
                     var batchResult = await _downloadService.DownloadBatchAsync(downloadItems, 8, progress, ct);
                     if (!batchResult.Success)
                     {
-                        throw new InvalidOperationException($"Failed to download Fabric libraries: {string.Join(", ", batchResult.Errors.Take(2))}");
+                        // Check if all libraries actually exist and are non-empty
+                        bool allExist = result.AdditionalLibraries.All(p => File.Exists(p) && new FileInfo(p).Length > 0);
+                        if (!allExist)
+                        {
+                            throw new InvalidOperationException($"Failed to download Fabric libraries: {string.Join(", ", batchResult.Errors.Take(2))}");
+                        }
                     }
                 }
                 else
