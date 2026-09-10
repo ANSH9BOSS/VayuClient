@@ -180,57 +180,35 @@
             <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,6,0,10">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
 
-                    <!-- ─── 1. LEFT: 3D RUNNING PLAYER SKIN SHOWCASE ─── -->
-                    <Grid Width="230" Height="240" Margin="0,0,44,0" VerticalAlignment="Center">
+                    <!-- ─── 1. LEFT: 3D RUNNING PLAYER SKIN HERO SHOWCASE (OPEN & UNCONFINED) ─── -->
+                    <Grid Width="280" Height="360" Margin="0,0,40,0" VerticalAlignment="Center" HorizontalAlignment="Center">
                         
-                        <!-- Layered Faceted Glass Diamonds (Tilted & Layered with Purple Cyber Glow) -->
-                        <Canvas Width="230" Height="240">
-                            <!-- Back Layer 1 (Dark Obsidian Shadow Diamond) -->
-                            <Path Data="M 45,8 L 195,8 L 155,218 L 5,218 Z" 
-                                  Fill="#120A22" Stroke="#311956" StrokeThickness="1.2" Opacity="0.85">
-                                <Path.Effect>
-                                    <DropShadowEffect Color="#7C3AED" BlurRadius="32" ShadowDepth="0" Opacity="0.35"/>
-                                </Path.Effect>
-                            </Path>
-
-                            <!-- Accent Facet Plate (Angled Top-Right Cut) -->
-                            <Path Data="M 135,2 L 220,2 L 185,105 L 100,105 Z"
-                                  Fill="#28114C" Stroke="#6B21A8" StrokeThickness="1" Opacity="0.55"/>
-
-                            <!-- Accent Facet Plate (Angled Bottom-Left Cut) -->
-                            <Path Data="M 28,115 L 115,115 L 80,220 L -7,220 Z"
-                                  Fill="#180C30" Stroke="#4C1D95" StrokeThickness="1" Opacity="0.45"/>
-
-                            <!-- Front Layer (Glowing Purple Diamond Frame) -->
-                            <Path Data="M 60,20 L 210,20 L 170,230 L 20,230 Z" 
-                                  Fill="#0D0719" Stroke="#A855F7" StrokeThickness="1.6">
-                                <Path.Effect>
-                                    <DropShadowEffect Color="#A855F7" BlurRadius="26" ShadowDepth="0" Opacity="0.55"/>
-                                </Path.Effect>
-                            </Path>
-                        </Canvas>
-
-                        <!-- Glowing Purple Ambient Radial Backlight -->
-                        <Ellipse Width="140" Height="140" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,8,0,0">
+                        <!-- Soft Ambient Purple World Floor Halo Underneath Player Feet -->
+                        <Ellipse Width="200" Height="38" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" IsHitTestVisible="False">
                             <Ellipse.Fill>
                                 <RadialGradientBrush>
-                                    <GradientStop Color="#60A855F7" Offset="0.0"/>
-                                    <GradientStop Color="#207C3AED" Offset="0.6"/>
+                                    <GradientStop Color="#70A855F7" Offset="0.0"/>
+                                    <GradientStop Color="#207C3AED" Offset="0.5"/>
                                     <GradientStop Color="#00000000" Offset="1.0"/>
                                 </RadialGradientBrush>
                             </Ellipse.Fill>
                         </Ellipse>
 
-                        <!-- Active Instance / 3D Running Player Skin Body -->
-                        <Border Width="140" Height="190" CornerRadius="16" Background="#140D26" 
-                                BorderBrush="#5B29A6" BorderThickness="1.2" 
-                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,8,0,0"
-                                ClipToBounds="True">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#A855F7" BlurRadius="24" ShadowDepth="0" Opacity="0.65"/>
-                            </Border.Effect>
-                            <controls:PlayerBody3D Profile="{Binding ActiveProfile}"/>
-                        </Border>
+                        <!-- Subtle Radial Ambient Backlight for Character Silhouette Definition -->
+                        <Ellipse Width="240" Height="280" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.35">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Color="#40A855F7" Offset="0.0"/>
+                                    <GradientStop Color="#157C3AED" Offset="0.5"/>
+                                    <GradientStop Color="#00000000" Offset="1.0"/>
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <!-- Free-Standing Heroic 3D Running Player Model -->
+                        <controls:PlayerBody3D Profile="{Binding ActiveProfile}" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Width="280" Height="360"/>
                     </Grid>
 
                     <!-- ─── 2. RIGHT: INSTANCE NAME, SPEC CHIPS & DRAG TO PLAY ─── -->

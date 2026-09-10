@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,7 +25,9 @@ namespace VayuClient.Controls
     /// <summary>
     /// Renders a full 3D animated running Minecraft player model textured with real player skin.
     /// Features:
-    /// - 16x Nearest-Neighbor upscaling for razor-sharp pixel art (zero blur in 3D).
+    /// - Ultra-sharp isolated face extraction (32x Nearest-Neighbor replication, zero bilinear bleed).
+    /// - Full support for modern 64x64 dual-layer skins (Hat, Jacket, Sleeves, Pants 3D overlays).
+    /// - Official Mojang textures.minecraft.net direct high-res downloader + multi-CDN fallback.
     /// - Built-in Steve skin generator for cracked/offline players.
     /// - 6-part humanoid mesh: Head, Torso, Left Arm, Right Arm, Left Leg, Right Leg.
     /// - Animated running motion: forward sprinting lean, counter-swinging limbs, vertical stride bobbing.
@@ -62,19 +66,19 @@ namespace VayuClient.Controls
         private readonly AxisAngleRotation3D _leftArmRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _rightLegRotation = new(new Vector3D(1, 0, 0), 0);
         private readonly AxisAngleRotation3D _leftLegRotation = new(new Vector3D(1, 0, 0), 0);
-        private readonly AxisAngleRotation3D _headNodRotation = new(new Vector3D(1, 0, 0), 4);
+        private readonly AxisAngleRotation3D _headNodRotation = new(new Vector3D(1, 0, 0), 3);
         private readonly TranslateTransform3D _bodyBounceTransform = new(0, 0, 0);
 
         // Overall Character Orientation (Heroic 3/4 Isometric Perspective)
-        private readonly AxisAngleRotation3D _characterYawRotation = new(new Vector3D(0, 1, 0), -26);
-        private readonly AxisAngleRotation3D _runningLeanRotation = new(new Vector3D(1, 0, 0), 10);
+        private readonly AxisAngleRotation3D _characterYawRotation = new(new Vector3D(0, 1, 0), -22);
+        private readonly AxisAngleRotation3D _runningLeanRotation = new(new Vector3D(1, 0, 0), 8);
 
         private int _skinRequestId;
         private BitmapSource? _currentSkinSource;
 
         public PlayerBody3D()
         {
-            ClipToBounds = true;
+            ClipToBounds = false;
             BuildSceneHierarchy();
             ApplySkin(SteveSkinSource);
 
@@ -119,10 +123,11 @@ namespace VayuClient.Controls
 
             var scene = new Model3DGroup();
             
-            // Dual-tone lighting: ambient fill + crisp directional sunlight + purple cyber rim light
-            scene.Children.Add(new AmbientLight(Color.FromRgb(175, 165, 205)));
-            scene.Children.Add(new DirectionalLight(Color.FromRgb(255, 255, 255), new Vector3D(-0.4, -0.7, -1.0)));
-            scene.Children.Add(new DirectionalLight(Color.FromRgb(168, 85, 247), new Vector3D(0.6, 0.4, -0.8)));
+            // Studio Lighting: Ambient fill + Crisp Directional Key Light + Purple Cyber Rim Light + Soft Under-Fill
+            scene.Children.Add(new AmbientLight(Color.FromRgb(190, 185, 215)));
+            scene.Children.Add(new DirectionalLight(Color.FromRgb(255, 255, 255), new Vector3D(-0.45, -0.75, -1.0)));
+            scene.Children.Add(new DirectionalLight(Color.FromRgb(168, 85, 247), new Vector3D(0.8, 0.3, -0.6)));
+            scene.Children.Add(new DirectionalLight(Color.FromRgb(60, 45, 90), new Vector3D(0.0, 1.0, -0.2)));
 
             // Attach limb transforms
             // Right arm pivot at shoulder: (-0.6, 0.95, 0)
@@ -178,19 +183,19 @@ namespace VayuClient.Controls
             {
                 // Tight camera framing on head only
                 Camera = new PerspectiveCamera(
-                    new Point3D(0.55, 1.55, 3.6),
-                    new Vector3D(-0.55, -0.35, -3.6),
+                    new Point3D(0.5, 1.55, 3.4),
+                    new Vector3D(-0.5, -0.35, -3.4),
                     new Vector3D(0, 1, 0),
-                    26);
+                    25);
             }
             else
             {
-                // Full Body Running Camera
+                // Full Body Heroic Running Camera (Frames entire 3.2-unit character with high vertical presence)
                 Camera = new PerspectiveCamera(
-                    new Point3D(0.65, 0.25, 4.4),
-                    new Vector3D(-0.65, -0.25, -4.4),
+                    new Point3D(0.48, 0.25, 3.8),
+                    new Vector3D(-0.48, -0.25, -3.8),
                     new Vector3D(0, 1, 0),
-                    38);
+                    44);
             }
         }
 
@@ -203,11 +208,13 @@ namespace VayuClient.Controls
         private async void LoadSkinForProfile(object? value)
         {
             string? username = null;
+            string? uuid = null;
             bool isOffline = false;
 
             if (value is UserProfile profile)
             {
                 username = profile.Username;
+                uuid = profile.UUID;
                 isOffline = profile.AccountType == AccountType.Offline;
             }
             else if (value is MinecraftInstance instance)
@@ -219,18 +226,20 @@ namespace VayuClient.Controls
                 username = text;
             }
 
-            if (string.IsNullOrWhiteSpace(username) || isOffline || username.Equals("Offline", StringComparison.OrdinalIgnoreCase) || username.Equals("Cracked", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(username) || isOffline || 
+                username.Equals("Offline", StringComparison.OrdinalIgnoreCase) || 
+                username.Equals("Cracked", StringComparison.OrdinalIgnoreCase))
             {
                 _currentSkinSource = SteveSkinSource;
                 ApplySkin(SteveSkinSource);
                 return;
             }
 
-            // Immediately show Steve skin while loading so there is never a blank/grey box
+            // Immediately show Steve skin while loading so there is never an unrendered model
             ApplySkin(SteveSkinSource);
             var requestId = ++_skinRequestId;
-            var cacheKey = username.Trim();
-            var skin = await SkinRequests.GetOrAdd(cacheKey, GetSkinAsync);
+            var cacheKey = $"{username.Trim()}_{(uuid ?? "")}".TrimEnd('_');
+            var skin = await SkinRequests.GetOrAdd(cacheKey, _ => GetSkinAsync(username, uuid));
             
             if (requestId == _skinRequestId)
             {
@@ -239,25 +248,39 @@ namespace VayuClient.Controls
             }
         }
 
-        private static async Task<BitmapSource?> GetSkinAsync(string username)
+        private static async Task<BitmapSource?> GetSkinAsync(string username, string? uuid)
         {
             try
             {
                 Directory.CreateDirectory(SkinCacheDirectory);
                 var path = Path.Combine(SkinCacheDirectory, $"{username}.vayu-skin.png");
-                var fromCache = File.Exists(path);
-                byte[] bytes = fromCache
-                    ? await File.ReadAllBytesAsync(path)
-                    : await FetchSkinBytesAsync(username);
+                
+                byte[] bytes = Array.Empty<byte>();
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        var cachedBytes = await File.ReadAllBytesAsync(path);
+                        if (cachedBytes.Length > 200)
+                        {
+                            bytes = cachedBytes;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (bytes.Length == 0)
+                {
+                    bytes = await FetchSkinBytesAsync(username, uuid);
+                    if (bytes.Length > 200)
+                    {
+                        try { await File.WriteAllBytesAsync(path, bytes); } catch { }
+                    }
+                }
 
                 if (bytes.Length == 0)
                 {
                     return SteveSkinSource;
-                }
-
-                if (!fromCache)
-                {
-                    await File.WriteAllBytesAsync(path, bytes);
                 }
 
                 var rawBitmap = new BitmapImage();
@@ -267,8 +290,7 @@ namespace VayuClient.Controls
                 rawBitmap.EndInit();
                 rawBitmap.Freeze();
 
-                // 16x Nearest-Neighbor upscaling to eliminate 3D blurriness completely
-                return UpscaleNearestNeighbor(rawBitmap, 16);
+                return rawBitmap;
             }
             catch
             {
@@ -276,27 +298,79 @@ namespace VayuClient.Controls
             }
         }
 
-        private static async Task<byte[]> FetchSkinBytesAsync(string username)
+        private static async Task<byte[]> FetchSkinBytesAsync(string username, string? uuid)
         {
+            // 1. Try Official Mojang Session Server (textures.minecraft.net uncompressed source)
             try
             {
-                // Try NameMC profile skin scraping
-                var profileHtml = await SkinClient.GetStringAsync($"https://namemc.com/profile/{Uri.EscapeDataString(username)}");
-                var match = Regex.Match(profileHtml, @"(?:s(?:\\)?\.namemc(?:\\)?\.com(?:\\)?/i|/skin)(?:\\)?/([a-f0-9]{16})", RegexOptions.IgnoreCase);
-                if (match.Success)
+                string targetUuid = uuid ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(targetUuid))
                 {
-                    return await SkinClient.GetByteArrayAsync($"https://s.namemc.com/i/{match.Groups[1].Value}.png");
+                    var userJson = await SkinClient.GetStringAsync($"https://api.mojang.com/users/profiles/minecraft/{Uri.EscapeDataString(username)}");
+                    using var doc = JsonDocument.Parse(userJson);
+                    if (doc.RootElement.TryGetProperty("id", out var idProp))
+                    {
+                        targetUuid = idProp.GetString() ?? string.Empty;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(targetUuid))
+                {
+                    var sessionJson = await SkinClient.GetStringAsync($"https://sessionserver.mojang.com/session/minecraft/profile/{targetUuid}");
+                    using var sessionDoc = JsonDocument.Parse(sessionJson);
+                    if (sessionDoc.RootElement.TryGetProperty("properties", out var props))
+                    {
+                        foreach (var prop in props.EnumerateArray())
+                        {
+                            if (prop.TryGetProperty("name", out var nameProp) && nameProp.GetString() == "textures" &&
+                                prop.TryGetProperty("value", out var valProp))
+                            {
+                                var decodedJson = Encoding.UTF8.GetString(Convert.FromBase64String(valProp.GetString() ?? ""));
+                                using var texDoc = JsonDocument.Parse(decodedJson);
+                                if (texDoc.RootElement.TryGetProperty("textures", out var tex) &&
+                                    tex.TryGetProperty("SKIN", out var skinProp) &&
+                                    skinProp.TryGetProperty("url", out var urlProp))
+                                {
+                                    var skinUrl = urlProp.GetString();
+                                    if (!string.IsNullOrEmpty(skinUrl))
+                                    {
+                                        var skinBytes = await SkinClient.GetByteArrayAsync(skinUrl);
+                                        if (skinBytes != null && skinBytes.Length > 200)
+                                            return skinBytes;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch { }
 
-            // Fallback to Minotar skin endpoint
+            // 2. Try Crafatar Skin CDN
+            try
+            {
+                var bytes = await SkinClient.GetByteArrayAsync($"https://crafatar.com/skins/{Uri.EscapeDataString(uuid ?? username)}");
+                if (bytes != null && bytes.Length > 200) return bytes;
+            }
+            catch { }
+
+            // 3. Try Minotar Skin CDN
             try
             {
                 var bytes = await SkinClient.GetByteArrayAsync($"https://minotar.net/skin/{Uri.EscapeDataString(username)}");
-                if (bytes != null && bytes.Length > 200)
+                if (bytes != null && bytes.Length > 200) return bytes;
+            }
+            catch { }
+
+            // 4. Try NameMC scraping
+            try
+            {
+                var profileHtml = await SkinClient.GetStringAsync($"https://namemc.com/profile/{Uri.EscapeDataString(username)}");
+                var match = Regex.Match(profileHtml, @"(?:s(?:\\)?\.namemc(?:\\)?\.com(?:\\)?/i|/skin)(?:\\)?/([a-f0-9]{16})", RegexOptions.IgnoreCase);
+                if (match.Success)
                 {
-                    return bytes;
+                    var bytes = await SkinClient.GetByteArrayAsync($"https://s.namemc.com/i/{match.Groups[1].Value}.png");
+                    if (bytes != null && bytes.Length > 200) return bytes;
                 }
             }
             catch { }
@@ -312,59 +386,65 @@ namespace VayuClient.Controls
         }
 
         /// <summary>
-        /// Upscales a 64x64 / 64x32 skin bitmap by factor (e.g. 16x to 1024x1024)
-        /// using pure Nearest-Neighbor pixel replication. This ensures every Minecraft pixel is
-        /// crystal clear and 100% sharp in WPF 3D Viewport.
+        /// Extracts an isolated sub-rectangle of the skin and upscales it with 32x Nearest-Neighbor replication.
+        /// Because the texture is standalone, DirectX clamping prevents ANY texture bleeding from adjacent faces.
         /// </summary>
-        private static BitmapSource UpscaleNearestNeighbor(BitmapSource source, int scale = 16)
+        private static DiffuseMaterial? CreateFaceMaterial(uint[] skin, int skinW, int skinH,
+            int tx, int ty, int tw, int th, int scale = 32, bool discardIfTransparent = false)
         {
             try
             {
-                int srcWidth = source.PixelWidth;
-                int srcHeight = source.PixelHeight;
-                int dstWidth = srcWidth * scale;
-                int dstHeight = srcHeight * scale;
+                if (tx + tw > skinW || ty + th > skinH || tw <= 0 || th <= 0)
+                    return null;
 
-                var format = PixelFormats.Bgra32;
-                var converted = new FormatConvertedBitmap(source, format, null, 0);
-                int srcStride = srcWidth * 4;
-                var srcPixels = new byte[srcStride * srcHeight];
-                converted.CopyPixels(srcPixels, srcStride, 0);
+                bool hasAnyVisiblePixel = false;
+                int dstW = tw * scale;
+                int dstH = th * scale;
+                var dstPixels = new uint[dstW * dstH];
 
-                int dstStride = dstWidth * 4;
-                var dstPixels = new byte[dstStride * dstHeight];
-
-                for (int y = 0; y < dstHeight; y++)
+                for (int y = 0; y < th; y++)
                 {
-                    int srcY = y / scale;
-                    int srcRowOffset = srcY * srcStride;
-                    int dstRowOffset = y * dstStride;
-
-                    for (int x = 0; x < dstWidth; x++)
+                    for (int x = 0; x < tw; x++)
                     {
-                        int srcX = x / scale;
-                        int srcPixelOffset = srcRowOffset + (srcX * 4);
-                        int dstPixelOffset = dstRowOffset + (x * 4);
+                        uint pixel = skin[(ty + y) * skinW + (tx + x)];
+                        byte a = (byte)((pixel >> 24) & 0xFF);
+                        if (a > 10) hasAnyVisiblePixel = true;
 
-                        dstPixels[dstPixelOffset + 0] = srcPixels[srcPixelOffset + 0]; // B
-                        dstPixels[dstPixelOffset + 1] = srcPixels[srcPixelOffset + 1]; // G
-                        dstPixels[dstPixelOffset + 2] = srcPixels[srcPixelOffset + 2]; // R
-                        dstPixels[dstPixelOffset + 3] = srcPixels[srcPixelOffset + 3]; // A
+                        // Fill scale x scale block with identical pixel value
+                        for (int dy = 0; dy < scale; dy++)
+                        {
+                            int row = (y * scale + dy) * dstW;
+                            for (int dx = 0; dx < scale; dx++)
+                            {
+                                dstPixels[row + (x * scale + dx)] = pixel;
+                            }
+                        }
                     }
                 }
 
-                var result = BitmapSource.Create(dstWidth, dstHeight, 96, 96, format, null, dstPixels, dstStride);
-                result.Freeze();
-                return result;
+                if (discardIfTransparent && !hasAnyVisiblePixel)
+                    return null;
+
+                var bitmap = BitmapSource.Create(dstW, dstH, 96, 96, PixelFormats.Bgra32, null, dstPixels, dstW * 4);
+                bitmap.Freeze();
+
+                var brush = new ImageBrush(bitmap)
+                {
+                    Stretch = Stretch.Fill,
+                    TileMode = TileMode.None
+                };
+                RenderOptions.SetBitmapScalingMode(brush, BitmapScalingMode.NearestNeighbor);
+
+                return new DiffuseMaterial(brush);
             }
             catch
             {
-                return source;
+                return null;
             }
         }
 
         /// <summary>
-        /// Programmatically creates the official 64x64 Minecraft Steve skin upscaled for 100% crisp rendering.
+        /// Programmatically creates the official 64x64 Minecraft Steve skin.
         /// </summary>
         private static BitmapSource GenerateSteveSkin()
         {
@@ -372,10 +452,8 @@ namespace VayuClient.Controls
             int h = 64;
             var pixels = new uint[w * h];
 
-            // Color Palette
             uint hairDark = 0xFF2B170B;
             uint hairMid = 0xFF452817;
-            uint hairLight = 0xFF54331E;
             uint skinBase = 0xFFBC8B72;
             uint skinShade = 0xFFA5745D;
             uint eyeWhite = 0xFFFFFFFF;
@@ -386,7 +464,6 @@ namespace VayuClient.Controls
             uint pantsBlue = 0xFF29337A;
             uint pantsShade = 0xFF1F265D;
             uint shoeGray = 0xFF464646;
-            uint shoeDark = 0xFF363636;
 
             void FillRect(int rx, int ry, int rw, int rh, uint color)
             {
@@ -395,73 +472,54 @@ namespace VayuClient.Controls
                         pixels[y * w + x] = color;
             }
 
-            // 1. Head Top (8..15, 0..7)
+            // Head
             FillRect(8, 0, 8, 8, hairMid);
-            // 2. Head Bottom (16..23, 0..7)
             FillRect(16, 0, 8, 8, skinShade);
-
-            // 3. Head Faces (y: 8..15)
-            // Head Right (0..7, 8..15)
             FillRect(0, 8, 8, 8, skinBase);
             FillRect(0, 8, 8, 3, hairMid);
-            FillRect(0, 11, 2, 2, hairDark);
-
-            // Head Front (8..15, 8..15)
             FillRect(8, 8, 8, 8, skinBase);
             FillRect(8, 8, 8, 3, hairMid);
             FillRect(8, 10, 1, 1, hairDark);
             FillRect(15, 10, 1, 1, hairDark);
-            // Eyes
             pixels[12 * w + 9] = eyeWhite;
             pixels[12 * w + 10] = eyeBlue;
             pixels[12 * w + 13] = eyeBlue;
             pixels[12 * w + 14] = eyeWhite;
-            // Nose & Mouth / Beard
             FillRect(11, 13, 2, 1, skinShade);
             FillRect(10, 14, 4, 1, beard);
-            pixels[13 * w + 11] = beard;
-            pixels[13 * w + 12] = beard;
-
-            // Head Left (16..23, 8..15)
             FillRect(16, 8, 8, 8, skinBase);
             FillRect(16, 8, 8, 3, hairMid);
-            FillRect(22, 11, 2, 2, hairDark);
-
-            // Head Back (24..31, 8..15)
             FillRect(24, 8, 8, 8, hairMid);
-            FillRect(24, 8, 8, 4, hairDark);
 
-            // 4. Torso (y: 16..31)
+            // Torso
             FillRect(20, 16, 8, 4, shirtShade);
             FillRect(28, 16, 8, 4, shirtShade);
             FillRect(16, 20, 24, 12, shirtTeal);
-            // Torso front neck cutout
             FillRect(22, 20, 4, 2, skinBase);
-            FillRect(23, 21, 2, 1, skinShade);
 
-            // 5. Right Arm (x: 40..55, y: 16..31)
+            // Right Arm
             FillRect(44, 16, 8, 4, shirtShade);
             FillRect(40, 20, 16, 4, shirtTeal);
             FillRect(40, 24, 16, 8, skinBase);
 
-            // 6. Left Arm (x: 32..47, y: 48..63)
+            // Left Arm
             FillRect(36, 48, 8, 4, shirtShade);
             FillRect(32, 52, 16, 4, shirtTeal);
             FillRect(32, 56, 16, 8, skinBase);
 
-            // 7. Right Leg (x: 0..15, y: 16..31)
+            // Right Leg
             FillRect(4, 16, 8, 4, pantsShade);
             FillRect(0, 20, 16, 8, pantsBlue);
             FillRect(0, 28, 16, 4, shoeGray);
 
-            // 8. Left Leg (x: 16..31, y: 48..63)
+            // Left Leg
             FillRect(20, 48, 8, 4, pantsShade);
             FillRect(16, 52, 16, 8, pantsBlue);
             FillRect(16, 60, 16, 4, shoeGray);
 
             var rawSteve = BitmapSource.Create(w, h, 96, 96, PixelFormats.Bgra32, null, pixels, w * 4);
             rawSteve.Freeze();
-            return UpscaleNearestNeighbor(rawSteve, 16);
+            return rawSteve;
         }
 
         private void ClearAllMeshes()
@@ -474,174 +532,281 @@ namespace VayuClient.Controls
             _leftLegGroup.Children.Clear();
         }
 
-        private void ApplySkin(BitmapSource skin)
+        private void ApplySkin(BitmapSource skinBitmap)
         {
             ClearAllMeshes();
 
-            int scale = skin.PixelWidth / 64;
-            if (scale < 1) scale = 1;
+            int skinW = skinBitmap.PixelWidth;
+            int skinH = skinBitmap.PixelHeight;
+            var format = PixelFormats.Bgra32;
+            var converted = new FormatConvertedBitmap(skinBitmap, format, null, 0);
+            var rawPixels = new uint[skinW * skinH];
+            converted.CopyPixels(rawPixels, skinW * 4, 0);
 
-            Int32Rect S(int x, int y, int tw, int th) => new(x * scale, y * scale, tw * scale, th * scale);
+            bool is64x64 = skinH >= 64;
 
-            bool is64x64 = skin.PixelHeight >= 64 * scale;
-
-            // 1. Head (8x8x8) centered at X=0, Y=1.2 to 2.0, Z=-0.4 to 0.4
-            AddCuboid(_headGroup, skin,
+            // ═══════════════════════════════════════════════════════════════
+            // 1. HEAD (Inner 8x8x8 + Outer Hat 8.5x8.5x8.5)
+            // ═══════════════════════════════════════════════════════════════
+            // Inner Head: X [-0.4, 0.4], Y [1.2, 2.0], Z [-0.4, 0.4]
+            AddCuboid(_headGroup, rawPixels, skinW, skinH,
                 -0.4, 1.2, -0.4, 0.4, 2.0, 0.4,
-                frontTile: S(8, 8, 8, 8),
-                backTile: S(24, 8, 8, 8),
-                rightTile: S(0, 8, 8, 8),
-                leftTile: S(16, 8, 8, 8),
-                topTile: S(8, 0, 8, 8),
-                bottomTile: S(16, 0, 8, 8));
+                fX: 8, fY: 8, fW: 8, fH: 8,     // Front
+                bkX: 24, bkY: 8, bkW: 8, bkH: 8, // Back
+                rX: 0, rY: 8, rW: 8, rH: 8,      // Right
+                lX: 16, lY: 8, lW: 8, lH: 8,     // Left
+                tX: 8, tY: 0, tW: 8, tH: 8,      // Top
+                bmX: 16, bmY: 0, bmW: 8, bmH: 8, // Bottom
+                isOuterLayer: false);
+
+            // Outer Head (Hat / Helmet): slightly expanded by 0.035
+            AddCuboid(_headGroup, rawPixels, skinW, skinH,
+                -0.435, 1.165, -0.435, 0.435, 2.035, 0.435,
+                fX: 40, fY: 8, fW: 8, fH: 8,
+                bkX: 56, bkY: 8, bkW: 8, bkH: 8,
+                rX: 32, rY: 8, rW: 8, rH: 8,
+                lX: 48, lY: 8, lW: 8, lH: 8,
+                tX: 40, tY: 0, tW: 8, tH: 8,
+                bmX: 48, bmY: 0, bmW: 8, bmH: 8,
+                isOuterLayer: true);
 
             if (DisplayMode == PlayerModelMode.HeadOnly)
                 return;
 
-            // 2. Torso (8x12x4) centered at X=0, Y=0.0 to 1.2, Z=-0.2 to 0.2
-            AddCuboid(_torsoGroup, skin,
+            // ═══════════════════════════════════════════════════════════════
+            // 2. TORSO (Inner 8x12x4 + Outer Jacket)
+            // ═══════════════════════════════════════════════════════════════
+            // Inner Torso: X [-0.4, 0.4], Y [0.0, 1.2], Z [-0.2, 0.2]
+            AddCuboid(_torsoGroup, rawPixels, skinW, skinH,
                 -0.4, 0.0, -0.2, 0.4, 1.2, 0.2,
-                frontTile: S(20, 20, 8, 12),
-                backTile: S(32, 20, 8, 12),
-                rightTile: S(16, 20, 4, 12),
-                leftTile: S(28, 20, 4, 12),
-                topTile: S(20, 16, 8, 4),
-                bottomTile: S(28, 16, 8, 4));
+                fX: 20, fY: 20, fW: 8, fH: 12,
+                bkX: 32, bkY: 20, bkW: 8, bkH: 12,
+                rX: 16, rY: 20, rW: 4, rH: 12,
+                lX: 28, lY: 20, lW: 4, lH: 12,
+                tX: 20, tY: 16, tW: 8, tH: 4,
+                bmX: 28, bmY: 16, bmW: 8, bmH: 4,
+                isOuterLayer: false);
 
-            // 3. Right Arm (4x12x4) at X=-0.8 to -0.4, Y=0.0 to 1.2, Z=-0.2 to 0.2
-            AddCuboid(_rightArmGroup, skin,
+            if (is64x64)
+            {
+                // Outer Torso (Jacket): expanded by 0.025
+                AddCuboid(_torsoGroup, rawPixels, skinW, skinH,
+                    -0.425, -0.025, -0.225, 0.425, 1.225, 0.225,
+                    fX: 20, fY: 36, fW: 8, fH: 12,
+                    bkX: 32, bkY: 36, bkW: 8, bkH: 12,
+                    rX: 16, rY: 36, rW: 4, rH: 12,
+                    lX: 28, lY: 36, lW: 4, lH: 12,
+                    tX: 20, tY: 32, tW: 8, tH: 4,
+                    bmX: 28, bmY: 32, bmW: 8, bmH: 4,
+                    isOuterLayer: true);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // 3. RIGHT ARM (Inner 4x12x4 + Outer Sleeve)
+            // ═══════════════════════════════════════════════════════════════
+            // Inner Right Arm: X [-0.8, -0.4], Y [0.0, 1.2], Z [-0.2, 0.2]
+            AddCuboid(_rightArmGroup, rawPixels, skinW, skinH,
                 -0.8, 0.0, -0.2, -0.4, 1.2, 0.2,
-                frontTile: S(44, 20, 4, 12),
-                backTile: S(52, 20, 4, 12),
-                rightTile: S(40, 20, 4, 12),
-                leftTile: S(48, 20, 4, 12),
-                topTile: S(44, 16, 4, 4),
-                bottomTile: S(48, 16, 4, 4));
+                fX: 44, fY: 20, fW: 4, fH: 12,
+                bkX: 52, bkY: 20, bkW: 4, bkH: 12,
+                rX: 40, rY: 20, rW: 4, rH: 12,
+                lX: 48, lY: 20, lW: 4, lH: 12,
+                tX: 44, tY: 16, tW: 4, tH: 4,
+                bmX: 48, bmY: 16, bmW: 4, bmH: 4,
+                isOuterLayer: false);
 
-            // 4. Left Arm (4x12x4) at X=0.4 to 0.8, Y=0.0 to 1.2, Z=-0.2 to 0.2
             if (is64x64)
             {
-                AddCuboid(_leftArmGroup, skin,
+                // Outer Right Arm (Sleeve): expanded by 0.025
+                AddCuboid(_rightArmGroup, rawPixels, skinW, skinH,
+                    -0.825, -0.025, -0.225, -0.375, 1.225, 0.225,
+                    fX: 44, fY: 36, fW: 4, fH: 12,
+                    bkX: 52, bkY: 36, bkW: 4, bkH: 12,
+                    rX: 40, rY: 36, rW: 4, rH: 12,
+                    lX: 48, lY: 36, lW: 4, lH: 12,
+                    tX: 44, tY: 32, tW: 4, tH: 4,
+                    bmX: 48, bmY: 32, bmW: 4, bmH: 4,
+                    isOuterLayer: true);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // 4. LEFT ARM (Inner 4x12x4 + Outer Sleeve)
+            // ═══════════════════════════════════════════════════════════════
+            if (is64x64)
+            {
+                // Inner Left Arm: X [0.4, 0.8], Y [0.0, 1.2], Z [-0.2, 0.2]
+                AddCuboid(_leftArmGroup, rawPixels, skinW, skinH,
                     0.4, 0.0, -0.2, 0.8, 1.2, 0.2,
-                    frontTile: S(36, 52, 4, 12),
-                    backTile: S(44, 52, 4, 12),
-                    rightTile: S(32, 52, 4, 12),
-                    leftTile: S(40, 52, 4, 12),
-                    topTile: S(36, 48, 4, 4),
-                    bottomTile: S(40, 48, 4, 4));
+                    fX: 36, fY: 52, fW: 4, fH: 12,
+                    bkX: 44, bkY: 52, bkW: 4, bkH: 12,
+                    rX: 32, rY: 52, rW: 4, rH: 12,
+                    lX: 40, lY: 52, lW: 4, lH: 12,
+                    tX: 36, tY: 48, tW: 4, tH: 4,
+                    bmX: 40, bmY: 48, bmW: 4, bmH: 4,
+                    isOuterLayer: false);
+
+                // Outer Left Arm (Sleeve): expanded by 0.025
+                AddCuboid(_leftArmGroup, rawPixels, skinW, skinH,
+                    0.375, -0.025, -0.225, 0.825, 1.225, 0.225,
+                    fX: 52, fY: 52, fW: 4, fH: 12,
+                    bkX: 60, bkY: 52, bkW: 4, bkH: 12,
+                    rX: 48, rY: 52, rW: 4, rH: 12,
+                    lX: 56, lY: 52, lW: 4, lH: 12,
+                    tX: 52, tY: 48, tW: 4, tH: 4,
+                    bmX: 56, bmY: 48, bmW: 4, bmH: 4,
+                    isOuterLayer: true);
             }
             else
             {
-                // Mirrored Right Arm for legacy skins
-                AddCuboid(_leftArmGroup, skin,
+                // Classic 64x32 Mirrored Arm
+                AddCuboid(_leftArmGroup, rawPixels, skinW, skinH,
                     0.4, 0.0, -0.2, 0.8, 1.2, 0.2,
-                    frontTile: S(44, 20, 4, 12),
-                    backTile: S(52, 20, 4, 12),
-                    rightTile: S(48, 20, 4, 12),
-                    leftTile: S(40, 20, 4, 12),
-                    topTile: S(44, 16, 4, 4),
-                    bottomTile: S(48, 16, 4, 4));
+                    fX: 44, fY: 20, fW: 4, fH: 12,
+                    bkX: 52, bkY: 20, bkW: 4, bkH: 12,
+                    rX: 48, rY: 20, rW: 4, rH: 12,
+                    lX: 40, lY: 20, lW: 4, lH: 12,
+                    tX: 44, tY: 16, tW: 4, tH: 4,
+                    bmX: 48, bmY: 16, bmW: 4, bmH: 4,
+                    isOuterLayer: false);
             }
 
-            // 5. Right Leg (4x12x4) at X=-0.4 to 0.0, Y=-1.2 to 0.0, Z=-0.2 to 0.2
-            AddCuboid(_rightLegGroup, skin,
+            // ═══════════════════════════════════════════════════════════════
+            // 5. RIGHT LEG (Inner 4x12x4 + Outer Pants)
+            // ═══════════════════════════════════════════════════════════════
+            // Inner Right Leg: X [-0.4, 0.0], Y [-1.2, 0.0], Z [-0.2, 0.2]
+            AddCuboid(_rightLegGroup, rawPixels, skinW, skinH,
                 -0.4, -1.2, -0.2, 0.0, 0.0, 0.2,
-                frontTile: S(4, 20, 4, 12),
-                backTile: S(12, 20, 4, 12),
-                rightTile: S(0, 20, 4, 12),
-                leftTile: S(8, 20, 4, 12),
-                topTile: S(4, 16, 4, 4),
-                bottomTile: S(8, 16, 4, 4));
+                fX: 4, fY: 20, fW: 4, fH: 12,
+                bkX: 12, bkY: 20, bkW: 4, bkH: 12,
+                rX: 0, rY: 20, rW: 4, rH: 12,
+                lX: 8, lY: 20, lW: 4, lH: 12,
+                tX: 4, tY: 16, tW: 4, tH: 4,
+                bmX: 8, bmY: 16, bmW: 4, bmH: 4,
+                isOuterLayer: false);
 
-            // 6. Left Leg (4x12x4) at X=0.0 to 0.4, Y=-1.2 to 0.0, Z=-0.2 to 0.2
             if (is64x64)
             {
-                AddCuboid(_leftLegGroup, skin,
+                // Outer Right Leg (Pants): expanded by 0.025
+                AddCuboid(_rightLegGroup, rawPixels, skinW, skinH,
+                    -0.425, -1.225, -0.225, 0.025, 0.025, 0.225,
+                    fX: 4, fY: 36, fW: 4, fH: 12,
+                    bkX: 12, bkY: 36, bkW: 4, bkH: 12,
+                    rX: 0, rY: 36, rW: 4, rH: 12,
+                    lX: 8, lY: 36, lW: 4, lH: 12,
+                    tX: 4, tY: 32, tW: 4, tH: 4,
+                    bmX: 8, bmY: 32, bmW: 4, bmH: 4,
+                    isOuterLayer: true);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // 6. LEFT LEG (Inner 4x12x4 + Outer Pants)
+            // ═══════════════════════════════════════════════════════════════
+            if (is64x64)
+            {
+                // Inner Left Leg: X [0.0, 0.4], Y [-1.2, 0.0], Z [-0.2, 0.2]
+                AddCuboid(_leftLegGroup, rawPixels, skinW, skinH,
                     0.0, -1.2, -0.2, 0.4, 0.0, 0.2,
-                    frontTile: S(20, 52, 4, 12),
-                    backTile: S(28, 52, 4, 12),
-                    rightTile: S(16, 52, 4, 12),
-                    leftTile: S(24, 52, 4, 12),
-                    topTile: S(20, 48, 4, 4),
-                    bottomTile: S(24, 48, 4, 4));
+                    fX: 20, fY: 52, fW: 4, fH: 12,
+                    bkX: 28, bkY: 52, bkW: 4, bkH: 12,
+                    rX: 16, rY: 52, rW: 4, rH: 12,
+                    lX: 24, lY: 52, lW: 4, lH: 12,
+                    tX: 20, tY: 48, tW: 4, tH: 4,
+                    bmX: 24, bmY: 48, bmW: 4, bmH: 4,
+                    isOuterLayer: false);
+
+                // Outer Left Leg (Pants): expanded by 0.025
+                AddCuboid(_leftLegGroup, rawPixels, skinW, skinH,
+                    -0.025, -1.225, -0.225, 0.425, 0.025, 0.225,
+                    fX: 4, fY: 52, fW: 4, fH: 12,
+                    bkX: 12, bkY: 52, bkW: 4, bkH: 12,
+                    rX: 0, rY: 52, rW: 4, rH: 12,
+                    lX: 8, lY: 52, lW: 4, lH: 12,
+                    tX: 4, tY: 48, tW: 4, tH: 4,
+                    bmX: 8, bmY: 48, bmW: 4, bmH: 4,
+                    isOuterLayer: true);
             }
             else
             {
-                // Mirrored Right Leg for legacy skins
-                AddCuboid(_leftLegGroup, skin,
+                // Classic 64x32 Mirrored Leg
+                AddCuboid(_leftLegGroup, rawPixels, skinW, skinH,
                     0.0, -1.2, -0.2, 0.4, 0.0, 0.2,
-                    frontTile: S(4, 20, 4, 12),
-                    backTile: S(12, 20, 4, 12),
-                    rightTile: S(8, 20, 4, 12),
-                    leftTile: S(0, 20, 4, 12),
-                    topTile: S(4, 16, 4, 4),
-                    bottomTile: S(8, 16, 4, 4));
+                    fX: 4, fY: 20, fW: 4, fH: 12,
+                    bkX: 12, bkY: 20, bkW: 4, bkH: 12,
+                    rX: 8, rY: 20, rW: 4, rH: 12,
+                    lX: 0, lY: 20, lW: 4, lH: 12,
+                    tX: 4, tY: 16, tW: 4, tH: 4,
+                    bmX: 8, bmY: 16, bmW: 4, bmH: 4,
+                    isOuterLayer: false);
             }
         }
 
-        private void AddCuboid(Model3DGroup parentGroup, BitmapSource skin,
+        private void AddCuboid(Model3DGroup parentGroup, uint[] skin, int skinW, int skinH,
             double x1, double y1, double z1, double x2, double y2, double z2,
-            Int32Rect frontTile, Int32Rect backTile,
-            Int32Rect rightTile, Int32Rect leftTile,
-            Int32Rect topTile, Int32Rect bottomTile)
+            int fX, int fY, int fW, int fH,
+            int bkX, int bkY, int bkW, int bkH,
+            int rX, int rY, int rW, int rH,
+            int lX, int lY, int lW, int lH,
+            int tX, int tY, int tW, int tH,
+            int bmX, int bmY, int bmW, int bmH,
+            bool isOuterLayer)
         {
             // Front (+Z)
-            AddTexturedFace(parentGroup, skin, frontTile,
+            AddFace(parentGroup, skin, skinW, skinH, fX, fY, fW, fH, isOuterLayer,
                 new Point3D(x1, y1, z2), new Point3D(x2, y1, z2),
                 new Point3D(x2, y2, z2), new Point3D(x1, y2, z2));
 
             // Back (-Z)
-            AddTexturedFace(parentGroup, skin, backTile,
+            AddFace(parentGroup, skin, skinW, skinH, bkX, bkY, bkW, bkH, isOuterLayer,
                 new Point3D(x2, y1, z1), new Point3D(x1, y1, z1),
                 new Point3D(x1, y2, z1), new Point3D(x2, y2, z1));
 
-            // Right (-X)
-            AddTexturedFace(parentGroup, skin, rightTile,
+            // Right (-X in 3D coordinate space)
+            AddFace(parentGroup, skin, skinW, skinH, rX, rY, rW, rH, isOuterLayer,
                 new Point3D(x1, y1, z1), new Point3D(x1, y1, z2),
                 new Point3D(x1, y2, z2), new Point3D(x1, y2, z1));
 
-            // Left (+X)
-            AddTexturedFace(parentGroup, skin, leftTile,
+            // Left (+X in 3D coordinate space)
+            AddFace(parentGroup, skin, skinW, skinH, lX, lY, lW, lH, isOuterLayer,
                 new Point3D(x2, y1, z2), new Point3D(x2, y1, z1),
                 new Point3D(x2, y2, z1), new Point3D(x2, y2, z2));
 
             // Top (+Y)
-            AddTexturedFace(parentGroup, skin, topTile,
+            AddFace(parentGroup, skin, skinW, skinH, tX, tY, tW, tH, isOuterLayer,
                 new Point3D(x1, y2, z2), new Point3D(x2, y2, z2),
                 new Point3D(x2, y2, z1), new Point3D(x1, y2, z1));
 
             // Bottom (-Y)
-            AddTexturedFace(parentGroup, skin, bottomTile,
+            AddFace(parentGroup, skin, skinW, skinH, bmX, bmY, bmW, bmH, isOuterLayer,
                 new Point3D(x1, y1, z1), new Point3D(x2, y1, z1),
                 new Point3D(x2, y1, z2), new Point3D(x1, y1, z2));
         }
 
-        private void AddTexturedFace(Model3DGroup group, BitmapSource skin, Int32Rect tile,
+        private void AddFace(Model3DGroup group, uint[] skin, int skinW, int skinH,
+            int tx, int ty, int tw, int th, bool isOuterLayer,
             Point3D a, Point3D b, Point3D c, Point3D d)
         {
-            try
-            {
-                if (tile.X + tile.Width > skin.PixelWidth || tile.Y + tile.Height > skin.PixelHeight)
-                    return;
+            var mat = CreateFaceMaterial(skin, skinW, skinH, tx, ty, tw, th, 32, discardIfTransparent: isOuterLayer);
+            if (mat == null) return;
 
-                var cropped = new CroppedBitmap(skin, tile);
-                cropped.Freeze();
-                var brush = new ImageBrush(cropped) { Stretch = Stretch.Fill };
-                RenderOptions.SetBitmapScalingMode(brush, BitmapScalingMode.NearestNeighbor);
-                var material = new DiffuseMaterial(brush);
+            var mesh = new MeshGeometry3D();
+            mesh.Positions.Add(a);
+            mesh.Positions.Add(b);
+            mesh.Positions.Add(c);
+            mesh.Positions.Add(d);
 
-                var mesh = new MeshGeometry3D();
-                mesh.Positions.Add(a); mesh.Positions.Add(b); mesh.Positions.Add(c); mesh.Positions.Add(d);
-                mesh.TextureCoordinates.Add(new Point(0, 1));
-                mesh.TextureCoordinates.Add(new Point(1, 1));
-                mesh.TextureCoordinates.Add(new Point(1, 0));
-                mesh.TextureCoordinates.Add(new Point(0, 0));
-                mesh.TriangleIndices.Add(0); mesh.TriangleIndices.Add(1); mesh.TriangleIndices.Add(2);
-                mesh.TriangleIndices.Add(0); mesh.TriangleIndices.Add(2); mesh.TriangleIndices.Add(3);
+            mesh.TextureCoordinates.Add(new Point(0, 1));
+            mesh.TextureCoordinates.Add(new Point(1, 1));
+            mesh.TextureCoordinates.Add(new Point(1, 0));
+            mesh.TextureCoordinates.Add(new Point(0, 0));
 
-                group.Children.Add(new GeometryModel3D(mesh, material) { BackMaterial = material });
-            }
-            catch { }
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(1);
+            mesh.TriangleIndices.Add(2);
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(2);
+            mesh.TriangleIndices.Add(3);
+
+            group.Children.Add(new GeometryModel3D(mesh, mat) { BackMaterial = mat });
         }
 
         private void UpdateAnimations()
@@ -699,8 +864,8 @@ namespace VayuClient.Controls
             };
             _bodyBounceTransform.BeginAnimation(TranslateTransform3D.OffsetYProperty, bobbingAnim);
 
-            // 6. Character Subtle Yaw Drift (-32° to -20°)
-            var yawAnim = new DoubleAnimation(-32, -20, TimeSpan.FromSeconds(3.5))
+            // 6. Character Subtle Yaw Drift (-26° to -18°)
+            var yawAnim = new DoubleAnimation(-26, -18, TimeSpan.FromSeconds(3.5))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
@@ -720,3 +885,4 @@ namespace VayuClient.Controls
         }
     }
 }
+
