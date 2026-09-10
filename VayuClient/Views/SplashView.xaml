@@ -4,7 +4,7 @@
              xmlns:core="clr-namespace:VayuClient.Core"
              Cursor="Arrow">
 
-    <Grid x:Name="Root" Background="#060608" ClipToBounds="True">
+    <Grid x:Name="Root" Background="#050507" ClipToBounds="True">
         <Grid.RenderTransform>
             <TransformGroup>
                 <ScaleTransform x:Name="RootScale" ScaleX="1.0" ScaleY="1.0" CenterX="620" CenterY="390"/>
@@ -14,15 +14,15 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- 1. TOP MINIMALIST HEADER & WINDOW CONTROLS                    -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid VerticalAlignment="Top" Height="48" Margin="24,14,24,0" Panel.ZIndex="50">
-            <!-- Left: Minimalist Logo + Label -->
+        <Grid VerticalAlignment="Top" Height="48" Margin="28,16,28,0" Panel.ZIndex="50">
+            <!-- Left: Brand Logo & Identifier -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
                 <Path Data="M 2,12 L 14,2 L 26,12 L 14,22 Z M 8,12 L 14,7 L 20,12 L 14,17 Z" 
                       Fill="#FFFFFF" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
                 <TextBlock Text="VAYU CLIENT" FontSize="11" FontWeight="Bold" Foreground="#8E8EA0" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Right: Minimalist Window Control Dots -->
+            <!-- Right: Sleek Window Control Indicators -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,4,0">
                 <Border Width="9" Height="9" CornerRadius="4.5" Background="#EF4444" Margin="0,0,10,0" Opacity="0.85"/>
                 <Border Width="9" Height="9" CornerRadius="4.5" Background="#262632" Margin="0,0,10,0" Opacity="0.8"/>
@@ -32,50 +32,50 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 2. AMBIENT BACKGROUND GLOW & MESH GRID                        -->
+        <!-- 2. AMBIENT BACKDROP LIGHTING & NEBULA CORE                    -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- Deep Ambient Purple Radial Illumination behind the center -->
-        <Ellipse Width="800" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.35">
+        <!-- Central Ambient Purple Glow -->
+        <Ellipse Width="900" Height="650" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.4">
             <Ellipse.Fill>
-                <RadialGradientBrush Center="0.52,0.48" GradientOrigin="0.52,0.48" RadiusX="0.5" RadiusY="0.5">
-                    <GradientStop Color="#406B21A8" Offset="0.0"/>
-                    <GradientStop Color="#183B0764" Offset="0.5"/>
-                    <GradientStop Color="#00060608" Offset="1.0"/>
+                <RadialGradientBrush Center="0.55,0.45" GradientOrigin="0.55,0.45" RadiusX="0.5" RadiusY="0.5">
+                    <GradientStop Color="#50581C87" Offset="0.0"/>
+                    <GradientStop Color="#252E1065" Offset="0.55"/>
+                    <GradientStop Color="#00050507" Offset="1.0"/>
                 </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 3. THE FRACTAL GROWTH: 3D VECTOR CRYSTALLINE POLYHEDRA        -->
+        <!-- 3. THE FRACTAL GROWTH: 3D REALISTIC FACETED POLYHEDRA         -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- Canvas for full precision geometric coordinate mapping -->
         <Viewbox Stretch="Uniform" IsHitTestVisible="False">
             <Canvas Width="1240" Height="780" Background="Transparent">
 
-                <!-- ─── CLUSTER 0: Baseline Wireframe Lattice & Outer Nodes (0%) ─── -->
-                <Canvas x:Name="ClusterStage0" Opacity="0.25">
-                    <!-- Fine Wireframe Connectivity Struts -->
-                    <Line X1="80" Y1="620" X2="240" Y2="540" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="240" Y1="540" X2="410" Y2="430" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="410" Y1="430" X2="540" Y2="260" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="540" Y1="260" X2="760" Y2="190" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="760" Y1="190" X2="960" Y2="140" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="960" Y1="140" X2="1140" Y2="220" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="410" Y1="430" X2="620" Y2="560" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="620" Y1="560" X2="880" Y2="500" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
-                    <Line X1="880" Y1="500" X2="1080" Y2="380" Stroke="#40FFFFFF" StrokeThickness="0.6"/>
+                <!-- ─── CLUSTER 0: Baseline Wireframe Struts & Micro Nodes (0%) ─── -->
+                <Canvas x:Name="ClusterStage0" Opacity="0.3">
+                    <Line X1="60" Y1="640" X2="180" Y2="580" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="180" Y1="580" X2="290" Y2="440" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="290" Y1="440" X2="430" Y2="240" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="430" Y1="240" X2="580" Y2="160" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="580" Y1="160" X2="760" Y2="180" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="760" Y1="180" X2="980" Y2="120" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="980" Y1="120" X2="1160" Y2="240" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="430" Y1="240" X2="510" Y2="560" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="510" Y1="560" X2="750" Y2="540" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="750" Y1="540" X2="920" Y2="440" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
+                    <Line X1="920" Y1="440" X2="1100" Y2="340" Stroke="#50FFFFFF" StrokeThickness="0.65"/>
                     
-                    <!-- Ambient Micro-nodes -->
-                    <Ellipse Canvas.Left="78" Canvas.Top="618" Width="4" Height="4" Fill="#A855F7"/>
-                    <Ellipse Canvas.Left="238" Canvas.Top="538" Width="4" Height="4" Fill="#FFFFFF"/>
-                    <Ellipse Canvas.Left="538" Canvas.Top="258" Width="4" Height="4" Fill="#A855F7"/>
-                    <Ellipse Canvas.Left="758" Canvas.Top="188" Width="4" Height="4" Fill="#FFFFFF"/>
-                    <Ellipse Canvas.Left="958" Canvas.Top="138" Width="4" Height="4" Fill="#A855F7"/>
-                    <Ellipse Canvas.Left="1138" Canvas.Top="218" Width="4" Height="4" Fill="#FFFFFF"/>
-                    <Ellipse Canvas.Left="878" Canvas.Top="498" Width="4" Height="4" Fill="#A855F7"/>
+                    <Ellipse Canvas.Left="58" Canvas.Top="638" Width="4" Height="4" Fill="#A855F7"/>
+                    <Ellipse Canvas.Left="178" Canvas.Top="578" Width="4" Height="4" Fill="#FFFFFF"/>
+                    <Ellipse Canvas.Left="288" Canvas.Top="438" Width="4" Height="4" Fill="#C084FC"/>
+                    <Ellipse Canvas.Left="428" Canvas.Top="238" Width="4" Height="4" Fill="#FFFFFF"/>
+                    <Ellipse Canvas.Left="578" Canvas.Top="158" Width="4" Height="4" Fill="#A855F7"/>
+                    <Ellipse Canvas.Left="758" Canvas.Top="178" Width="4" Height="4" Fill="#FFFFFF"/>
+                    <Ellipse Canvas.Left="978" Canvas.Top="118" Width="4" Height="4" Fill="#C084FC"/>
+                    <Ellipse Canvas.Left="1158" Canvas.Top="238" Width="4" Height="4" Fill="#FFFFFF"/>
                 </Canvas>
 
-                <!-- ─── CLUSTER 1: Left Wing Primary Polyhedra (Emerges at 25%) ─── -->
+                <!-- ─── CLUSTER 1: Left Wing Primary Polyhedral Crystals (25%) ─── -->
                 <Canvas x:Name="ClusterStage1" Opacity="0" RenderTransformOrigin="0.2,0.7">
                     <Canvas.RenderTransform>
                         <TransformGroup>
@@ -84,49 +84,99 @@
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
-                    <!-- Large Left Base Polyhedron (Peak: 170, 560) -->
-                    <!-- Facet A: Top Light Face -->
-                    <Polygon Points="170,560 60,630 180,720" Fill="#161622" Stroke="#70FFFFFF" StrokeThickness="0.9"/>
-                    <!-- Facet B: Shadow Bottom Face -->
-                    <Polygon Points="170,560 180,720 280,660" Fill="#0E0E14" Stroke="#40FFFFFF" StrokeThickness="0.8"/>
-                    <!-- Facet C: Inner Illuminated Purple Face -->
-                    <Polygon Points="170,560 280,660 250,510">
+                    <!-- Crystal Star 1: Bottom-Left Base (Peak: 160, 580) -->
+                    <!-- Facet Top-Light (Key light from top-left) -->
+                    <Polygon Points="160,580 50,650 170,730" Stroke="#80FFFFFF" StrokeThickness="0.85">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#807C3AED" Offset="0"/>
-                                <GradientStop Color="#101018" Offset="1"/>
+                                <GradientStop Color="#2A2A3E" Offset="0"/>
+                                <GradientStop Color="#14141E" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#C084FC" Opacity="0.8"/>
-                        </Polygon.Stroke>
                     </Polygon>
-                    <!-- Facet D: Top Shard -->
-                    <Polygon Points="170,560 250,510 120,490" Fill="#1E1E2C" Stroke="#80FFFFFF" StrokeThickness="0.9"/>
-                    <Polygon Points="170,560 120,490 60,630" Fill="#12121A" Stroke="#30FFFFFF" StrokeThickness="0.8"/>
-
-                    <!-- Mid Left Secondary Polyhedron (Peak: 260, 420) -->
-                    <!-- Facet A: Top Light -->
-                    <Polygon Points="260,420 180,340 310,310" Fill="#242436" Stroke="#90FFFFFF" StrokeThickness="0.9"/>
-                    <!-- Facet B: Outer Shadow -->
-                    <Polygon Points="260,420 120,490 180,340" Fill="#14141E" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
-                    <!-- Facet C: Glowing Purple Seam -->
-                    <Polygon Points="260,420 250,510 380,470">
+                    <!-- Facet Bottom-Shadow -->
+                    <Polygon Points="160,580 170,730 270,680" Stroke="#45FFFFFF" StrokeThickness="0.8">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#12121A" Offset="0"/>
+                                <GradientStop Color="#07070B" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet Inner Purple Illuminated Crevice -->
+                    <Polygon Points="160,580 270,680 240,520" Stroke="#C084FC" StrokeThickness="1.0">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
                                 <GradientStop Color="#A855F7" Offset="0"/>
-                                <GradientStop Color="#12121A" Offset="0.85"/>
+                                <GradientStop Color="#581C87" Offset="0.4"/>
+                                <GradientStop Color="#0E0E16" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#E9D5FF" Opacity="0.9"/>
-                        </Polygon.Stroke>
                     </Polygon>
-                    <!-- Facet D: Bridge to Center -->
-                    <Polygon Points="260,420 380,470 310,310" Fill="#181824" Stroke="#60FFFFFF" StrokeThickness="0.85"/>
+                    <!-- Facet Top-Right Shard -->
+                    <Polygon Points="160,580 240,520 110,480" Stroke="#90FFFFFF" StrokeThickness="0.9">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                <GradientStop Color="#303046" Offset="0"/>
+                                <GradientStop Color="#161622" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <Polygon Points="160,580 110,480 50,650" Stroke="#40FFFFFF" StrokeThickness="0.75" Fill="#0E0E16"/>
+
+                    <!-- Crystal Star 2: Mid-Left Main Polyhedron (Peak: 270, 440) -->
+                    <!-- Facet A: Top Specular Light Face -->
+                    <Polygon Points="270,440 180,330 320,310" Stroke="#B0FFFFFF" StrokeThickness="1.0">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#3E3E58" Offset="0"/>
+                                <GradientStop Color="#202030" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet B: Left Shadow Face -->
+                    <Polygon Points="270,440 110,480 180,330" Stroke="#55FFFFFF" StrokeThickness="0.8">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#181824" Offset="0"/>
+                                <GradientStop Color="#0C0C12" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet C: Radiant Violet Vein Seam -->
+                    <Polygon Points="270,440 240,520 390,480" Stroke="#E9D5FF" StrokeThickness="1.1">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                                <GradientStop Color="#C084FC" Offset="0"/>
+                                <GradientStop Color="#7C3AED" Offset="0.35"/>
+                                <GradientStop Color="#101018" Offset="0.9"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet D: Inner Dark Face -->
+                    <Polygon Points="270,440 390,480 320,310" Stroke="#70FFFFFF" StrokeThickness="0.85">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0.5,1">
+                                <GradientStop Color="#222234" Offset="0"/>
+                                <GradientStop Color="#101018" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+
+                    <!-- Crystal Star 3: Upper-Left Protruding Shard (Peak: 170, 290) -->
+                    <Polygon Points="170,290 90,340 180,330" Stroke="#70FFFFFF" StrokeThickness="0.85" Fill="#1C1C2A"/>
+                    <Polygon Points="170,290 180,330 240,240" Stroke="#A0FFFFFF" StrokeThickness="0.95">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#36364E" Offset="0"/>
+                                <GradientStop Color="#1A1A26" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <Polygon Points="170,290 240,240 140,210" Stroke="#50FFFFFF" StrokeThickness="0.8" Fill="#12121B"/>
                 </Canvas>
 
-                <!-- ─── CLUSTER 2: Upper Left & Spine Bridge (Emerges at 50%) ─── -->
+                <!-- ─── CLUSTER 2: Upper Spine & Canopy (50%) ─── -->
                 <Canvas x:Name="ClusterStage2" Opacity="0" RenderTransformOrigin="0.35,0.4">
                     <Canvas.RenderTransform>
                         <TransformGroup>
@@ -135,45 +185,61 @@
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
-                    <!-- Upper Left Apex Polyhedron (Peak: 390, 260) -->
-                    <!-- Facet A: Top Razor Light Face -->
-                    <Polygon Points="390,260 310,310 350,170" Fill="#2C2C42" Stroke="#B0FFFFFF" StrokeThickness="1.0"/>
-                    <!-- Facet B: Back Ridge Face -->
-                    <Polygon Points="390,260 350,170 480,180" Fill="#1C1C2A" Stroke="#60FFFFFF" StrokeThickness="0.85"/>
-                    <!-- Facet C: Purple Canyon Crevice -->
-                    <Polygon Points="390,260 480,180 500,310">
+                    <!-- Crystal Star 4: High Apex Spine (Peak: 410, 240) -->
+                    <!-- Facet A: Top Specular Light Blade -->
+                    <Polygon Points="410,240 320,310 360,140" Stroke="#E0FFFFFF" StrokeThickness="1.1">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#4A4A68" Offset="0"/>
+                                <GradientStop Color="#242436" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet B: Rear Ridge -->
+                    <Polygon Points="410,240 360,140 500,160" Stroke="#80FFFFFF" StrokeThickness="0.9">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#26263A" Offset="0"/>
+                                <GradientStop Color="#12121C" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet C: Deep Purple Radiant Abyss -->
+                    <Polygon Points="410,240 500,160 520,300" Stroke="#C084FC" StrokeThickness="1.05">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                <GradientStop Color="#C084FC" Offset="0"/>
-                                <GradientStop Color="#101018" Offset="0.9"/>
+                                <GradientStop Color="#E879F9" Offset="0"/>
+                                <GradientStop Color="#9333EA" Offset="0.35"/>
+                                <GradientStop Color="#0B0B12" Offset="0.9"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#C084FC" Opacity="0.9"/>
-                        </Polygon.Stroke>
                     </Polygon>
-                    <!-- Facet D: Lower Center Connection -->
-                    <Polygon Points="390,260 500,310 380,470" Fill="#14141E" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="390,260 380,470 310,310" Fill="#0E0E14" Stroke="#35FFFFFF" StrokeThickness="0.75"/>
+                    <!-- Facet D: Lower Connection to VAYU -->
+                    <Polygon Points="410,240 520,300 390,480" Stroke="#60FFFFFF" StrokeThickness="0.85" Fill="#141420"/>
+                    <Polygon Points="410,240 390,480 320,310" Stroke="#45FFFFFF" StrokeThickness="0.8" Fill="#0E0E16"/>
 
-                    <!-- Lower Center Anchor Shards (X: 380..520, Y: 470..680) -->
-                    <Polygon Points="460,580 380,470 420,670" Fill="#12121A" Stroke="#40FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="460,580 420,670 540,640" Fill="#0C0C12" Stroke="#30FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="460,580 540,640 500,510">
+                    <!-- Crystal Star 5: Top Crown Arch (Peak: 560, 160) -->
+                    <Polygon Points="560,160 500,160 540,80" Stroke="#A0FFFFFF" StrokeThickness="0.95" Fill="#28283C"/>
+                    <Polygon Points="560,160 540,80 660,110" Stroke="#C0FFFFFF" StrokeThickness="1.0">
                         <Polygon.Fill>
-                            <LinearGradientBrush StartPoint="1,1" EndPoint="0,0">
-                                <GradientStop Color="#7C3AED" Offset="0"/>
-                                <GradientStop Color="#0F0F16" Offset="0.8"/>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#40405C" Offset="0"/>
+                                <GradientStop Color="#1E1E2C" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#A855F7" Opacity="0.85"/>
-                        </Polygon.Stroke>
                     </Polygon>
-                    <Polygon Points="460,580 500,510 380,470" Fill="#1A1A26" Stroke="#60FFFFFF" StrokeThickness="0.85"/>
+                    <Polygon Points="560,160 660,110 630,220" Stroke="#70FFFFFF" StrokeThickness="0.85" Fill="#181826"/>
+                    <Polygon Points="560,160 630,220 500,160" Stroke="#A855F7" StrokeThickness="0.9">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#7C3AED" Offset="0"/>
+                                <GradientStop Color="#101018" Offset="0.8"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
                 </Canvas>
 
-                <!-- ─── CLUSTER 3: Right Wing Polyhedral Canopy (Emerges at 75%) ─── -->
+                <!-- ─── CLUSTER 3: Right Wing Polyhedral Canopy (75%) ─── -->
                 <Canvas x:Name="ClusterStage3" Opacity="0" RenderTransformOrigin="0.7,0.4">
                     <Canvas.RenderTransform>
                         <TransformGroup>
@@ -182,55 +248,72 @@
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
-                    <!-- Central-Right Arch Crystal (Peak: 720, 220) -->
-                    <!-- Facet A: Top Prism Light -->
-                    <Polygon Points="720,220 600,160 710,90" Fill="#32324A" Stroke="#D0FFFFFF" StrokeThickness="1.0"/>
-                    <!-- Facet B: Outer Right Shadow -->
-                    <Polygon Points="720,220 710,90 840,150" Fill="#1E1E2C" Stroke="#70FFFFFF" StrokeThickness="0.85"/>
-                    <!-- Facet C: Glowing Purple Vertical Ridge -->
-                    <Polygon Points="720,220 840,150 820,310">
+                    <!-- Crystal Star 6: Central Right Canopy (Peak: 740, 200) -->
+                    <!-- Facet A: Sky Light Top Blade -->
+                    <Polygon Points="740,200 630,220 730,70" Stroke="#E0FFFFFF" StrokeThickness="1.15">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#464664" Offset="0"/>
+                                <GradientStop Color="#222234" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet B: Right Outer Shadow -->
+                    <Polygon Points="740,200 730,70 860,130" Stroke="#80FFFFFF" StrokeThickness="0.9">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#242436" Offset="0"/>
+                                <GradientStop Color="#101018" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <!-- Facet C: Vertical Neon Purple Ridge -->
+                    <Polygon Points="740,200 860,130 840,300" Stroke="#F0ABFC" StrokeThickness="1.2">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                 <GradientStop Color="#C084FC" Offset="0"/>
-                                <GradientStop Color="#101018" Offset="0.85"/>
+                                <GradientStop Color="#6B21A8" Offset="0.45"/>
+                                <GradientStop Color="#0B0B10" Offset="0.95"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#E879F9" Opacity="0.95"/>
-                        </Polygon.Stroke>
                     </Polygon>
-                    <!-- Facet D: Inner Face wrapping over VAYU -->
-                    <Polygon Points="720,220 820,310 680,330" Fill="#14141E" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="720,220 680,330 600,160" Fill="#1A1A26" Stroke="#60FFFFFF" StrokeThickness="0.8"/>
+                    <!-- Facet D: Inner Face framing VAYU -->
+                    <Polygon Points="740,200 840,300 700,320" Stroke="#60FFFFFF" StrokeThickness="0.85" Fill="#14141E"/>
+                    <Polygon Points="740,200 700,320 630,220" Stroke="#75FFFFFF" StrokeThickness="0.9" Fill="#1C1C2A"/>
 
-                    <!-- Far Right Wing Mega-Crystal (Peak: 930, 240) -->
-                    <!-- Facet A: Sky Light Face -->
-                    <Polygon Points="930,240 840,150 960,110" Fill="#2A2A3E" Stroke="#A0FFFFFF" StrokeThickness="0.9"/>
+                    <!-- Crystal Star 7: Far-Right Mega Crystal (Peak: 960, 220) -->
+                    <!-- Facet A: Top Specular Face -->
+                    <Polygon Points="960,220 860,130 990,90" Stroke="#B0FFFFFF" StrokeThickness="1.0">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#3A3A54" Offset="0"/>
+                                <GradientStop Color="#1E1E2C" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
                     <!-- Facet B: Far Right Edge Shadow -->
-                    <Polygon Points="930,240 960,110 1080,190" Fill="#161622" Stroke="#60FFFFFF" StrokeThickness="0.85"/>
+                    <Polygon Points="960,220 990,90 1110,170" Stroke="#70FFFFFF" StrokeThickness="0.85" Fill="#161622"/>
                     <!-- Facet C: Lower Purple Core -->
-                    <Polygon Points="930,240 1080,190 1020,360">
+                    <Polygon Points="960,220 1110,170 1050,350" Stroke="#C084FC" StrokeThickness="1.05">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="1,0" EndPoint="0,1">
-                                <GradientStop Color="#9333EA" Offset="0"/>
-                                <GradientStop Color="#0D0D14" Offset="0.8"/>
+                                <GradientStop Color="#A855F7" Offset="0"/>
+                                <GradientStop Color="#4C1D95" Offset="0.4"/>
+                                <GradientStop Color="#0D0D14" Offset="0.9"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#C084FC" Opacity="0.85"/>
-                        </Polygon.Stroke>
                     </Polygon>
-                    <!-- Facet D: Inner Bridge -->
-                    <Polygon Points="930,240 1020,360 820,310" Fill="#181826" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="930,240 820,310 840,150" Fill="#202030" Stroke="#70FFFFFF" StrokeThickness="0.85"/>
+                    <!-- Facet D: Lower Left Return -->
+                    <Polygon Points="960,220 1050,350 840,300" Stroke="#60FFFFFF" StrokeThickness="0.85" Fill="#181824"/>
+                    <Polygon Points="960,220 840,300 860,130" Stroke="#85FFFFFF" StrokeThickness="0.9" Fill="#222232"/>
 
-                    <!-- Far Right Secondary Shard (Peak: 1110, 320) -->
-                    <Polygon Points="1110,320 1080,190 1190,270" Fill="#222234" Stroke="#80FFFFFF" StrokeThickness="0.85"/>
-                    <Polygon Points="1110,320 1190,270 1140,420" Fill="#101018" Stroke="#40FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="1110,320 1140,420 1020,360" Fill="#14141E" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
+                    <!-- Crystal Star 8: Far Right Secondary Shards (Peak: 1140, 290) -->
+                    <Polygon Points="1140,290 1110,170 1210,240" Stroke="#80FFFFFF" StrokeThickness="0.9" Fill="#262638"/>
+                    <Polygon Points="1140,290 1210,240 1170,410" Stroke="#45FFFFFF" StrokeThickness="0.8" Fill="#101018"/>
+                    <Polygon Points="1140,290 1170,410 1050,350" Stroke="#60FFFFFF" StrokeThickness="0.85" Fill="#141420"/>
                 </Canvas>
 
-                <!-- ─── CLUSTER 4: Center Core Origami Frame & Glowing Purple Veins (90-100%) ─── -->
+                <!-- ─── CLUSTER 4: Center Core Framing & Radiant Purple Veins (90-100%) ─── -->
                 <Canvas x:Name="ClusterStage4" Opacity="0" RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
                         <TransformGroup>
@@ -238,42 +321,51 @@
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
-                    <!-- Lower Right Crystal Pod (Peak: 760, 520) -->
+                    <!-- Crystal Star 9: Lower Right Anchor Polyhedron (Peak: 780, 520) -->
                     <!-- Facet A: Top -->
-                    <Polygon Points="760,520 680,330 820,310" Fill="#161622" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
+                    <Polygon Points="780,520 700,320 840,300" Stroke="#60FFFFFF" StrokeThickness="0.85" Fill="#161622"/>
                     <!-- Facet B: Right -->
-                    <Polygon Points="760,520 820,310 900,480" Fill="#101016" Stroke="#40FFFFFF" StrokeThickness="0.8"/>
+                    <Polygon Points="780,520 840,300 930,460" Stroke="#50FFFFFF" StrokeThickness="0.8" Fill="#101018"/>
                     <!-- Facet C: Bottom Purple Radiant Vein -->
-                    <Polygon Points="760,520 900,480 810,630">
+                    <Polygon Points="780,520 930,460 830,640" Stroke="#C084FC" StrokeThickness="1.1">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
                                 <GradientStop Color="#A855F7" Offset="0"/>
-                                <GradientStop Color="#0B0B10" Offset="0.85"/>
+                                <GradientStop Color="#581C87" Offset="0.4"/>
+                                <GradientStop Color="#0B0B10" Offset="0.9"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#C084FC" Opacity="0.9"/>
-                        </Polygon.Stroke>
                     </Polygon>
                     <!-- Facet D: Bottom Left -->
-                    <Polygon Points="760,520 810,630 670,580" Fill="#0D0D14" Stroke="#30FFFFFF" StrokeThickness="0.75"/>
-                    <Polygon Points="760,520 670,580 680,330">
+                    <Polygon Points="780,520 830,640 680,590" Stroke="#40FFFFFF" StrokeThickness="0.8" Fill="#0D0D14"/>
+                    <!-- Facet E: Center Crevice Purple Seam -->
+                    <Polygon Points="780,520 680,590 700,320" Stroke="#E879F9" StrokeThickness="1.05">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                 <GradientStop Color="#7C3AED" Offset="0"/>
-                                <GradientStop Color="#12121A" Offset="0.8"/>
+                                <GradientStop Color="#141420" Offset="0.8"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
-                        <Polygon.Stroke>
-                            <SolidColorBrush Color="#E879F9" Opacity="0.9"/>
-                        </Polygon.Stroke>
                     </Polygon>
 
-                    <!-- Micro Prismatic Shards around the VAYU Typography Perimeter -->
-                    <Polygon Points="500,310 570,240 600,160" Fill="#181826" Stroke="#60FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="500,310 600,160 680,330" Fill="#0F0F16" Stroke="#40FFFFFF" StrokeThickness="0.75"/>
-                    <Polygon Points="500,510 610,540 670,580" Fill="#14141E" Stroke="#50FFFFFF" StrokeThickness="0.8"/>
-                    <Polygon Points="500,510 670,580 540,640" Fill="#0E0E14" Stroke="#35FFFFFF" StrokeThickness="0.75"/>
+                    <!-- Crystal Star 10: Lower Left Anchor Polyhedron (Peak: 470, 580) -->
+                    <Polygon Points="470,580 390,480 430,690" Stroke="#50FFFFFF" StrokeThickness="0.8" Fill="#12121A"/>
+                    <Polygon Points="470,580 430,690 560,650" Stroke="#40FFFFFF" StrokeThickness="0.8" Fill="#0A0A10"/>
+                    <Polygon Points="470,580 560,650 510,510" Stroke="#A855F7" StrokeThickness="1.0">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="1,1" EndPoint="0,0">
+                                <GradientStop Color="#8B5CF6" Offset="0"/>
+                                <GradientStop Color="#0F0F16" Offset="0.8"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <Polygon Points="470,580 510,510 390,480" Stroke="#70FFFFFF" StrokeThickness="0.85" Fill="#1A1A26"/>
+
+                    <!-- Micro Prismatic Shards around the VAYU Perimeter -->
+                    <Polygon Points="520,300 590,230 630,160" Stroke="#65FFFFFF" StrokeThickness="0.85" Fill="#181828"/>
+                    <Polygon Points="520,300 630,160 700,320" Stroke="#45FFFFFF" StrokeThickness="0.8" Fill="#0E0E16"/>
+                    <Polygon Points="510,510 620,540 680,590" Stroke="#55FFFFFF" StrokeThickness="0.85" Fill="#161622"/>
+                    <Polygon Points="510,510 680,590 560,650" Stroke="#40FFFFFF" StrokeThickness="0.8" Fill="#0C0C12"/>
                 </Canvas>
 
                 <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -281,20 +373,20 @@
                 <!-- ═══════════════════════════════════════════════════════════════ -->
                 <Canvas x:Name="AnnotationCanvas" Opacity="0">
                     <!-- Leader Line 1: Upper-Left "VAYU CLIENT" Annotation -->
-                    <Polyline Points="340,160 380,160 430,220" Stroke="#70FFFFFF" StrokeThickness="0.85"/>
-                    <Ellipse Canvas.Left="428" Canvas.Top="218" Width="4" Height="4" Fill="#FFFFFF"/>
-                    <TextBlock Text="VAYU CLIENT" Canvas.Left="260" Canvas.Top="152" 
+                    <Polyline Points="320,150 370,150 420,210" Stroke="#80FFFFFF" StrokeThickness="0.9"/>
+                    <Ellipse Canvas.Left="418" Canvas.Top="208" Width="4" Height="4" Fill="#FFFFFF"/>
+                    <TextBlock Text="VAYU CLIENT" Canvas.Left="236" Canvas.Top="142" 
                                FontSize="10" FontWeight="Bold" Foreground="#A855F7"/>
 
                     <!-- Leader Line 2: Top-Center "VAYU" Annotation -->
-                    <Polyline Points="580,120 620,120 620,290" Stroke="#70FFFFFF" StrokeThickness="0.85"/>
-                    <Ellipse Canvas.Left="618" Canvas.Top="288" Width="4" Height="4" Fill="#C084FC"/>
-                    <TextBlock Text="VAYU" Canvas.Left="540" Canvas.Top="112" 
+                    <Polyline Points="560,110 600,110 600,280" Stroke="#80FFFFFF" StrokeThickness="0.9"/>
+                    <Ellipse Canvas.Left="598" Canvas.Top="278" Width="4" Height="4" Fill="#C084FC"/>
+                    <TextBlock Text="VAYU" Canvas.Left="520" Canvas.Top="102" 
                                FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"/>
 
                     <!-- Leader Line 3: Bottom-Right Status Bracket Annotation -->
-                    <Polyline Points="790,520 830,560 880,560" Stroke="#70FFFFFF" StrokeThickness="0.85"/>
-                    <Ellipse Canvas.Left="788" Canvas.Top="518" Width="4" Height="4" Fill="#A855F7"/>
+                    <Polyline Points="800,530 840,570 890,570" Stroke="#80FFFFFF" StrokeThickness="0.9"/>
+                    <Ellipse Canvas.Left="798" Canvas.Top="528" Width="4" Height="4" Fill="#A855F7"/>
                 </Canvas>
 
             </Canvas>
@@ -303,8 +395,7 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- 5. CENTRAL BRANDING TYPOGRAPHY (CRISP PURE WHITE)              -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-10,0,0">
-            <!-- Central "VAYU" Ultra-Clean Logo Typography -->
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-12,0,0">
             <StackPanel x:Name="CenterLogoGroup" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0">
                 <StackPanel.RenderTransform>
                     <TransformGroup>
@@ -313,13 +404,13 @@
                 </StackPanel.RenderTransform>
 
                 <TextBlock Text="VAYU" 
-                           FontSize="64" 
+                           FontSize="68" 
                            FontWeight="Black" 
                            Foreground="#FFFFFF" 
                            HorizontalAlignment="Center" 
                            TextAlignment="Center">
                     <TextBlock.Effect>
-                        <DropShadowEffect Color="#A855F7" BlurRadius="24" ShadowDepth="0" Opacity="0.45"/>
+                        <DropShadowEffect Color="#A855F7" BlurRadius="28" ShadowDepth="0" Opacity="0.55"/>
                     </TextBlock.Effect>
                 </TextBlock>
             </StackPanel>
@@ -328,7 +419,7 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- 6. LOWER-RIGHT STATUS & PROGRESS TELEMETRY                    -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,54,58" Panel.ZIndex="60">
+        <Grid VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,58,58" Panel.ZIndex="60">
             <StackPanel x:Name="StatusContainer" Opacity="0" HorizontalAlignment="Right">
                 <!-- Status Row with Glowing Status Indicator Dot -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -348,7 +439,7 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 
-                <!-- Thin Minimalist Progress Hairline (90px wide) -->
+                <!-- Thin Minimalist Progress Hairline (160px wide) -->
                 <Border Width="160" Height="2" Background="#161622" HorizontalAlignment="Right" Margin="0,8,0,0" CornerRadius="1">
                     <Border x:Name="ProgressHairline" Width="0" Height="2" HorizontalAlignment="Left" CornerRadius="1">
                         <Border.Background>
