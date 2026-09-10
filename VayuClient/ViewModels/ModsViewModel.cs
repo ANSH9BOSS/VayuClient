@@ -290,6 +290,16 @@ namespace VayuClient.ViewModels
             _main.NavigateTo("InstallationManager");
         }
 
+        [RelayCommand]
+        private void ConvertInstance()
+        {
+            var target = SelectedInstance ?? _instanceService.GetActiveInstance();
+            if (target == null) return;
+
+            Views.ModpackConverterDialog.ShowDialog(target, System.Windows.Application.Current.MainWindow);
+            LoadInstances();
+        }
+
         private static readonly HttpClient _modrinthHttp = new() { Timeout = TimeSpan.FromSeconds(5) };
         private static readonly string _iconsCacheDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VayuClient", "Cache", "Icons");

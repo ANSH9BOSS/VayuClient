@@ -273,16 +273,17 @@ public final class LauncherRenderer {
         int statBoxH = 34;
         int statBoxX = panelX + 16;
         int statBoxY = panelY + 40;
+        reg("profile", statBoxX, statBoxY, statBoxW, statBoxH);
         VayuHUDUI.roundedRect(g, statBoxX, statBoxY, statBoxW, statBoxH, 6, 0xFF050A10);
         VayuHUDUI.roundedOutline(g, statBoxX, statBoxY, statBoxW, statBoxH, 6, 0x2238BDF8);
 
         Minecraft mc = Minecraft.getInstance();
+        String user = getUserName();
         String fps = mc.getFps() + " FPS";
         String server = mc.hasSingleplayerServer() ? "Singleplayer" : (mc.getCurrentServer() != null ? mc.getCurrentServer().ip : "Multiplayer");
-        String pos = mc.player != null ? String.format("X:%d Y:%d Z:%d", mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ()) : "X:0 Y:0 Z:0";
 
-        g.text(font, server + " | " + fps, statBoxX + 10, statBoxY + 6, 0xFFFFFFFF, true);
-        g.text(font, pos, statBoxX + 10, statBoxY + 18, VayuTheme.PRIMARY, false);
+        g.text(font, "👤 " + user + " (" + server + ")", statBoxX + 10, statBoxY + 6, 0xFFFFFFFF, true);
+        g.text(font, fps + " | Click to Switch Account/Skin", statBoxX + 10, statBoxY + 18, VayuTheme.PRIMARY, false);
 
         // Pause Action Buttons
         int btnW = panelW - 32;
@@ -355,11 +356,11 @@ public final class LauncherRenderer {
 
         // Left Brand Badge
         int leftX = pad;
-        int badgeW = 124;
+        int badgeW = 132;
         VayuHUDUI.roundedRect(g, leftX, y, badgeW, h, 6, 0xD00A111A);
         VayuHUDUI.roundedOutline(g, leftX, y, badgeW, h, 6, 0x3338BDF8);
         g.text(font, "VAYUCLIENT", leftX + 10, y + 9, VayuTheme.PRIMARY, true);
-        g.text(font, "1.9.1", leftX + badgeW - 36, y + 9, VayuTheme.TEXT_MUTED, false);
+        g.text(font, "v2.1.0", leftX + badgeW - 40, y + 9, VayuTheme.TEXT_MUTED, false);
 
         // Right Profile Pill
         String user = getUserName();
@@ -387,11 +388,11 @@ public final class LauncherRenderer {
     // ═══════════════════════════════════════════════════════════════
 
     public static void renderVanillaOverlay(GuiGraphicsExtractor g, Font font, int screenW, int screenH, int mouseX, int mouseY) {
-        g.text(font, "VayuClient v1.9.1", 12, screenH - 18, 0x8838BDF8, true);
+        g.text(font, "VayuClient v2.1.0", 12, screenH - 18, 0x8838BDF8, true);
     }
 
     public static int[] skinToggleBounds(int screenW, int screenH) {
-        return new int[]{screenW - 36, 12, 24, 24};
+        return new int[]{-1000, -1000, 0, 0};
     }
 
     public static int[] discordBounds(int screenW, int screenH) {

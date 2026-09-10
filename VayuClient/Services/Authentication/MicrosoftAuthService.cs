@@ -507,7 +507,9 @@ namespace VayuClient.Services.Authentication
 
             try
             {
-                CrashLogger.LogMessage($"[AUTH] Refreshing session for player {profile.Username} via MSAL.NET...");
+                CrashLogger.LogMessage($"[AUTH] Refreshing session for player {profile.Username}...");
+
+                // 1. Try MSAL in-memory / persistent account cache
                 var app = GetMsalApp();
                 var accounts = await app.GetAccountsAsync();
                 var account = accounts.FirstOrDefault(a => a.HomeAccountId.Identifier == profile.RefreshToken) 
@@ -516,7 +518,11 @@ namespace VayuClient.Services.Authentication
                 AuthenticationResult? authResult = null;
                 if (account != null)
                 {
-                    authResult = await app.AcquireTokenSilent(MicrosoftAuthConfig.Scopes, account).ExecuteAsync(ct);
+                    try
+                    {
+                        authResult = await app.AcquireTokenSilent(MicrosoftAuthConfig.Scopes, account).ExecuteAsync(ct);
+                    }
+                    catch { }
                 }
 
                 if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
@@ -524,12 +530,50 @@ namespace VayuClient.Services.Authentication
                     var refreshed = await CompleteMinecraftAuthenticationAsync(authResult.AccessToken, authResult.Account?.HomeAccountId?.Identifier, null, ct);
                     refreshed.Id = profile.Id;
                     refreshed.AvatarIndex = profile.AvatarIndex;
+                    CrashLogger.LogMessage($"[AUTH] Successfully refreshed Microsoft session via MSAL for {profile.Username}.");
                     return refreshed;
+                }
+
+                // 2. Try Live Connect OAuth refresh_token flow
+                if (!string.IsNullOrWhiteSpace(profile.RefreshToken))
+                {
+                    CrashLogger.LogMessage($"[AUTH] Refreshing session via Live Connect OAuth refresh_token for {profile.Username}...");
+                    var content = new FormUrlEncodedContent(new[]
+                    {
+                        new KeyValuePair<string, string>("client_id", "00000000402b5328"),
+                        new KeyValuePair<string, string>("grant_type", "refresh_token"),
+                        new KeyValuePair<string, string>("refresh_token", profile.RefreshToken),
+                        new KeyValuePair<string, string>("scope", "service::user.auth.xboxlive.com::MBI_SSL")
+                    });
+
+                    var response = await _http.PostAsync("https://login.live.com/oauth20_token.srf", content, ct);
+                    var json = await response.Content.ReadAsStringAsync(ct);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var msaToken = JsonConvert.DeserializeObject<MsaTokenResponse>(json);
+                        if (msaToken != null && !string.IsNullOrEmpty(msaToken.AccessToken))
+                        {
+                            CrashLogger.LogMessage($"[AUTH] Live Connect OAuth refresh succeeded. Acquired fresh MSA token for {profile.Username}.");
+                            var refreshed = await CompleteMinecraftAuthenticationAsync(
+                                msaToken.AccessToken, 
+                                !string.IsNullOrEmpty(msaToken.RefreshToken) ? msaToken.RefreshToken : profile.RefreshToken, 
+                                null, 
+                                ct);
+                            refreshed.Id = profile.Id;
+                            refreshed.AvatarIndex = profile.AvatarIndex;
+                            return refreshed;
+                        }
+                    }
+                    else
+                    {
+                        CrashLogger.LogMessage($"[AUTH] Live Connect OAuth refresh returned HTTP {(int)response.StatusCode}: {json}");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                CrashLogger.LogMessage($"[AUTH] Silent token refresh notice: {ex.Message}");
+                CrashLogger.LogMessage($"[AUTH] Token refresh notice: {ex.Message}");
             }
 
             return profile;

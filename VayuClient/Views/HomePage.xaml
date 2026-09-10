@@ -26,8 +26,9 @@
         </Storyboard>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                  Style="{StaticResource VayuScrollViewer}">
+    <Grid Background="#070B14">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Style="{StaticResource VayuScrollViewer}">
         <StackPanel>
             
             <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -161,72 +162,88 @@
                         <!-- ═══════════════════════════════════════════════════════ -->
                         <!-- CRAZY COOL GLOWING CYBER PLAY BUTTON                   -->
                         <!-- ═══════════════════════════════════════════════════════ -->
-                        <Grid HorizontalAlignment="Center">
+                        <!-- ═══════════════════════════════════════════════════════ -->
+                        <!-- CRAZY COOL GLOWING CYBER PLAY BUTTON + DUAL LAUNCH     -->
+                        <!-- ═══════════════════════════════════════════════════════ -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Grid HorizontalAlignment="Center">
 
-                            <!-- Outer Animated Energy Pulse Aura (Active when Launching) -->
-                            <Border x:Name="LaunchPulseRing" Width="330" Height="80" CornerRadius="16"
-                                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    BorderBrush="#38BDF8" BorderThickness="2" Opacity="0.6">
-                                <Border.RenderTransform>
-                                    <ScaleTransform x:Name="LaunchPulseScale" CenterX="165" CenterY="40"/>
-                                </Border.RenderTransform>
-                                <Border.Background>
-                                    <RadialGradientBrush>
-                                        <GradientStop Color="#4038BDF8" Offset="0.0"/>
-                                        <GradientStop Color="#00000000" Offset="1.0"/>
-                                    </RadialGradientBrush>
-                                </Border.Background>
-                                <Border.Triggers>
-                                    <EventTrigger RoutedEvent="Loaded">
-                                        <BeginStoryboard Storyboard="{StaticResource LaunchPulseStoryboard}"/>
-                                    </EventTrigger>
-                                </Border.Triggers>
-                            </Border>
-                            
-                            <Button Command="{Binding PlayCommand}" Style="{StaticResource LunarHeroPlayButton}" 
-                                    Width="300" Height="58" Padding="0">
-                                <Button.Effect>
-                                    <DropShadowEffect Color="#2563EB" BlurRadius="18" ShadowDepth="0" Opacity="0.65" RenderingBias="Performance"/>
-                                </Button.Effect>
+                                <!-- Outer Animated Energy Pulse Aura (Active when Launching) -->
+                                <Border x:Name="LaunchPulseRing" Width="310" Height="78" CornerRadius="16"
+                                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        BorderBrush="#38BDF8" BorderThickness="2" Opacity="0.6">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="LaunchPulseScale" CenterX="155" CenterY="39"/>
+                                    </Border.RenderTransform>
+                                    <Border.Background>
+                                        <RadialGradientBrush>
+                                            <GradientStop Color="#4038BDF8" Offset="0.0"/>
+                                            <GradientStop Color="#00000000" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Border.Background>
+                                    <Border.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard Storyboard="{StaticResource LaunchPulseStoryboard}"/>
+                                        </EventTrigger>
+                                    </Border.Triggers>
+                                </Border>
                                 
-                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Button Command="{Binding PlayCommand}" Style="{StaticResource LunarHeroPlayButton}" 
+                                        Width="280" Height="58" Padding="0">
+                                    <Button.Effect>
+                                        <DropShadowEffect Color="#2563EB" BlurRadius="18" ShadowDepth="0" Opacity="0.65" RenderingBias="Performance"/>
+                                    </Button.Effect>
                                     
-                                    <!-- State 1: Ready / Play / In-Game CTA -->
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Visibility="{Binding IsBusy, Converter={StaticResource InverseBoolToVis}}">
+                                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                         
-                                        <Path Data="{StaticResource VayuIconPlay}" Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" 
-                                              Margin="0,0,12,0" VerticalAlignment="Center"
-                                              Visibility="{Binding HasActiveInstance, Converter={StaticResource BoolToVis}}"/>
-                                        
-                                        <Path Data="{StaticResource VayuIconPlus}" Fill="#FFFFFF" Width="14" Height="14" Stretch="Uniform" 
-                                              Margin="0,0,12,0" VerticalAlignment="Center"
-                                              Visibility="{Binding HasActiveInstance, Converter={StaticResource InverseBoolToVis}}"/>
+                                        <!-- State 1: Ready / Play / In-Game CTA -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Visibility="{Binding IsBusy, Converter={StaticResource InverseBoolToVis}}">
+                                            
+                                            <Path Data="{StaticResource VayuIconPlay}" Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" 
+                                                  Margin="0,0,12,0" VerticalAlignment="Center"
+                                                  Visibility="{Binding HasActiveInstance, Converter={StaticResource BoolToVis}}"/>
+                                            
+                                            <Path Data="{StaticResource VayuIconPlus}" Fill="#FFFFFF" Width="14" Height="14" Stretch="Uniform" 
+                                                  Margin="0,0,12,0" VerticalAlignment="Center"
+                                                  Visibility="{Binding HasActiveInstance, Converter={StaticResource InverseBoolToVis}}"/>
 
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding PlayButtonText, FallbackValue='PLAY'}" 
-                                                       FontSize="16" FontWeight="Black" Foreground="#FFFFFF"/>
-                                            <TextBlock Text="{Binding PlayButtonSubText, FallbackValue='READY TO LAUNCH'}" 
-                                                       FontSize="9" FontWeight="Bold" Foreground="#BFDBFE" Margin="0,1,0,0"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding PlayButtonText, FallbackValue='PLAY'}" 
+                                                           FontSize="16" FontWeight="Black" Foreground="#FFFFFF"/>
+                                                <TextBlock Text="{Binding PlayButtonSubText, FallbackValue='READY TO LAUNCH'}" 
+                                                           FontSize="9" FontWeight="Bold" Foreground="#BFDBFE" Margin="0,1,0,0"/>
+                                            </StackPanel>
                                         </StackPanel>
-                                    </StackPanel>
 
-                                    <!-- State 2: Starting / Initializing Indicator -->
-                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <TextBlock Text="⚡ " FontSize="14" Foreground="#38BDF8" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding PlayButtonText, FallbackValue='LAUNCHING...'}" 
-                                                       FontSize="14" FontWeight="Black" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
+                                        <!-- State 2: Starting / Initializing Indicator -->
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="⚡ " FontSize="14" Foreground="#38BDF8" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding PlayButtonText, FallbackValue='LAUNCHING...'}" 
+                                                           FontSize="14" FontWeight="Black" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding ProgressStatus, FallbackValue='Preparing engine...'}" 
+                                                       FontSize="9.5" FontWeight="SemiBold" Foreground="#93C5FD" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding ProgressStatus, FallbackValue='Preparing engine...'}" 
-                                                   FontSize="9.5" FontWeight="SemiBold" Foreground="#93C5FD" HorizontalAlignment="Center" Margin="0,2,0,0"/>
-                                    </StackPanel>
 
-                                </Grid>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+
+                            <!-- Launch Another Instance / Custom Name Button -->
+                            <Button Command="{Binding OpenLaunchWithCustomNameCommand}"
+                                    Style="{StaticResource VayuDarkButton}"
+                                    Width="140" Height="58" Margin="10,0,0,0" Padding="0" Cursor="Hand"
+                                    ToolTip="Launch another concurrent instance or launch under a custom username">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="⚡ Launch Another" FontSize="12.5" FontWeight="Black" Foreground="#38BDF8" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Multi-Instance / Name" FontSize="9" FontWeight="SemiBold" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                </StackPanel>
                             </Button>
-                        </Grid>
+                        </StackPanel>
 
                         <!-- ═══════════════════════════════════════════════════════════════════════ -->
                         <!-- ═══ CYBER LAUNCH PROGRESS HUD (Active During Launch) ═════════════════ -->
@@ -301,30 +318,67 @@
                         <!-- ═══════════════════════════════════════════════════════════════════════ -->
                         <!-- ═══ LIVE IN-GAME SESSION CONTROLLER (Active When Game Is Running) ═══ -->
                         <!-- ═══════════════════════════════════════════════════════════════════════ -->
-                        <Border Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVis}}"
-                                Width="420" CornerRadius="10" Background="#F0091824" BorderBrush="#10B981" BorderThickness="1.5"
+                        <Border Visibility="{Binding HasRunningSessions, Converter={StaticResource BoolToVis}}"
+                                Width="480" CornerRadius="12" Background="#F0091824" BorderBrush="#10B981" BorderThickness="1.5"
                                 Padding="14,10" Margin="0,14,0,0" HorizontalAlignment="Center">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <!-- Header Row -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                        <Border Width="7" Height="7" CornerRadius="4" Background="#10B981" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="GAME IS RUNNING" FontSize="11" FontWeight="Black" Foreground="#10B981" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#10B981" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="ACTIVE GAME SESSIONS" FontSize="11" FontWeight="Black" Foreground="#10B981" VerticalAlignment="Center"/>
+                                        <Border CornerRadius="8" Background="#10B981" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding RunningSessionCount}" FontSize="9" FontWeight="Black" Foreground="#022C22"/>
+                                        </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding ActiveInstanceName, StringFormat='Active: {0}'}" FontSize="11.5" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                </StackPanel>
 
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Content="Logs" Command="{Binding ToggleConsoleCommand}"
-                                            Style="{StaticResource VayuDarkButton}" Padding="8,5" Margin="0,0,6,0" FontSize="10.5"/>
-                                    <Button Content="Stop" Command="{Binding StopGameCommand}"
-                                            Style="{StaticResource VayuDarkButton}" Padding="10,5" FontSize="10.5" Foreground="#EF4444"/>
-                                </StackPanel>
-                            </Grid>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="＋ Launch Another" Command="{Binding OpenLaunchWithCustomNameCommand}"
+                                                Style="{StaticResource VayuDarkButton}" Padding="8,4" Margin="0,0,6,0" FontSize="10" Foreground="#38BDF8" ToolTip="Launch another game instance"/>
+                                        <Button Content="Logs" Command="{Binding ToggleConsoleCommand}"
+                                                Style="{StaticResource VayuDarkButton}" Padding="8,4" Margin="0,0,6,0" FontSize="10"/>
+                                        <Button Content="Stop All" Command="{Binding StopAllSessionsCommand}"
+                                                Style="{StaticResource VayuDarkButton}" Padding="10,4" FontSize="10" Foreground="#EF4444"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Session Items -->
+                                <ItemsControl ItemsSource="{Binding RunningSessions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#121D2F" CornerRadius="6" BorderBrush="#1E293B" BorderThickness="1"
+                                                    Padding="10,6" Margin="0,0,0,4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding InstanceName}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,8,0"/>
+                                                            <Border CornerRadius="3" Background="#1E293B" Padding="5,1" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding PlayerName, StringFormat='👤 {0}'}" FontSize="9.5" FontWeight="SemiBold" Foreground="#38BDF8"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding ProcessId, StringFormat='PID: {0}'}" FontSize="8.5" Foreground="#64748B" Margin="0,1,0,0"/>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="1" Content="Stop" 
+                                                            Command="{Binding DataContext.StopSessionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{StaticResource VayuDarkButton}" Padding="8,3" FontSize="10" Foreground="#EF4444" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </Border>
 
                     </StackPanel>
@@ -548,4 +602,54 @@
             </StackPanel>
         </StackPanel>
     </ScrollViewer>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LAUNCH WITH CUSTOM NAME MODAL OVERLAY                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <Grid Visibility="{Binding IsCustomNameModalOpen, Converter={StaticResource BoolToVis}}"
+          Background="#D0050812" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Width="440" VerticalAlignment="Center" HorizontalAlignment="Center"
+                Background="#0F172A" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="16"
+                Padding="26,22">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="8" Opacity="0.8"/>
+            </Border.Effect>
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚡" FontSize="18" Foreground="#38BDF8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Launch with Custom Name" FontSize="17" FontWeight="Black" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Command="{Binding CloseLaunchWithCustomNameCommand}" HorizontalAlignment="Right"
+                            Style="{StaticResource VayuDarkButton}" Padding="8,4" Content="✕" Foreground="#94A3B8"/>
+                </Grid>
+
+                <TextBlock Text="Launch the selected instance under a custom player profile or run an additional concurrent game session side-by-side."
+                           FontSize="11.5" Foreground="#94A3B8" TextWrapping="Wrap" LineHeight="17" Margin="0,0,0,16"/>
+
+                <Border Background="#1E293B" CornerRadius="8" Padding="12,10" Margin="0,0,0,14">
+                    <StackPanel>
+                        <TextBlock Text="TARGET INSTANCE" FontSize="9" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding ActiveInstanceName, FallbackValue='Default Instance'}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="PLAYER USERNAME" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,6"/>
+                <TextBox Text="{Binding CustomLaunchPlayerName, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource VayuTextBox}" Height="38" FontSize="13" Margin="0,0,0,20"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Cancel" Command="{Binding CloseLaunchWithCustomNameCommand}"
+                            Style="{StaticResource VayuDarkButton}" Height="38" Margin="0,0,6,0" FontSize="11.5"/>
+                    <Button Grid.Column="1" Content="Launch Game 🚀" Command="{Binding ConfirmLaunchWithCustomNameCommand}"
+                            Style="{StaticResource VayuPrimaryButton}" Height="38" Margin="6,0,0,0" FontSize="11.5"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Grid>
 </UserControl>

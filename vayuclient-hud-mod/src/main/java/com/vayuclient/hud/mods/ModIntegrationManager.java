@@ -103,7 +103,21 @@ public class ModIntegrationManager {
                 ModMetadata meta = mod.getMetadata();
                 String id = meta.getId();
 
-                // Skip internal synthetic submodules if needed or keep top-level
+                // 1. Skip nested sub-modules contained inside another JAR (e.g. fabric-api submodules)
+                if (mod.getContainingMod().isPresent()) {
+                    continue;
+                }
+
+                // 2. Skip internal individual fabric API packages (group under Fabric API)
+                if (id.startsWith("fabric-") && !id.equals("fabric-api") && !id.equals("fabricloader")) {
+                    continue;
+                }
+
+                // 3. Skip internal synthetic wrappers
+                if (id.startsWith("quilt_") || id.startsWith("quilted_") || id.startsWith("mixinextras") || id.startsWith("java-") || id.equals("java") || id.equals("minecraft")) {
+                    continue;
+                }
+
                 String name = meta.getName();
                 String version = meta.getVersion().getFriendlyString();
                 String desc = meta.getDescription();

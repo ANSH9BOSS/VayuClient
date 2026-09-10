@@ -78,7 +78,7 @@ namespace VayuClient.Services.Launch
             // Tuned for client rendering (Sodium/Iris/Fabric/Vanilla/Shaders)
             jvmArgs.Add("-XX:+UseG1GC");
             jvmArgs.Add("-XX:+ParallelRefProcEnabled");
-            jvmArgs.Add("-XX:MaxGCPauseMillis=10");
+            jvmArgs.Add("-XX:MaxGCPauseMillis=5");
             jvmArgs.Add("-XX:+UnlockExperimentalVMOptions");
             jvmArgs.Add("-XX:+AlwaysPreTouch");
             jvmArgs.Add("-XX:G1NewSizePercent=30");
@@ -94,6 +94,7 @@ namespace VayuClient.Services.Launch
             jvmArgs.Add("-XX:+UseStringDeduplication");
             jvmArgs.Add("-XX:ReservedCodeCacheSize=512M");
             jvmArgs.Add("-XX:InitialCodeCacheSize=128M");
+            jvmArgs.Add("-XX:+UseFastUnorderedTimeStamps");
 
             // Allocate direct memory for Iris/Sodium shader vertex and shadow buffers
             int directMemoryMB = Math.Max(4096, ramMB);
@@ -116,6 +117,8 @@ namespace VayuClient.Services.Launch
             }
             jvmArgs.Add("-Dorg.lwjgl.system.allocator=system");
             jvmArgs.Add("-Dsun.java2d.noddraw=true");
+            jvmArgs.Add("-Dsun.java2d.d3d=false");
+            jvmArgs.Add("-Dsun.java2d.opengl=false");
             jvmArgs.Add("-Dorg.lwjgl.opengl.Display.enableHighDPI=true");
             jvmArgs.Add("-Dminecraft.launcher.brand=VayuClient");
             jvmArgs.Add($"-Dminecraft.launcher.version={Core.AppInfo.VersionString}");

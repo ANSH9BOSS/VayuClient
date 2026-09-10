@@ -66,6 +66,9 @@ namespace VayuClient.Core
             var modpackInstaller = new ModpackInstaller(downloadService);
             Register<IModpackInstaller>(modpackInstaller);
 
+            var modpackConverter = new ModpackConverterService(downloadService, instanceService);
+            Register<IModpackConverterService>(modpackConverter);
+
             var launchArgumentBuilder = new LaunchArgumentBuilder();
             Register<ILaunchArgumentBuilder>(launchArgumentBuilder);
 
@@ -159,12 +162,7 @@ namespace VayuClient.Core
                         var acct = accountService.ActiveProfile;
                         if (acct != null && !string.IsNullOrWhiteSpace(acct.Username))
                         {
-                            identity = new Services.Backend.PresenceIdentity
-                            {
-                                Username    = acct.Username,
-                                AccountType = acct.AccountType == Models.AccountType.Microsoft
-                                    ? "microsoft" : "offline"
-                            };
+                            identity = Services.Backend.PresenceIdentity.FromProfile(acct);
                         }
                     }
                     catch { }

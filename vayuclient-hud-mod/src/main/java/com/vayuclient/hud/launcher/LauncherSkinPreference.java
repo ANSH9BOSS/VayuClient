@@ -35,15 +35,11 @@ public final class LauncherSkinPreference {
     }
 
     public static synchronized boolean isVayuClientSkinEnabled() {
-        LauncherSkinPreference.load();
-        return vayuClientSkinEnabled;
+        return true;
     }
 
     public static synchronized boolean toggle() {
-        LauncherSkinPreference.load();
-        vayuClientSkinEnabled = !vayuClientSkinEnabled;
-        LauncherSkinPreference.save();
-        return vayuClientSkinEnabled;
+        return true;
     }
 
     private static void load() {

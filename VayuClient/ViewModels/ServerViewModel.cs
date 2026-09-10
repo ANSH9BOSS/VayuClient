@@ -227,16 +227,7 @@ namespace VayuClient.ViewModels
             try
             {
                 var profile = _accountService.ActiveProfile;
-                PresenceIdentity? identity = null;
-                if (profile != null && !string.IsNullOrWhiteSpace(profile.Username))
-                {
-                    identity = new PresenceIdentity
-                    {
-                        // Only the display username — never email, token, or UUID
-                        Username    = profile.Username,
-                        AccountType = profile.AccountType == AccountType.Microsoft ? "microsoft" : "offline"
-                    };
-                }
+                PresenceIdentity? identity = profile != null ? PresenceIdentity.FromProfile(profile) : null;
                 await _signalR.UpdatePresenceIdentityAsync(identity).ConfigureAwait(false);
             }
             catch { /* Non-critical */ }

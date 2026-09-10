@@ -1341,18 +1341,26 @@ namespace VayuClient.QA
             mainVm.HomeVM.CycleWallpaperCommand.Execute(null);
             Log($"  [PASS] Cycled HeroBackgroundPath = {mainVm.HomeVM.HeroBackgroundPath}");
 
-            Log("\n[TEST 2] Instantiating ServerPage and parsing XAML resources...");
+            Log("\n[TEST 2] Instantiating ServerPage, HomePage, and InstallationManagerPage...");
             try
             {
                 var serverPage = new Views.ServerPage
                 {
                     DataContext = mainVm.ServerVM
                 };
-                Log("  [PASS] ServerPage instantiated and all styles/resources resolved successfully!");
+                var homePage = new Views.HomePage
+                {
+                    DataContext = mainVm.HomeVM
+                };
+                var installPage = new Views.InstallationManagerPage
+                {
+                    DataContext = mainVm.InstallationManagerVM
+                };
+                Log("  [PASS] ServerPage, HomePage, and InstallationManagerPage instantiated and all styles/resources resolved successfully!");
             }
             catch (Exception ex)
             {
-                Log($"  [FAIL] ServerPage XAML failed: {ex}");
+                Log($"  [FAIL] Page XAML failed: {ex}");
                 return 2;
             }
 

@@ -84,6 +84,10 @@ namespace VayuClient.Models
         [JsonIgnore]
         private bool _isActive;
 
+        [ObservableProperty]
+        [JsonIgnore]
+        private bool _isRunning;
+
         [JsonIgnore]
         public string DisplaySubtitle
         {

@@ -38,15 +38,37 @@ namespace VayuClient.Services.Launch
         private readonly IVayuUIArtifactResolver _uiResolver;
 
         private Process? _activeGameProcess;
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, RunningGameSession> _runningSessions = new();
         private readonly string _logsDir;
 
         public LaunchState CurrentState { get; private set; } = LaunchState.Idle;
         public string StatusMessage { get; private set; } = "Ready";
-        public bool IsGameRunning => _activeGameProcess != null && !_activeGameProcess.HasExited;
+
+        public IReadOnlyList<RunningGameSession> RunningSessions
+        {
+            get
+            {
+                foreach (var kvp in _runningSessions)
+                {
+                    if (kvp.Value.Process == null || kvp.Value.Process.HasExited)
+                    {
+                        kvp.Value.IsRunning = false;
+                    }
+                }
+                return _runningSessions.Values.Where(s => s.IsRunning).ToList();
+            }
+        }
+
+        public int RunningSessionCount => RunningSessions.Count;
+        public bool IsGameRunning => RunningSessionCount > 0;
+        public bool IsInstanceRunning(string instanceId) => !string.IsNullOrEmpty(instanceId) && RunningSessions.Any(s => s.InstanceId == instanceId);
+
         public DownloadProgressInfo? CurrentProgress { get; private set; }
 
         public event Action<LaunchState, string>? StateChanged;
         public event Action<DownloadProgressInfo>? DownloadProgressChanged;
+        public event Action<RunningGameSession>? GameSessionStarted;
+        public event Action<RunningGameSession, int>? GameSessionExited;
 
         public LaunchService(
             IInstanceService instanceService,
@@ -89,24 +111,50 @@ namespace VayuClient.Services.Launch
 
         public void KillActiveGame()
         {
-            if (_activeGameProcess != null && !_activeGameProcess.HasExited)
+            var latest = _runningSessions.Values.OrderByDescending(s => s.StartTime).FirstOrDefault(s => s.IsRunning);
+            if (latest?.Process != null && !latest.Process.HasExited)
             {
-                try
-                {
-                    _activeGameProcess.Kill(entireProcessTree: true);
-                }
-                catch { }
+                try { latest.Process.Kill(entireProcessTree: true); } catch { }
+            }
+            else if (_activeGameProcess != null && !_activeGameProcess.HasExited)
+            {
+                try { _activeGameProcess.Kill(entireProcessTree: true); } catch { }
             }
         }
 
-        public async Task<bool> LaunchInstanceAsync(string? instanceId = null, CancellationToken ct = default)
+        public void KillSession(string sessionId)
         {
-            if (IsGameRunning)
+            if (_runningSessions.TryGetValue(sessionId, out var session))
             {
-                SetState(LaunchState.Failed, "A game instance is already running.");
-                return false;
+                session.IsRunning = false;
+                if (session.Process != null && !session.Process.HasExited)
+                {
+                    try { session.Process.Kill(entireProcessTree: true); } catch { }
+                }
             }
+        }
 
+        public void KillInstance(string instanceId)
+        {
+            var targets = _runningSessions.Values.Where(s => s.InstanceId == instanceId).ToList();
+            foreach (var s in targets)
+            {
+                KillSession(s.SessionId);
+            }
+        }
+
+        public void KillAllActiveGames()
+        {
+            foreach (var s in _runningSessions.Values.ToList())
+            {
+                KillSession(s.SessionId);
+            }
+        }
+
+        public Task<bool> LaunchInstanceAsync(string? instanceId = null, CancellationToken ct = default) => LaunchInstanceAsync(instanceId, null, ct);
+
+        public async Task<bool> LaunchInstanceAsync(string? instanceId, string? customPlayerName, CancellationToken ct = default)
+        {
             var logFile = Path.Combine(_logsDir, $"launch_{DateTime.Now:yyyyMMdd_HHmmss}.log");
             var logChannel = System.Threading.Channels.Channel.CreateUnbounded<string>(
                 new System.Threading.Channels.UnboundedChannelOptions { SingleReader = true, SingleWriter = false });
@@ -169,7 +217,25 @@ namespace VayuClient.Services.Launch
                 catch { }
 
                 // 2. Resolve Active Profile
-                var profile = _accountService.ActiveProfile;
+                UserProfile? profile = null;
+                if (!string.IsNullOrWhiteSpace(customPlayerName))
+                {
+                    var cleanName = customPlayerName.Trim();
+                    profile = new UserProfile
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        Username = cleanName,
+                        UUID = Guid.NewGuid().ToString(),
+                        AccountType = AccountType.Offline,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    Log($"Using custom session player name: '{cleanName}'");
+                }
+                else
+                {
+                    profile = _accountService.ActiveProfile;
+                }
+
                 if (profile == null)
                 {
                     SetState(LaunchState.Failed, "No profile selected. Please select or create an offline profile or sign in with Microsoft.");
@@ -179,12 +245,18 @@ namespace VayuClient.Services.Launch
 
                 Log($"Profile: {profile.Username} ({profile.AccountType}, UUID: {profile.UUID})");
 
-                // Refresh Microsoft Token if expired
-                if (profile.AccountType == AccountType.Microsoft && profile.TokenExpiresAt.HasValue && DateTime.UtcNow >= profile.TokenExpiresAt.Value)
+                // Refresh Microsoft Token if expired or nearing expiration (within 5 minutes)
+                if (profile.AccountType == AccountType.Microsoft && (!profile.TokenExpiresAt.HasValue || DateTime.UtcNow.AddMinutes(5) >= profile.TokenExpiresAt.Value))
                 {
                     SetState(LaunchState.Preparing, "Refreshing Microsoft authentication session...");
-                    Log("Refreshing expired Microsoft authentication token...");
-                    profile = await _msAuthService.RefreshTokenAsync(profile, ct) ?? profile;
+                    Log("Refreshing Microsoft authentication token with Mojang Services...");
+                    var refreshed = await _msAuthService.RefreshTokenAsync(profile, ct);
+                    if (refreshed != null)
+                    {
+                        profile = refreshed;
+                        try { ServiceLocator.Resolve<Profiles.IProfileService>()?.AddOrUpdateProfile(profile); } catch { }
+                        _accountService.SetActiveProfile(profile.Id);
+                    }
                 }
 
                 // 3. Resolve Version Package
@@ -258,6 +330,36 @@ namespace VayuClient.Services.Launch
                 var sharedAssetsDir = Path.Combine(appData, "VayuClient", "assets");
                 Directory.CreateDirectory(nativesDir);
                 Directory.CreateDirectory(instance.GameDirectory);
+
+                // Determine effective game directory for this session.
+                // If this instance is already running or a custom player name was specified, allocate an isolated session workspace
+                bool isSameInstanceRunning = _runningSessions.Values.Any(s => s.InstanceId == instance.InstanceId && s.IsRunning);
+                string effectiveGameDirectory = instance.GameDirectory;
+
+                if (isSameInstanceRunning || !string.IsNullOrWhiteSpace(customPlayerName))
+                {
+                    var safeTag = string.Join("_", (profile.Username ?? "session").Split(Path.GetInvalidFileNameChars()));
+                    var sessionsDir = Path.Combine(instanceBaseDir, "sessions");
+                    var sessionDir = Path.Combine(sessionsDir, $"{safeTag}_{DateTime.Now:yyyyMMdd_HHmmss}");
+                    Directory.CreateDirectory(sessionDir);
+
+                    try
+                    {
+                        var sourceMods = Path.Combine(instance.GameDirectory, "mods");
+                        if (Directory.Exists(sourceMods)) CopyDirectorySafe(sourceMods, Path.Combine(sessionDir, "mods"));
+                        var sourceConfig = Path.Combine(instance.GameDirectory, "config");
+                        if (Directory.Exists(sourceConfig)) CopyDirectorySafe(sourceConfig, Path.Combine(sessionDir, "config"));
+                        var sourceOptions = Path.Combine(instance.GameDirectory, "options.txt");
+                        if (File.Exists(sourceOptions)) File.Copy(sourceOptions, Path.Combine(sessionDir, "options.txt"), true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"[Session Isolation Notice]: {ex.Message}");
+                    }
+
+                    effectiveGameDirectory = sessionDir;
+                    Log($"Concurrent session for '{instance.Name}' allocated isolated workspace: {effectiveGameDirectory}");
+                }
 
                 bool mcInstalled = await _minecraftInstaller.InstallMinecraftAsync(instance.MinecraftVersion, nativesDir, progressReporter, ct);
                 if (!mcInstalled)
@@ -334,10 +436,27 @@ namespace VayuClient.Services.Launch
                     combinedJvmArgs.AddRange(splitArgs);
                 }
 
-                // 10. Build Launch Arguments
+                // 10. Build Launch Arguments with effective isolated instance
+                var effectiveInstance = new MinecraftInstance
+                {
+                    InstanceId = instance.InstanceId,
+                    Name = instance.Name,
+                    MinecraftVersion = instance.MinecraftVersion,
+                    Loader = instance.Loader,
+                    LoaderVersion = instance.LoaderVersion,
+                    RamMB = instance.RamMB,
+                    GameDirectory = effectiveGameDirectory,
+                    JvmArguments = instance.JvmArguments,
+                    ModpackId = instance.ModpackId,
+                    ModpackVersion = instance.ModpackVersion,
+                    Icon = instance.Icon,
+                    ArtworkPath = instance.ArtworkPath,
+                    PerformanceProfile = instance.PerformanceProfile
+                };
+
                 var launchParams = new LaunchParameters
                 {
-                    Instance = instance,
+                    Instance = effectiveInstance,
                     Profile = profile,
                     VersionPackage = pkg,
                     JavaRuntime = javaRuntime,
@@ -356,7 +475,7 @@ namespace VayuClient.Services.Launch
                 SetState(LaunchState.Launching, "Launching Minecraft Java Edition...");
                 Log("Starting Java process...");
 
-                Directory.CreateDirectory(instance.GameDirectory);
+                Directory.CreateDirectory(effectiveGameDirectory);
                 Directory.CreateDirectory(nativesDir);
 
                 Process? process = null;
@@ -417,7 +536,7 @@ namespace VayuClient.Services.Launch
                         var startInfo = new ProcessStartInfo
                         {
                             FileName = javaPath,
-                            WorkingDirectory = instance.GameDirectory,
+                            WorkingDirectory = effectiveGameDirectory,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
@@ -436,11 +555,7 @@ namespace VayuClient.Services.Launch
                             startInfo.EnvironmentVariables["__GLX_VENDOR_LIBRARY_NAME"] = "nvidia";
                             startInfo.EnvironmentVariables["CUDA_VISIBLE_DEVICES"] = "0";
                             startInfo.EnvironmentVariables["GPU_DEVICE_ORDINAL"] = "0";
-
-                            // Uncap driver framerate and enable NVIDIA multithreaded command dispatch
-                            startInfo.EnvironmentVariables["__GL_THREADED_OPTIMIZATIONS"] = "1";
                             startInfo.EnvironmentVariables["__GL_SYNC_TO_VBLANK"] = "0";
-                            startInfo.EnvironmentVariables["__GL_YIELD"] = "NOTHING";
 
                             // Set Windows DirectX high-performance GPU preference for this javaw executable
                             using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\DirectX\UserGpuPreferences");
@@ -504,10 +619,25 @@ namespace VayuClient.Services.Launch
                     return false;
                 }
 
+                var session = new RunningGameSession
+                {
+                    SessionId = Guid.NewGuid().ToString("N"),
+                    InstanceId = instance.InstanceId,
+                    InstanceName = instance.Name,
+                    PlayerName = profile.Username,
+                    ProcessId = process.Id,
+                    Process = process,
+                    StartTime = DateTime.Now,
+                    LogFilePath = logFile,
+                    GameDirectory = effectiveGameDirectory,
+                    IsRunning = true
+                };
+                _runningSessions[session.SessionId] = session;
                 _activeGameProcess = process;
+
                 try
                 {
-                    ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().RegisterMinecraftProcess(process);
+                    ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>()?.RegisterMinecraftProcess(process);
                 }
                 catch { }
 
@@ -525,18 +655,25 @@ namespace VayuClient.Services.Launch
                 }
                 catch { }
 
-                SetState(LaunchState.Playing, $"Playing Minecraft {instance.MinecraftVersion} ({instance.Name})");
-                Log($"Minecraft process running with PID: {process.Id}");
+                int runningCount = RunningSessionCount;
+                string statusMsg = runningCount > 1
+                    ? $"{runningCount} instances running (Latest: {instance.Name} • {profile.Username})"
+                    : $"Playing Minecraft {instance.MinecraftVersion} ({instance.Name})";
 
-                // Open custom Glassmorphic Live Game Output Menu
+                SetState(LaunchState.Playing, statusMsg);
+                Log($"Minecraft process running with PID: {process.Id} (Session: {session.SessionId})");
+
+                GameSessionStarted?.Invoke(session);
+
+                // Open custom Glassmorphic Live Game Output Console
                 try
                 {
-                    string liveLogDir = Path.Combine(instance.GameDirectory, "logs");
+                    string liveLogDir = Path.Combine(effectiveGameDirectory, "logs");
                     Directory.CreateDirectory(liveLogDir);
                     string liveLogFile = Path.Combine(liveLogDir, "latest.log");
                     if (!File.Exists(liveLogFile))
                     {
-                        File.WriteAllText(liveLogFile, $"[{DateTime.Now:HH:mm:ss}] [VayuClient v1.9.0] Starting Minecraft {instance.MinecraftVersion} ({instance.Name})...\n");
+                        File.WriteAllText(liveLogFile, $"[{DateTime.Now:HH:mm:ss}] [VayuClient v2.1.0] Starting Minecraft {instance.MinecraftVersion} ({instance.Name} • {profile.Username})...\n");
                     }
 
                     // Open custom live log menu inside the launcher
@@ -554,46 +691,70 @@ namespace VayuClient.Services.Launch
                     {
                         await process.WaitForExitAsync();
                         int exitCode = process.ExitCode;
-                        Log($"Game process exited with ExitCode: {exitCode}");
-                        _activeGameProcess = null;
-                        try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
-                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
+                        Log($"Game process {process.Id} ({instance.Name}) exited with ExitCode: {exitCode}");
 
-                        if (exitCode == 0)
+                        session.IsRunning = false;
+                        _runningSessions.TryRemove(session.SessionId, out _);
+
+                        try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>()?.UnregisterMinecraftProcess(process.Id); } catch { }
+                        GameSessionExited?.Invoke(session, exitCode);
+
+                        var activeSessions = RunningSessions;
+                        if (activeSessions.Count > 0)
                         {
-                            SetState(LaunchState.GameClosed, "Minecraft closed normally.");
+                            var latestRunning = activeSessions.OrderByDescending(s => s.StartTime).First();
+                            _activeGameProcess = latestRunning.Process;
+                            try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInGamePresence(latestRunning.InstanceName, instance.MinecraftVersion, instance.Loader); } catch { }
+                            SetState(LaunchState.Playing, $"{activeSessions.Count} Minecraft instance(s) running.");
                         }
                         else
                         {
-                            string crashMsg = $"Minecraft exited unexpectedly (Exit Code: {exitCode}).";
-                            SetState(LaunchState.Failed, crashMsg);
+                            _activeGameProcess = null;
+                            try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
 
-                            // Instant Crash Log Shower
-                            try
+                            if (exitCode == 0)
                             {
-                                var (details, logPath) = CrashLogger.GetCrashDetails(instance.GameDirectory, crashMsg);
-                                Views.ErrorDialog.ShowDialogSafe(
-                                    summary: $"Minecraft instance '{instance.Name}' ({instance.MinecraftVersion} {instance.Loader}) crashed with Exit Code {exitCode}.",
-                                    details: details,
-                                    logFilePath: logPath,
-                                    header: $"Minecraft Crashed (Exit Code: {exitCode})");
+                                SetState(LaunchState.GameClosed, "Minecraft closed normally.");
                             }
-                            catch { }
-                        }
+                            else
+                            {
+                                string crashMsg = $"Minecraft exited unexpectedly (Exit Code: {exitCode}).";
+                                SetState(LaunchState.Failed, crashMsg);
 
-                        await Task.Delay(2500);
-                        if (CurrentState == LaunchState.GameClosed)
-                        {
-                            SetState(LaunchState.Idle, "Ready");
+                                // Instant Crash Log Shower
+                                try
+                                {
+                                    var (details, logPath) = CrashLogger.GetCrashDetails(effectiveGameDirectory, crashMsg);
+                                    Views.ErrorDialog.ShowDialogSafe(
+                                        summary: $"Minecraft instance '{instance.Name}' ({instance.MinecraftVersion} {instance.Loader}) crashed with Exit Code {exitCode}.",
+                                        details: details,
+                                        logFilePath: logPath,
+                                        header: $"Minecraft Crashed (Exit Code: {exitCode})");
+                                }
+                                catch { }
+                            }
+
+                            await Task.Delay(2500);
+                            if (CurrentState == LaunchState.GameClosed && RunningSessionCount == 0)
+                            {
+                                SetState(LaunchState.Idle, "Ready");
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log($"Error monitoring process: {ex.Message}");
-                        _activeGameProcess = null;
-                        try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>().UnregisterMinecraftProcess(); } catch { }
-                        try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
-                        SetState(LaunchState.Idle, "Ready");
+                        Log($"Error monitoring process {process.Id}: {ex.Message}");
+                        session.IsRunning = false;
+                        _runningSessions.TryRemove(session.SessionId, out _);
+                        try { ServiceLocator.Resolve<Monitoring.IPerformanceMonitorService>()?.UnregisterMinecraftProcess(process.Id); } catch { }
+                        GameSessionExited?.Invoke(session, -1);
+
+                        if (RunningSessionCount == 0)
+                        {
+                            _activeGameProcess = null;
+                            try { ServiceLocator.Resolve<Services.Discord.IDiscordRpcService>()?.SetInLauncherPresence(instance.Name, instance.MinecraftVersion, instance.Loader); } catch { }
+                            SetState(LaunchState.Idle, "Ready");
+                        }
                     }
                 });
 
@@ -838,6 +999,20 @@ namespace VayuClient.Services.Launch
             {
                 log?.Invoke($"[VayuHUD] Warning: in-game HUD deployment exception: {ex.Message}");
                 CrashLogger.LogMessage($"[VayuHUD] Warning: could not deploy in-game HUD mod: {ex.Message}");
+            }
+        }
+
+        private static void CopyDirectorySafe(string sourceDir, string destDir)
+        {
+            if (!Directory.Exists(sourceDir)) return;
+            Directory.CreateDirectory(destDir);
+            foreach (var f in Directory.GetFiles(sourceDir))
+            {
+                try { File.Copy(f, Path.Combine(destDir, Path.GetFileName(f)), true); } catch { }
+            }
+            foreach (var d in Directory.GetDirectories(sourceDir))
+            {
+                CopyDirectorySafe(d, Path.Combine(destDir, Path.GetFileName(d)));
             }
         }
     }

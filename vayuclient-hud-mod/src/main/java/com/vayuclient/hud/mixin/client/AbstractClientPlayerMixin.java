@@ -22,7 +22,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AbstractClientPlayerMixin {
     @Inject(method={"getSkin"}, at={@At(value="RETURN")}, cancellable=true)
     private void vayuclient$resolveAppearance(CallbackInfoReturnable<PlayerSkin> callback) {
-        // No custom cosmetics active
+        AbstractClientPlayer player = (AbstractClientPlayer)(Object)this;
+        String name = com.vayuclient.hud.utils.PlayerUtils.getProfileName(player.getGameProfile());
+        PlayerSkin resolved = com.vayuclient.hud.appearance.CustomSkinManager.getInstance().resolveSkin(callback.getReturnValue(), name);
+        if (resolved != null) {
+            callback.setReturnValue(resolved);
+        }
     }
 }
 

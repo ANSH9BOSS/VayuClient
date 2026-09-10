@@ -58,12 +58,13 @@ namespace VayuClient.Services.Performance
             int gcThreads = Math.Max(2, profile.PhysicalCores);
 
             var sb = new StringBuilder();
-            sb.Append($"-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=20 ");
+            sb.Append($"-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=5 ");
             sb.Append($"-XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch ");
-            sb.Append($"-XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1ReservePercent=20 ");
+            sb.Append($"-XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=50 -XX:G1ReservePercent=15 ");
             sb.Append($"-XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 ");
             sb.Append($"-XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 ");
-            sb.Append($"-XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 ");
+            sb.Append($"-XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:+UseStringDeduplication ");
+            sb.Append($"-XX:ReservedCodeCacheSize=512M -XX:InitialCodeCacheSize=128M -XX:+UseFastUnorderedTimeStamps ");
             sb.Append($"-XX:ParallelGCThreads={gcThreads} -XX:ConcGCThreads={Math.Max(1, gcThreads / 2)}");
 
             return sb.ToString().Trim();
@@ -94,12 +95,16 @@ namespace VayuClient.Services.Performance
                     }
                 }
 
-                // Apply real configuration values and uncap FPS limits
+                // Competitive FPS render distance clamp (Prevents FPS collapse from 32+ chunk settings)
+                int safeRenderDistance = Math.Clamp(settings.RenderDistanceChunks, 8, 16);
+                int safeSimDistance = Math.Clamp(settings.SimulationDistanceChunks, 4, 8);
+
+                // Apply competitive configuration values and uncap FPS limits
                 optionsMap["entityDistanceScaling"] = settings.MobRenderDistanceScale.ToString("0.0#", CultureInfo.InvariantCulture);
                 optionsMap["particles"] = settings.ParticleQuality.ToString();
-                optionsMap["renderDistance"] = settings.RenderDistanceChunks.ToString();
-                optionsMap["simulationDistance"] = settings.SimulationDistanceChunks.ToString();
-                optionsMap["enableVsync"] = settings.EnableVsync ? "true" : "false";
+                optionsMap["renderDistance"] = safeRenderDistance.ToString();
+                optionsMap["simulationDistance"] = safeSimDistance.ToString();
+                optionsMap["enableVsync"] = "false";
 
                 // Uncap framerate to Unlimited (260 in MC 1.20+) and disable background/AFK throttles
                 optionsMap["maxFps"] = "260";
@@ -108,6 +113,8 @@ namespace VayuClient.Services.Performance
                 optionsMap["renderClouds"] = "\"false\"";
                 optionsMap["entityShadows"] = "false";
                 optionsMap["biomeBlendRadius"] = "0";
+                optionsMap["mipmapLevels"] = "0";
+                optionsMap["graphicsMode"] = "\"fast\"";
 
                 var outLines = new List<string>();
                 foreach (var kvp in optionsMap)
@@ -130,7 +137,7 @@ namespace VayuClient.Services.Performance
                 }, Formatting.Indented);
                 await File.WriteAllTextAsync(entityCullingConfig, ecJson);
 
-                // Write Sodium Max-Performance Configuration (Uncaps rendering pipeline)
+                // Write Sodium Max-Performance Configuration (Uncaps rendering pipeline & enables NVIDIA Direct Staging Buffers)
                 var sodiumConfig = Path.Combine(configDir, "sodium-options.json");
                 var sodiumJson = JsonConvert.SerializeObject(new
                 {
@@ -172,7 +179,7 @@ namespace VayuClient.Services.Performance
                 }, Formatting.Indented);
                 await File.WriteAllTextAsync(sodiumConfig, sodiumJson);
 
-                CrashLogger.LogMessage($"[PerformanceService]: Applied real performance settings to '{instance.Name}' (Options: RenderDistance={settings.RenderDistanceChunks}, EntityScale={settings.MobRenderDistanceScale}, Particles={settings.ParticleQuality}, MaxFPS=Unlimited)");
+                CrashLogger.LogMessage($"[PerformanceService]: Applied real performance settings to '{instance.Name}' (Options: RenderDistance={safeRenderDistance}, EntityScale={settings.MobRenderDistanceScale}, Particles={settings.ParticleQuality}, MaxFPS=Unlimited, Mipmap=0, VSync=Off)");
             }
             catch (Exception ex)
             {

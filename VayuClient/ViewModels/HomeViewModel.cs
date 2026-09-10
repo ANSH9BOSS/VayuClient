@@ -121,6 +121,17 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private string _playButtonSubText = "READY TO LAUNCH";
 
+        public ObservableCollection<RunningGameSession> RunningSessions { get; } = new();
+
+        public bool HasRunningSessions => RunningSessions.Count > 0;
+        public int RunningSessionCount => RunningSessions.Count;
+
+        [ObservableProperty]
+        private bool _isCustomNameModalOpen;
+
+        [ObservableProperty]
+        private string _customLaunchPlayerName = string.Empty;
+
         [ObservableProperty]
         private bool _isProgressVisible;
 
@@ -196,6 +207,33 @@ namespace VayuClient.ViewModels
 
             _launchService.StateChanged += OnLaunchStateChanged;
             _launchService.DownloadProgressChanged += OnDownloadProgressChanged;
+            _launchService.GameSessionStarted += s => Dispatch(() =>
+            {
+                if (!RunningSessions.Any(r => r.SessionId == s.SessionId))
+                {
+                    RunningSessions.Add(s);
+                }
+                OnPropertyChanged(nameof(HasRunningSessions));
+                OnPropertyChanged(nameof(RunningSessionCount));
+                UpdatePlayButtonState();
+            });
+            _launchService.GameSessionExited += (s, code) => Dispatch(() =>
+            {
+                var existing = RunningSessions.FirstOrDefault(r => r.SessionId == s.SessionId);
+                if (existing != null)
+                {
+                    RunningSessions.Remove(existing);
+                }
+                OnPropertyChanged(nameof(HasRunningSessions));
+                OnPropertyChanged(nameof(RunningSessionCount));
+                UpdatePlayButtonState();
+            });
+
+            foreach (var s in _launchService.RunningSessions)
+            {
+                RunningSessions.Add(s);
+            }
+
             _accountService.ActiveProfileChanged += p => Dispatch(RefreshProfile);
             _instanceService.InstancesChanged += () => Dispatch(RefreshProfile);
 
@@ -375,6 +413,11 @@ namespace VayuClient.ViewModels
         [RelayCommand]
         public async Task PlayAsync()
         {
+            await LaunchInternalAsync(customPlayerName: null);
+        }
+
+        public async Task LaunchInternalAsync(string? customPlayerName)
+        {
             if (IsBusy) return;
 
             if (ActiveInstance == null)
@@ -384,7 +427,7 @@ namespace VayuClient.ViewModels
                 return;
             }
 
-            if (ActiveProfile == null)
+            if (ActiveProfile == null && string.IsNullOrWhiteSpace(customPlayerName))
             {
                 _main.NavigateToCommand.Execute("Accounts");
                 _main.ShowNotification("No Account Selected", "Please select or link an account before launching.", NotificationType.Warning);
@@ -397,13 +440,13 @@ namespace VayuClient.ViewModels
             ProgressStatus = "Preparing game engine...";
             ProgressDetail = $"Initializing {ActiveInstance.Name}...";
             PlayButtonText = "LAUNCHING...";
-            PlayButtonSubText = "STARTING ENGINE";
+            PlayButtonSubText = !string.IsNullOrWhiteSpace(customPlayerName) ? $"AS {customPlayerName}" : "STARTING ENGINE";
 
             _launchCts = new CancellationTokenSource();
 
             try
             {
-                bool success = await _launchService.LaunchInstanceAsync(ActiveInstance.InstanceId, _launchCts.Token);
+                bool success = await _launchService.LaunchInstanceAsync(ActiveInstance.InstanceId, customPlayerName, _launchCts.Token);
                 if (!success)
                 {
                     _main.ShowNotification("Launch Failed", "Could not start Minecraft. Check console logs for details.", NotificationType.Error);
@@ -424,7 +467,35 @@ namespace VayuClient.ViewModels
                 IsProgressVisible = false;
                 _launchCts?.Dispose();
                 _launchCts = null;
+                UpdatePlayButtonState();
             }
+        }
+
+        [RelayCommand]
+        public void OpenLaunchWithCustomName()
+        {
+            CustomLaunchPlayerName = ActiveProfile != null ? ActiveProfile.Username : "Player";
+            IsCustomNameModalOpen = true;
+        }
+
+        [RelayCommand]
+        public void CloseLaunchWithCustomName()
+        {
+            IsCustomNameModalOpen = false;
+        }
+
+        [RelayCommand]
+        public async Task ConfirmLaunchWithCustomNameAsync()
+        {
+            if (string.IsNullOrWhiteSpace(CustomLaunchPlayerName))
+            {
+                _main.ShowNotification("Invalid Name", "Please enter a valid player username.", NotificationType.Warning);
+                return;
+            }
+
+            string name = CustomLaunchPlayerName.Trim();
+            IsCustomNameModalOpen = false;
+            await LaunchInternalAsync(name);
         }
 
         [RelayCommand]
@@ -433,8 +504,38 @@ namespace VayuClient.ViewModels
             _launchCts?.Cancel();
             IsBusy = false;
             IsProgressVisible = false;
-            PlayButtonText = "PLAY";
-            PlayButtonSubText = "READY TO LAUNCH";
+            UpdatePlayButtonState();
+        }
+
+        [RelayCommand]
+        public void StopSession(RunningGameSession? session)
+        {
+            if (session == null) return;
+            try
+            {
+                _launchService.KillSession(session.SessionId);
+                _main.ShowNotification("Game Session Stopped", $"Terminated {session.InstanceName} ({session.PlayerName}).", NotificationType.Info);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("HomeViewModel.StopSession", ex);
+            }
+        }
+
+        [RelayCommand]
+        public void StopAllSessions()
+        {
+            try
+            {
+                int count = RunningSessions.Count;
+                _launchService.KillAllActiveGames();
+                _main.ShowNotification("All Games Stopped", $"Terminated {count} active game instance(s).", NotificationType.Info);
+                UpdatePlayButtonState();
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogException("HomeViewModel.StopAllSessions", ex);
+            }
         }
 
         [RelayCommand]
@@ -443,12 +544,36 @@ namespace VayuClient.ViewModels
             try
             {
                 _launchService.KillActiveGame();
-                IsPlaying = false;
+                UpdatePlayButtonState();
                 _main.ShowNotification("Game Stopped", "Minecraft process was terminated.", NotificationType.Info);
             }
             catch (Exception ex)
             {
                 CrashLogger.LogException("HomeViewModel.StopGame", ex);
+            }
+        }
+
+        public void UpdatePlayButtonState()
+        {
+            if (IsBusy) return;
+
+            if (ActiveInstance != null && _launchService.IsInstanceRunning(ActiveInstance.InstanceId))
+            {
+                PlayButtonText = "LAUNCH AGAIN";
+                PlayButtonSubText = "RUNNING • CLICK TO LAUNCH ANOTHER";
+                IsPlaying = true;
+            }
+            else if (RunningSessions.Count > 0)
+            {
+                PlayButtonText = "PLAY";
+                PlayButtonSubText = $"{RunningSessions.Count} INSTANCE(S) RUNNING";
+                IsPlaying = true;
+            }
+            else
+            {
+                PlayButtonText = "PLAY";
+                PlayButtonSubText = "READY TO LAUNCH";
+                IsPlaying = false;
             }
         }
 
@@ -525,21 +650,17 @@ namespace VayuClient.ViewModels
                         PlayButtonSubText = "LAUNCHING PROCESS";
                         break;
                     case LaunchState.Playing:
-                        IsPlaying = true;
                         IsBusy = false;
                         IsProgressVisible = false;
-                        PlayButtonText = "IN-GAME";
-                        PlayButtonSubText = "RUNNING";
+                        UpdatePlayButtonState();
                         break;
                     case LaunchState.GameClosed:
                     case LaunchState.Failed:
                     case LaunchState.Idle:
-                        IsPlaying = false;
                         IsBusy = false;
                         IsProgressVisible = false;
                         ProgressSpeed = string.Empty;
-                        PlayButtonText = "PLAY";
-                        PlayButtonSubText = "READY TO LAUNCH";
+                        UpdatePlayButtonState();
                         break;
                 }
             });
@@ -571,7 +692,7 @@ namespace VayuClient.ViewModels
             NewsCards.Add(new HomeCardItem
             {
                 Category = "UPDATE",
-                DateTag = "v1.8.3 Active",
+                DateTag = "v2.1.0 Active",
                 Title = "VayuClient Engine & HUD Rebuild",
                 Description = "All-new overhead player hearts, combat damage indicator telemetry, and ultra-high FPS pipeline.",
                 ImagePath = "/Assets/Images/bg_mountain_aurora.jpg",

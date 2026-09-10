@@ -10,6 +10,7 @@ namespace VayuClient.Services.Monitoring
         public double HostAvailableRamGB { get; set; }
         public double HostTotalRamGB { get; set; }
         public bool IsMinecraftRunning { get; set; }
+        public int MinecraftRunningCount { get; set; }
         public string MinecraftStatus { get; set; } = "Idle / Ready";
         public double MinecraftMemoryMB { get; set; }
         public int MinecraftPid { get; set; }
@@ -24,6 +25,6 @@ namespace VayuClient.Services.Monitoring
         void StartMonitoring(int intervalMs = 1500);
         void StopMonitoring();
         void RegisterMinecraftProcess(Process process);
-        void UnregisterMinecraftProcess();
+        void UnregisterMinecraftProcess(int? processId = null);
     }
 }

@@ -23,11 +23,20 @@ namespace VayuClient.Services.Launch
         string StatusMessage { get; }
         bool IsGameRunning { get; }
         DownloadProgressInfo? CurrentProgress { get; }
+        IReadOnlyList<RunningGameSession> RunningSessions { get; }
+        int RunningSessionCount { get; }
+        bool IsInstanceRunning(string instanceId);
 
         event Action<LaunchState, string>? StateChanged;
         event Action<DownloadProgressInfo>? DownloadProgressChanged;
+        event Action<RunningGameSession>? GameSessionStarted;
+        event Action<RunningGameSession, int>? GameSessionExited;
 
         Task<bool> LaunchInstanceAsync(string? instanceId = null, CancellationToken ct = default);
+        Task<bool> LaunchInstanceAsync(string? instanceId, string? customPlayerName, CancellationToken ct = default);
         void KillActiveGame();
+        void KillSession(string sessionId);
+        void KillInstance(string instanceId);
+        void KillAllActiveGames();
     }
 }

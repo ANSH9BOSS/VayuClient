@@ -11,6 +11,7 @@ namespace VayuClient.Services.Instance
         void SetActiveInstance(string instanceId);
         Task<MinecraftInstance> CreateInstanceAsync(MinecraftInstance instance);
         Task SaveInstanceAsync(MinecraftInstance instance);
+        Task<MinecraftInstance?> CloneInstanceAsync(string sourceInstanceId, string newName, bool copyModsAndConfig = true);
         void DeleteInstance(string instanceId);
         event Action? InstancesChanged;
     }

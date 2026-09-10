@@ -172,6 +172,14 @@
                         </StackPanel>
                     </Button>
 
+                    <Button Command="{Binding OpenConvertModalCommand}"
+                            Style="{StaticResource VayuDarkButton}" Padding="13,8" Margin="0,0,8,0" ToolTip="Convert modpack / instance to any Minecraft version">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔄" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Convert Version" FontSize="12" Foreground="#38BDF8" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+
                     <Button Command="{Binding OpenGameDirectoryCommand}"
                             Style="{StaticResource VayuDarkButton}" Padding="12,8">
                         <StackPanel Orientation="Horizontal">
@@ -397,6 +405,15 @@
 
                                                 <!-- Top Right: Active Badge or Favorite Star -->
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,12,0">
+                                                    <!-- Running Badge -->
+                                                    <Border Background="#064E3B" BorderBrush="#10B981" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,6,0"
+                                                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Ellipse Width="6" Height="6" Fill="#34D399" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="RUNNING" FontSize="9.5" FontWeight="Black" Foreground="#34D399"/>
+                                                        </StackPanel>
+                                                    </Border>
+
                                                     <!-- Active Checkmark Badge -->
                                                     <Border Background="#2563EB" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,6,0"
                                                             Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
@@ -486,66 +503,103 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <!-- Play / Select CTA -->
-                                                    <Button Grid.Column="0" 
-                                                            Command="{Binding DataContext.PlayInstanceDirectlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}"
-                                                            Cursor="Hand" Margin="0,0,8,0">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Setter Property="Template">
-                                                                    <Setter.Value>
-                                                                        <ControlTemplate TargetType="Button">
-                                                                            <Border x:Name="PlayBtnBorder" CornerRadius="8" Background="#1E3A8A" BorderBrush="#2563EB" BorderThickness="1" Padding="12,7">
-                                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                                                    <Path Data="{StaticResource VayuIconPlay}" Fill="#FFFFFF" Width="10" Height="10" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                                                    <TextBlock x:Name="PlayBtnText" Text="SELECT &amp; PLAY" FontSize="11.5" FontWeight="Black" Foreground="#FFFFFF"/>
-                                                                                </StackPanel>
-                                                                            </Border>
-                                                                            <ControlTemplate.Triggers>
-                                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                                    <Setter TargetName="PlayBtnBorder" Property="Background" Value="#2563EB"/>
-                                                                                    <Setter TargetName="PlayBtnBorder" Property="BorderBrush" Value="#38BDF8"/>
-                                                                                    <Setter TargetName="PlayBtnText" Property="Text" Value="PLAY NOW"/>
-                                                                                </DataTrigger>
-                                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                                    <Setter TargetName="PlayBtnBorder" Property="Background" Value="#38BDF8"/>
-                                                                                </Trigger>
-                                                                            </ControlTemplate.Triggers>
-                                                                        </ControlTemplate>
-                                                                    </Setter.Value>
-                                                                </Setter>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
+                                                    <!-- Play / Select CTA or Stop if Running -->
+                                                    <Grid Grid.Column="0" Margin="0,0,8,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Button Grid.Column="0" 
+                                                                Command="{Binding DataContext.PlayInstanceDirectlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Cursor="Hand">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Template">
+                                                                        <Setter.Value>
+                                                                            <ControlTemplate TargetType="Button">
+                                                                                <Border x:Name="PlayBtnBorder" CornerRadius="8" Background="#1E3A8A" BorderBrush="#2563EB" BorderThickness="1" Padding="10,7">
+                                                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                                                        <Path Data="{StaticResource VayuIconPlay}" Fill="#FFFFFF" Width="10" Height="10" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                                                        <TextBlock x:Name="PlayBtnText" Text="SELECT &amp; PLAY" FontSize="11" FontWeight="Black" Foreground="#FFFFFF"/>
+                                                                                    </StackPanel>
+                                                                                </Border>
+                                                                                <ControlTemplate.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                                        <Setter TargetName="PlayBtnBorder" Property="Background" Value="#2563EB"/>
+                                                                                        <Setter TargetName="PlayBtnBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                                                                        <Setter TargetName="PlayBtnText" Property="Text" Value="PLAY NOW"/>
+                                                                                    </DataTrigger>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                        <Setter TargetName="PlayBtnBorder" Property="Background" Value="#38BDF8"/>
+                                                                                    </Trigger>
+                                                                                </ControlTemplate.Triggers>
+                                                                            </ControlTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+
+                                                        <!-- Stop Button when running -->
+                                                        <Button Grid.Column="1" 
+                                                                Command="{Binding DataContext.StopRunningInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}"
+                                                                Style="{StaticResource VayuDarkButton}" Padding="8,5" Margin="4,0,0,0" ToolTip="Stop all running processes for this instance">
+                                                            <TextBlock Text="■ Stop" FontSize="10" FontWeight="Bold" Foreground="#EF4444"/>
+                                                        </Button>
+                                                    </Grid>
 
                                                     <!-- Tool Icons: Inspect, Edit, Folder, Delete -->
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                        <!-- Launch with Custom Name -->
+                                                        <Button Command="{Binding DataContext.OpenCustomLaunchModalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Launch as Custom Player / Concurrent Session">
+                                                            <TextBlock Text="⚡" FontSize="11" Foreground="#38BDF8" HorizontalAlignment="Center"/>
+                                                        </Button>
+
+                                                        <!-- Convert Version -->
+                                                        <Button Command="{Binding DataContext.OpenConvertModalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Convert Modpack to Any Version (Modrinth Sync)">
+                                                            <TextBlock Text="🔄" FontSize="11" HorizontalAlignment="Center"/>
+                                                        </Button>
+
+                                                        <!-- Clone Instance -->
+                                                        <Button Command="{Binding DataContext.OpenCloneModalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Clone Instance (Duplicate with mods/configs)">
+                                                            <TextBlock Text="⧉" FontSize="12" FontWeight="Bold" Foreground="#A78BFA" HorizontalAlignment="Center"/>
+                                                        </Button>
+
                                                         <!-- Inspect Specs -->
                                                         <Button Command="{Binding DataContext.InspectInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
-                                                                Style="{StaticResource VayuDarkButton}" Width="30" Height="30" Padding="0" Margin="0,0,4,0" ToolTip="Inspect Instance Specs">
-                                                            <Path Data="{StaticResource VayuIconSearch}" Fill="#94A3B8" Width="11" Height="11" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Inspect Instance Specs">
+                                                            <Path Data="{StaticResource VayuIconSearch}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center"/>
                                                         </Button>
 
                                                         <!-- Edit Specs -->
                                                         <Button Command="{Binding DataContext.EditInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
-                                                                Style="{StaticResource VayuDarkButton}" Width="30" Height="30" Padding="0" Margin="0,0,4,0" ToolTip="Edit Installation">
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Edit Installation">
                                                             <Path Data="{StaticResource VayuIconSettings}" Fill="#94A3B8" Width="11" Height="11" Stretch="Uniform" HorizontalAlignment="Center"/>
                                                         </Button>
 
                                                         <!-- Open Folder -->
                                                         <Button Command="{Binding DataContext.OpenInstanceFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
-                                                                Style="{StaticResource VayuDarkButton}" Width="30" Height="30" Padding="0" Margin="0,0,4,0" ToolTip="Open Game Folder">
-                                                            <Path Data="{StaticResource VayuIconFolder}" Fill="#94A3B8" Width="11" Height="11" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Open Game Folder">
+                                                            <Path Data="{StaticResource VayuIconFolder}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center"/>
                                                         </Button>
 
                                                         <!-- Delete Instance -->
                                                         <Button Command="{Binding DataContext.DeleteInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
-                                                                Style="{StaticResource VayuDarkButton}" Width="30" Height="30" Padding="0" ToolTip="Delete Instance">
+                                                                Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" ToolTip="Delete Instance">
                                                             <Path Data="{StaticResource VayuIconClose}" Fill="#EF4444" Width="9" Height="9" Stretch="Uniform" HorizontalAlignment="Center"/>
                                                         </Button>
                                                     </StackPanel>
@@ -773,6 +827,88 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Cancel" Command="{Binding CancelTargetInstanceCommand}" Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,8,0"/>
                         <Button Content="Install Now" Command="{Binding ConfirmTargetInstanceCommand}" Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 8. CLONE INSTANCE MODAL                                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Visibility="{Binding IsCloneModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
+            <Border Width="480" Background="#0C1322" BorderBrush="#A78BFA" BorderThickness="1.5" CornerRadius="14" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⧉" FontSize="18" FontWeight="Bold" Foreground="#A78BFA" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Clone Installation" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
+                        </StackPanel>
+                        <Button Command="{Binding CloseCloneModalCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
+                            <Path Data="{StaticResource VayuIconClose}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center"/>
+                        </Button>
+                    </Grid>
+
+                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="SOURCE INSTANCE" FontSize="9" FontWeight="Black" Foreground="#A78BFA" Margin="0,0,0,3"/>
+                            <TextBlock Text="{Binding CloningInstance.Name}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Text="{Binding CloningInstance.DisplaySubtitle}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="NEW INSTANCE NAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,14">
+                        <TextBox Text="{Binding CloneNewName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
+                    </Border>
+
+                    <CheckBox IsChecked="{Binding CloneCopyData}" Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Copy installed mods, config files, and options" FontSize="11.5" Foreground="#CBD5E1"/>
+                        </StackPanel>
+                    </CheckBox>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Command="{Binding CloseCloneModalCommand}" Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,8,0"/>
+                        <Button Content="Clone Instance" Command="{Binding ConfirmCloneCommand}" Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 9. LAUNCH WITH CUSTOM NAME MODAL                                -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <Grid Visibility="{Binding IsCustomLaunchModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
+            <Border Width="460" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚡" FontSize="18" Foreground="#38BDF8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Launch with Custom Name" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
+                        </StackPanel>
+                        <Button Command="{Binding CloseCustomLaunchModalCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
+                            <Path Data="{StaticResource VayuIconClose}" Fill="#94A3B8" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center"/>
+                        </Button>
+                    </Grid>
+
+                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="TARGET INSTANCE" FontSize="9" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,0,3"/>
+                            <TextBlock Text="{Binding CustomLaunchTargetInstance.Name}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Text="{Binding CustomLaunchTargetInstance.DisplaySubtitle}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="PLAYER USERNAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,20">
+                        <TextBox Text="{Binding CustomLaunchPlayerName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Command="{Binding CloseCustomLaunchModalCommand}" Style="{StaticResource VayuDarkButton}" Padding="16,8" Margin="0,0,8,0"/>
+                        <Button Content="Launch Game 🚀" Command="{Binding ConfirmCustomLaunchCommand}" Style="{StaticResource VayuAccentButton}" Padding="20,8"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

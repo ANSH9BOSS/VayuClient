@@ -231,6 +231,14 @@ public class ClickGUIScreen extends Screen {
         VayuHUDUI.roundedOutline(graphics, curX, headY, modsBtnW, btnH, 4, modH ? VayuTheme.PRIMARY : 0x3338BDF8);
         graphics.text(this.font, "Installed Mods", curX + 8, headY + 6, modH ? 0xFFFFFFFF : VayuTheme.TEXT_PRIMARY, true);
 
+        // 2.5. 3D Studio Button
+        int studioW = 68;
+        curX -= (studioW + 6);
+        boolean studioH = mouseX >= curX && mouseX <= curX + studioW && mouseY >= headY && mouseY <= headY + btnH;
+        VayuHUDUI.roundedRect(graphics, curX, headY, studioW, btnH, 4, studioH ? 0xFF0284C7 : 0xD00F1722);
+        VayuHUDUI.roundedOutline(graphics, curX, headY, studioW, btnH, 4, studioH ? VayuTheme.PRIMARY : 0x3338BDF8);
+        graphics.text(this.font, "3D Studio", curX + 8, headY + 6, studioH ? 0xFFFFFFFF : VayuTheme.TEXT_PRIMARY, true);
+
         // 3. Canvas Editor Button
         int canvasW = 56;
         curX -= (canvasW + 6);
@@ -385,6 +393,14 @@ public class ClickGUIScreen extends Screen {
         curX -= (modsBtnW + 6);
         if (mouseX >= curX && mouseX <= curX + modsBtnW && mouseY >= headY && mouseY <= headY + btnH) {
             this.minecraft.gui.setScreen(new VayuModsScreen(this));
+            return true;
+        }
+
+        // 2.5. 3D Studio Button
+        int studioW = 68;
+        curX -= (studioW + 6);
+        if (mouseX >= curX && mouseX <= curX + studioW && mouseY >= headY && mouseY <= headY + btnH) {
+            this.minecraft.gui.setScreen(new ItemStudioScreen(this));
             return true;
         }
 

@@ -122,6 +122,16 @@
                     </Button>
 
                     <Button Style="{StaticResource VayuDarkButton}" Padding="13,8" Margin="0,0,8,0"
+                            Command="{Binding ConvertInstanceCommand}"
+                            IsEnabled="{Binding HasSelectedInstance}"
+                            ToolTip="Convert this instance's modpack to another Minecraft version">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔄" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Convert Version" FontSize="12" Foreground="#38BDF8" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource VayuDarkButton}" Padding="13,8" Margin="0,0,8,0"
                             Command="{Binding BrowseModrinthCommand}">
                         <StackPanel Orientation="Horizontal">
                             <Path Data="{StaticResource VayuIconSearch}" Fill="#38BDF8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>

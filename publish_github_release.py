@@ -16,10 +16,10 @@ def get_version():
         vjson = os.path.join(os.path.dirname(__file__), "version.json")
         with open(vjson, "r") as f:
             data = json.load(f)
-            v = data.get("version", "1.9.1")
+            v = data.get("version", "2.1.0")
             return v if v.startswith("v") else f"v{v}"
     except:
-        return "v1.9.1"
+        return "v2.1.0"
 
 VERSION_TAG = get_version()
 RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Universal Minecraft 26.x & 1.21+ Support"

@@ -11,7 +11,6 @@ namespace VayuClient.Services.Monitoring
         private Timer? _timer;
         private readonly object _lock = new();
         private bool _isRunning;
-        private Process? _minecraftProcess;
         
         private TimeSpan _lastCpuTime;
         private DateTime _lastSampleTime;
@@ -56,19 +55,31 @@ namespace VayuClient.Services.Monitoring
             }
         }
 
+        private readonly List<Process> _minecraftProcesses = new();
+
         public void RegisterMinecraftProcess(Process process)
         {
             lock (_lock)
             {
-                _minecraftProcess = process;
+                if (!_minecraftProcesses.Any(p => p.Id == process.Id))
+                {
+                    _minecraftProcesses.Add(process);
+                }
             }
         }
 
-        public void UnregisterMinecraftProcess()
+        public void UnregisterMinecraftProcess(int? processId = null)
         {
             lock (_lock)
             {
-                _minecraftProcess = null;
+                if (processId.HasValue)
+                {
+                    _minecraftProcesses.RemoveAll(p => p.Id == processId.Value);
+                }
+                else
+                {
+                    _minecraftProcesses.Clear();
+                }
             }
         }
 
@@ -107,34 +118,38 @@ namespace VayuClient.Services.Monitoring
 
                 lock (_lock)
                 {
-                    if (_minecraftProcess != null)
+                    // Clean up exited processes
+                    _minecraftProcesses.RemoveAll(p =>
                     {
-                        try
+                        try { return p.HasExited; }
+                        catch { return true; }
+                    });
+
+                    if (_minecraftProcesses.Count > 0)
+                    {
+                        double totalMb = 0;
+                        foreach (var p in _minecraftProcesses)
                         {
-                            if (!_minecraftProcess.HasExited)
+                            try
                             {
-                                snapshot.IsMinecraftRunning = true;
-                                snapshot.MinecraftPid = _minecraftProcess.Id;
-                                snapshot.MinecraftMemoryMB = Math.Round(_minecraftProcess.WorkingSet64 / (1024.0 * 1024.0), 1);
-                                snapshot.MinecraftStatus = $"Running (PID {_minecraftProcess.Id}) • {snapshot.MinecraftMemoryMB:0} MB RAM";
+                                p.Refresh();
+                                totalMb += p.WorkingSet64 / (1024.0 * 1024.0);
                             }
-                            else
-                            {
-                                _minecraftProcess = null;
-                                snapshot.IsMinecraftRunning = false;
-                                snapshot.MinecraftStatus = "Terminated";
-                            }
+                            catch { }
                         }
-                        catch
-                        {
-                            _minecraftProcess = null;
-                            snapshot.IsMinecraftRunning = false;
-                            snapshot.MinecraftStatus = "Idle / Ready";
-                        }
+
+                        snapshot.IsMinecraftRunning = true;
+                        snapshot.MinecraftRunningCount = _minecraftProcesses.Count;
+                        snapshot.MinecraftPid = _minecraftProcesses[0].Id;
+                        snapshot.MinecraftMemoryMB = Math.Round(totalMb, 1);
+                        snapshot.MinecraftStatus = _minecraftProcesses.Count == 1
+                            ? $"Running (PID {_minecraftProcesses[0].Id}) • {snapshot.MinecraftMemoryMB:0} MB RAM"
+                            : $"{_minecraftProcesses.Count} Instances Running • {snapshot.MinecraftMemoryMB:0} MB Total RAM";
                     }
                     else
                     {
                         snapshot.IsMinecraftRunning = false;
+                        snapshot.MinecraftRunningCount = 0;
                         snapshot.MinecraftStatus = "Idle / Ready";
                     }
                 }

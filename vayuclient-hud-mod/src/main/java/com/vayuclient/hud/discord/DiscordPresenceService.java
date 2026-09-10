@@ -157,7 +157,7 @@ public class DiscordPresenceService {
 
             JsonObject assets = new JsonObject();
             assets.addProperty("large_image", "vayu_logo");
-            assets.addProperty("large_text", "VayuClient v1.8.0");
+            assets.addProperty("large_text", "VayuClient v2.1.0");
             assets.addProperty("small_image", "vayu_logo");
             assets.addProperty("small_text", "Developer: ANSH9BOSS");
             activity.add("assets", assets);

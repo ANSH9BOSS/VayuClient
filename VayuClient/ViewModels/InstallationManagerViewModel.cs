@@ -13,6 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 using VayuClient.Core;
 using VayuClient.Models;
 using VayuClient.Services.Instance;
+using VayuClient.Services.Launch;
 using VayuClient.Services.Modpack;
 using VayuClient.Services.Download;
 using VayuClient.Services.Version;
@@ -163,6 +164,30 @@ namespace VayuClient.ViewModels
         [ObservableProperty]
         private string _editJvmArguments = string.Empty;
 
+        // ─── Clone Instance Modal State ───
+        [ObservableProperty]
+        private bool _isCloneModalOpen;
+
+        [ObservableProperty]
+        private MinecraftInstance? _cloningInstance;
+
+        [ObservableProperty]
+        private string _cloneNewName = string.Empty;
+
+        [ObservableProperty]
+        private bool _cloneCopyData = true;
+
+        // ─── Custom Launch Modal State ───
+        [ObservableProperty]
+        private bool _isCustomLaunchModalOpen;
+
+        [ObservableProperty]
+        private MinecraftInstance? _customLaunchTargetInstance;
+
+        [ObservableProperty]
+        private string _customLaunchPlayerName = string.Empty;
+
+        private readonly ILaunchService? _launchService;
         private readonly IVersionService? _versionService;
 
         public InstallationManagerViewModel(MainViewModel main)
@@ -172,6 +197,26 @@ namespace VayuClient.ViewModels
             {
                 _instanceService = ServiceLocator.Resolve<IInstanceService>();
                 _versionService = ServiceLocator.Resolve<IVersionService>();
+                _launchService = ServiceLocator.Resolve<ILaunchService>();
+                if (_launchService != null)
+                {
+                    _launchService.GameSessionStarted += _ =>
+                    {
+                        var app = Application.Current;
+                        if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
+                            app.Dispatcher.BeginInvoke(SyncRunningInstancesState);
+                        else
+                            SyncRunningInstancesState();
+                    };
+                    _launchService.GameSessionExited += (_, _) =>
+                    {
+                        var app = Application.Current;
+                        if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
+                            app.Dispatcher.BeginInvoke(SyncRunningInstancesState);
+                        else
+                            SyncRunningInstancesState();
+                    };
+                }
                 LoadInstallations();
 
                 _instanceService.InstancesChanged += () =>
@@ -210,6 +255,8 @@ namespace VayuClient.ViewModels
             IsModpackModalOpen = false;
             IsTargetInstanceModalOpen = false;
             IsEditModalOpen = false;
+            IsCloneModalOpen = false;
+            IsCustomLaunchModalOpen = false;
         }
 
         public void Dispose()
@@ -245,7 +292,17 @@ namespace VayuClient.ViewModels
             {
                 SelectedTargetInstance = Installations.FirstOrDefault(i => i.IsActive) ?? Installations.FirstOrDefault();
             }
+            SyncRunningInstancesState();
             ApplyLibraryFilterAndSort();
+        }
+
+        public void SyncRunningInstancesState()
+        {
+            if (_launchService == null) return;
+            foreach (var inst in Installations)
+            {
+                inst.IsRunning = _launchService.IsInstanceRunning(inst.InstanceId);
+            }
         }
 
         public void ApplyLibraryFilterAndSort()
@@ -457,6 +514,132 @@ namespace VayuClient.ViewModels
         {
             IsEditModalOpen = false;
             EditingInstance = null;
+        }
+
+        // ─── Version & Modpack Converter Commands ───
+        [RelayCommand]
+        public void OpenConvertModal(MinecraftInstance? instance)
+        {
+            var inst = instance ?? SelectedInstallation ?? _instanceService?.GetActiveInstance();
+            if (inst == null) return;
+
+            Views.ModpackConverterDialog.ShowDialog(inst, System.Windows.Application.Current?.MainWindow);
+            LoadInstallations();
+        }
+
+        // ─── Clone Instance Commands ───
+        [RelayCommand]
+        public void OpenCloneModal(MinecraftInstance? instance)
+        {
+            var inst = instance ?? SelectedInstallation;
+            if (inst == null) return;
+            CloningInstance = inst;
+            CloneNewName = $"{inst.Name} (Copy)";
+            CloneCopyData = true;
+            IsCloneModalOpen = true;
+        }
+
+        [RelayCommand]
+        public void CloseCloneModal()
+        {
+            IsCloneModalOpen = false;
+            CloningInstance = null;
+        }
+
+        [RelayCommand]
+        public async Task ConfirmCloneAsync()
+        {
+            if (CloningInstance == null || _instanceService == null)
+            {
+                IsCloneModalOpen = false;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CloneNewName))
+            {
+                _main.ShowNotification("Invalid Name", "Please enter a name for the cloned instance.", NotificationType.Warning);
+                return;
+            }
+
+            try
+            {
+                _main.ShowNotification("Cloning Instance", $"Cloning '{CloningInstance.Name}' to '{CloneNewName}'...", NotificationType.Info);
+                var cloned = await _instanceService.CloneInstanceAsync(CloningInstance.InstanceId, CloneNewName.Trim(), CloneCopyData);
+                IsCloneModalOpen = false;
+                LoadInstallations();
+                if (cloned != null)
+                {
+                    _main.ShowNotification("Instance Cloned", $"Successfully created '{cloned.Name}'!", NotificationType.Success);
+                }
+            }
+            catch (Exception ex)
+            {
+                _main.ShowNotification("Clone Failed", $"Failed to clone instance: {ex.Message}", NotificationType.Error);
+            }
+        }
+
+        // ─── Custom Launch Commands ───
+        [RelayCommand]
+        public void OpenCustomLaunchModal(MinecraftInstance? instance)
+        {
+            var inst = instance ?? SelectedInstallation;
+            if (inst == null) return;
+            CustomLaunchTargetInstance = inst;
+            CustomLaunchPlayerName = $"Player_{new Random().Next(100, 999)}";
+            IsCustomLaunchModalOpen = true;
+        }
+
+        [RelayCommand]
+        public void CloseCustomLaunchModal()
+        {
+            IsCustomLaunchModalOpen = false;
+            CustomLaunchTargetInstance = null;
+        }
+
+        [RelayCommand]
+        public async Task ConfirmCustomLaunchAsync()
+        {
+            if (CustomLaunchTargetInstance == null)
+            {
+                IsCustomLaunchModalOpen = false;
+                return;
+            }
+
+            var nameToLaunch = CustomLaunchPlayerName.Trim();
+            if (string.IsNullOrWhiteSpace(nameToLaunch))
+            {
+                _main.ShowNotification("Invalid Name", "Please enter a username to launch with.", NotificationType.Warning);
+                return;
+            }
+
+            var target = CustomLaunchTargetInstance;
+            IsCustomLaunchModalOpen = false;
+
+            if (_launchService != null)
+            {
+                _main.ShowNotification("Launching Instance", $"Starting '{target.Name}' as '{nameToLaunch}'...", NotificationType.Info);
+                bool success = await _launchService.LaunchInstanceAsync(target.InstanceId, nameToLaunch);
+                if (success)
+                {
+                    _main.ShowNotification("Instance Launched", $"'{target.Name}' running as '{nameToLaunch}'", NotificationType.Success);
+                    SyncRunningInstancesState();
+                }
+                else
+                {
+                    _main.ShowNotification("Launch Failed", $"Could not launch '{target.Name}'. Check logs.", NotificationType.Error);
+                }
+            }
+        }
+
+        [RelayCommand]
+        public void StopRunningInstance(MinecraftInstance? instance)
+        {
+            var inst = instance ?? SelectedInstallation;
+            if (inst == null || _launchService == null) return;
+
+            _launchService.KillInstance(inst.InstanceId);
+            _main.ShowNotification("Instance Stopped", $"Terminated active processes for '{inst.Name}'.", NotificationType.Info);
+            SyncRunningInstancesState();
         }
 
         [RelayCommand]

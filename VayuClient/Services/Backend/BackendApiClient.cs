@@ -89,8 +89,8 @@ namespace VayuClient.Services.Backend
     /// </summary>
     public sealed class BackendApiClient : IDisposable
     {
-        public const string BaseUrl = "https://vayu.rencloud.online";
-        public const string FallbackUrl = "http://103.165.11.81:5050";
+        public const string BaseUrl = "https://201.7.16.242";
+        public const string FallbackUrl = "http://201.7.16.242";
 
         private static readonly JsonSerializerOptions _json = new()
         {
@@ -103,7 +103,12 @@ namespace VayuClient.Services.Backend
 
         public BackendApiClient()
         {
-            _http = new HttpClient
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            _http = new HttpClient(handler)
             {
                 BaseAddress = new Uri(BaseUrl),
                 Timeout = TimeSpan.FromSeconds(10)

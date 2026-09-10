@@ -11,11 +11,11 @@ namespace VayuClient.Services.Performance
         public bool EnableDynamicFps { get; set; } = true;
         public int UnfocusedFpsLimit { get; set; } = 30;
         public bool EnableEntityCulling { get; set; } = true;
-        public double MobRenderDistanceScale { get; set; } = 1.0; // 0.5 to 2.0
-        public int ParticleQuality { get; set; } = 0; // 0 = All, 1 = Decreased, 2 = Minimal
+        public double MobRenderDistanceScale { get; set; } = 0.8; // 0.8 competitive optimal
+        public int ParticleQuality { get; set; } = 1; // 0 = All, 1 = Decreased, 2 = Minimal
         public bool LimitAnimations { get; set; } = false;
         public int RenderDistanceChunks { get; set; } = 12;
-        public int SimulationDistanceChunks { get; set; } = 8;
+        public int SimulationDistanceChunks { get; set; } = 6;
         public bool EnableVsync { get; set; } = false;
     }
 

@@ -159,7 +159,7 @@
 
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock x:Name="TxtInstalledVerBadge" Text="VayuClient v1.1.0" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource VayuTextBrush}"/>
+                                                <TextBlock x:Name="TxtInstalledVerBadge" Text="VayuClient v2.1.0" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource VayuTextBrush}"/>
                                                 <Border Background="#16233B" BorderBrush="#00D2FF" BorderThickness="1" CornerRadius="3" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock Text="UP TO DATE" FontSize="9.5" FontWeight="Bold" Foreground="#00D2FF"/>
                                                 </Border>

@@ -184,6 +184,8 @@ namespace VayuClient.Views
                             dialog.Owner = Application.Current.MainWindow;
                         }
                         dialog.Show();
+                        dialog.Activate();
+                        dialog.Focus();
                     }
                     catch { }
                 });

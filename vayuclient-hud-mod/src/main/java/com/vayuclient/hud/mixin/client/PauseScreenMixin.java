@@ -104,11 +104,7 @@ extends Screen {
         int mouseX = DisplaySpace.mouseX(event.x());
         int mouseY = DisplaySpace.mouseY(event.y());
         Minecraft mc = Minecraft.getInstance();
-        if (this.showsMenu() && event.button() == 0 && LauncherRenderer.isSkinToggleClicked(DisplaySpace.width(), DisplaySpace.height(), mouseX, mouseY)) {
-            LauncherSkinPreference.toggle();
-            mc.gui.setScreen((Screen)new PauseScreen(this.showsMenu()));
-            return true;
-        }
+
         if (!this.showsMenu()) {
             return super.mouseClicked(event, bl);
         }
@@ -128,6 +124,11 @@ extends Screen {
         }
         Screen self = this;
         switch (clicked) {
+            case "profile":
+            case "account": {
+                mc.gui.setScreen(new com.vayuclient.hud.gui.screens.AccountSwitcherScreen(self));
+                break;
+            }
             case "pause_backtogame": {
                 mc.gui.setScreen(null);
                 mc.mouseHandler.grabMouse();
@@ -148,8 +149,10 @@ extends Screen {
                 SystemToast.add((ToastManager)mc.gui.toastManager(), (SystemToast.SystemToastId)SystemToast.SystemToastId.PERIODIC_NOTIFICATION, (Component)Component.literal((String)"VayuClient Store"), (Component)Component.literal((String)"Coming Soon"));
                 break;
             }
-            case "pause_modmenu": {
-                OptionalMenuIntegrations.openModMenu(self);
+            case "pause_mods":
+            case "pause_modmenu":
+            case "mods": {
+                mc.gui.setScreen(new com.vayuclient.hud.gui.screens.VayuModsScreen(self));
                 break;
             }
             case "pause_options": 

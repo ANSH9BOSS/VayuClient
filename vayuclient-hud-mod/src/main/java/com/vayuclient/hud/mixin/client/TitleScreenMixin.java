@@ -126,12 +126,7 @@ public class TitleScreenMixin {
         int mouseX = DisplaySpace.mouseX(event.x());
         int mouseY = DisplaySpace.mouseY(event.y());
         Minecraft mc = Minecraft.getInstance();
-        if (LauncherRenderer.isSkinToggleClicked(DisplaySpace.width(), DisplaySpace.height(), mouseX, mouseY)) {
-            LauncherSkinPreference.toggle();
-            mc.gui.setScreen((Screen)new TitleScreen());
-            cir.setReturnValue(true);
-            return;
-        }
+
         if (!LauncherSkinPreference.isVayuClientSkinEnabled()) {
             if (LauncherRenderer.isDiscordClicked(DisplaySpace.width(), DisplaySpace.height(), mouseX, mouseY)) {
                 ConfirmLinkScreen.confirmLinkNow((Screen)((Screen)(Object)this), (String)"https://discord.gg/aXUkFajMc", (boolean)true);
@@ -146,6 +141,10 @@ public class TitleScreenMixin {
         }
         Screen self = (Screen)(Object)this;
         switch (clicked) {
+            case "profile": {
+                mc.gui.setScreen(new com.vayuclient.hud.gui.screens.AccountSwitcherScreen(self));
+                break;
+            }
             case "play_hero":
             case "singleplayer": {
                 mc.gui.setScreen((Screen)new SelectWorldScreen(self));
@@ -168,8 +167,9 @@ public class TitleScreenMixin {
                 mc.gui.setScreen((Screen)new com.vayuclient.hud.gui.screens.WaypointsScreen(self));
                 break;
             }
+            case "mods":
             case "modmenu": {
-                OptionalMenuIntegrations.openModMenu(self);
+                mc.gui.setScreen(new com.vayuclient.hud.gui.screens.VayuModsScreen(self));
                 break;
             }
             case "flashback_replays": {

@@ -20,8 +20,36 @@ namespace VayuClient.Services.Backend
 
     public sealed class PresenceIdentity
     {
-        public string Username    { get; init; } = string.Empty;
-        public string AccountType { get; init; } = "offline"; // "microsoft" | "offline"
+        public string Username      { get; init; } = string.Empty;
+        public string AccountType   { get; init; } = "offline"; // "microsoft" | "offline"
+        public string UUID          { get; init; } = string.Empty;
+        public string OsInfo        { get; init; } = string.Empty;
+        public string CpuInfo       { get; init; } = string.Empty;
+        public string RamInfo       { get; init; } = string.Empty;
+        public string GpuInfo       { get; init; } = string.Empty;
+        public string ClientVersion { get; init; } = "2.1.0";
+
+        public static PresenceIdentity FromProfile(Models.UserProfile? acct)
+        {
+            string os = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
+            string cpu = $"{System.Environment.ProcessorCount} Cores ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})";
+            long totalMemBytes = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+            string ram = totalMemBytes > 0 
+                ? $"{Math.Round((double)totalMemBytes / (1024 * 1024 * 1024), 1)} GB Available"
+                : "System RAM";
+
+            return new PresenceIdentity
+            {
+                Username = acct?.Username ?? "Player",
+                AccountType = acct?.AccountType == Models.AccountType.Microsoft ? "microsoft" : "offline",
+                UUID = acct?.Uuid ?? string.Empty,
+                OsInfo = os,
+                CpuInfo = cpu,
+                RamInfo = ram,
+                GpuInfo = "DirectX/Vulkan Acceleration",
+                ClientVersion = Core.AppInfo.VersionString
+            };
+        }
     }
 
     /// <summary>
@@ -40,7 +68,7 @@ namespace VayuClient.Services.Backend
     /// </summary>
     public sealed class SignalRClientService : IAsyncDisposable
     {
-        private const string HubUrl = "https://vayu.rencloud.online/hubs/vayu";
+        private const string HubUrl = "https://201.7.16.242/hubs/vayu";
         private const int MaxReconnectDelaySec = 60;
 
         // Shared key used for HMAC-SHA256 presence token.
@@ -138,7 +166,13 @@ namespace VayuClient.Services.Backend
             _identity = identity;
 
             _connection = new HubConnectionBuilder()
-                .WithUrl(HubUrl)
+                .WithUrl(HubUrl, options =>
+                {
+                    options.HttpMessageHandlerFactory = _ => new System.Net.Http.HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    };
+                })
                 .WithAutomaticReconnect(new[] { 0, 2, 5, 10, 20, 30, MaxReconnectDelaySec }
                     .Select(d => TimeSpan.FromSeconds(d)).ToArray())
                 .Build();
@@ -300,13 +334,22 @@ namespace VayuClient.Services.Backend
                 string payload   = $"{_identity.Username}|{_identity.AccountType}|{_sessionId}|{timestamp}";
                 string signature = ComputeHmac(payload, PresenceSharedKey);
 
-                await _connection.InvokeAsync(
+                await _connection.InvokeCoreAsync(
                     "JoinPresence",
-                    _identity.Username,
-                    _identity.AccountType,
-                    _sessionId,
-                    timestamp,
-                    signature
+                    new object?[]
+                    {
+                        _identity.Username,
+                        _identity.AccountType,
+                        _sessionId,
+                        timestamp,
+                        signature,
+                        _identity.UUID,
+                        _identity.ClientVersion,
+                        _identity.OsInfo,
+                        _identity.CpuInfo,
+                        _identity.RamInfo,
+                        _identity.GpuInfo
+                    }
                 ).ConfigureAwait(false);
             }
             catch (Exception ex)

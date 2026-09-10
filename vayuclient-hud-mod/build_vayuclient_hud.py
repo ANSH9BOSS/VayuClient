@@ -8,7 +8,7 @@ import hashlib
 import json
 import datetime
 
-HUD_PRODUCT_VERSION = "2.0.0"
+HUD_PRODUCT_VERSION = "2.1.0"
 
 # Known supported version families & compatibility profiles
 VERSION_PROFILES = {

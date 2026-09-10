@@ -156,6 +156,106 @@ namespace VayuClient.Services.Instance
             InstancesChanged?.Invoke();
         }
 
+        public async Task<MinecraftInstance?> CloneInstanceAsync(string sourceInstanceId, string newName, bool copyModsAndConfig = true)
+        {
+            var source = _instances.FirstOrDefault(i => i.InstanceId == sourceInstanceId);
+            if (source == null) return null;
+
+            var cleanName = string.IsNullOrWhiteSpace(newName) ? $"{source.Name} (Copy)" : newName.Trim();
+            var safeName = string.Join("_", cleanName.Split(Path.GetInvalidFileNameChars())).Trim();
+            if (string.IsNullOrEmpty(safeName)) safeName = "Instance_" + Guid.NewGuid().ToString("N")[..6];
+
+            // Ensure unique directory
+            var instanceDir = Path.Combine(_instancesRootDir, safeName);
+            int counter = 2;
+            while (Directory.Exists(instanceDir))
+            {
+                safeName = $"{cleanName}_{counter++}";
+                instanceDir = Path.Combine(_instancesRootDir, safeName);
+            }
+            Directory.CreateDirectory(instanceDir);
+
+            var gameDir = Path.Combine(instanceDir, "game");
+            var modsDir = Path.Combine(instanceDir, "mods");
+            var configDir = Path.Combine(instanceDir, "config");
+            Directory.CreateDirectory(gameDir);
+            Directory.CreateDirectory(modsDir);
+            Directory.CreateDirectory(configDir);
+
+            // Copy contents if requested
+            if (copyModsAndConfig)
+            {
+                var sourceInstanceDir = Path.GetDirectoryName(source.GameDirectory);
+                if (!string.IsNullOrEmpty(sourceInstanceDir) && Directory.Exists(sourceInstanceDir))
+                {
+                    CopyDirectoryIfExists(Path.Combine(sourceInstanceDir, "mods"), modsDir);
+                    CopyDirectoryIfExists(Path.Combine(sourceInstanceDir, "config"), configDir);
+                    CopyDirectoryIfExists(Path.Combine(sourceInstanceDir, "shaderpacks"), Path.Combine(instanceDir, "shaderpacks"));
+                    CopyDirectoryIfExists(Path.Combine(sourceInstanceDir, "resourcepacks"), Path.Combine(instanceDir, "resourcepacks"));
+
+                    var sourceGameMods = Path.Combine(source.GameDirectory, "mods");
+                    if (Directory.Exists(sourceGameMods))
+                    {
+                        CopyDirectoryIfExists(sourceGameMods, Path.Combine(gameDir, "mods"));
+                    }
+                    var sourceGameConfig = Path.Combine(source.GameDirectory, "config");
+                    if (Directory.Exists(sourceGameConfig))
+                    {
+                        CopyDirectoryIfExists(sourceGameConfig, Path.Combine(gameDir, "config"));
+                    }
+                    var sourceGameOptions = Path.Combine(source.GameDirectory, "options.txt");
+                    if (File.Exists(sourceGameOptions))
+                    {
+                        try { File.Copy(sourceGameOptions, Path.Combine(gameDir, "options.txt"), true); } catch { }
+                    }
+                }
+            }
+
+            var clonedInstance = new MinecraftInstance
+            {
+                InstanceId = Guid.NewGuid().ToString("N"),
+                Name = cleanName,
+                MinecraftVersion = source.MinecraftVersion,
+                Loader = source.Loader,
+                LoaderVersion = source.LoaderVersion,
+                RamMB = source.RamMB,
+                GameDirectory = gameDir,
+                JvmArguments = source.JvmArguments,
+                ModpackId = source.ModpackId,
+                ModpackVersion = source.ModpackVersion,
+                Icon = source.Icon,
+                ArtworkPath = source.ArtworkPath,
+                PerformanceProfile = source.PerformanceProfile,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = false
+            };
+
+            var jsonPath = Path.Combine(instanceDir, "instance.json");
+            await SafeJsonStorage.SaveAtomicAsync(jsonPath, clonedInstance);
+
+            _instances.Add(clonedInstance);
+            InstancesChanged?.Invoke();
+
+            CrashLogger.LogMessage($"[Instance]: Cloned instance '{source.Name}' to '{clonedInstance.Name}' ({clonedInstance.InstanceId})");
+            return clonedInstance;
+        }
+
+        private static void CopyDirectoryIfExists(string sourceDir, string destDir)
+        {
+            if (!Directory.Exists(sourceDir)) return;
+            Directory.CreateDirectory(destDir);
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                var destFile = Path.Combine(destDir, Path.GetFileName(file));
+                try { File.Copy(file, destFile, true); } catch { }
+            }
+            foreach (var sub in Directory.GetDirectories(sourceDir))
+            {
+                var destSub = Path.Combine(destDir, Path.GetFileName(sub));
+                CopyDirectoryIfExists(sub, destSub);
+            }
+        }
+
         public void DeleteInstance(string instanceId)
         {
             var inst = _instances.FirstOrDefault(i => i.InstanceId == instanceId);
