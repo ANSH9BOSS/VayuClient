@@ -22,16 +22,25 @@ def get_version():
         return "v2.1.0"
 
 VERSION_TAG = get_version()
-RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Universal Minecraft 26.x & 1.21+ Support"
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Hardware 3D Installation Manager & Next-Gen Game Library"
 RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
-* **Expanded Minecraft 26.x & 1.21+ Native Ecosystem**: Added full first-class support for `26.2`, `26.2.0`, `26.1.2`, `26.1`, `26`, `1.21.11`, through `1.21`.
-* **Deep Modpack Archive & Mod Inspector**: Automatic version and loader detection for `.zip`, `.mrpack`, CurseForge `manifest.json`, MultiMC `instance.cfg` & `mmc-pack.json`, and direct inspection of `mods/*.jar` dependencies.
-* **1000+ FPS Entity Rendering Optimization**: Zero-allocation fast-exit paths in entity render states eliminate framerate drops when multiple players are nearby.
-* **Sleek In-App Live Game Output Menu**: Replaced raw Windows CMD prompt with Cyber-Aero Glassmorphic live log viewer dialog.
-* **Complete Module Config Overhaul**: Glass cards, interactive header toggles, cyber keycap buttons, glowing sliders, and dropdown menus.
-* **Fully Signed Windows Installer**: Authenticode-signed standalone setup package (`VayuClientSetup.exe`).
+* **Brand New Hardware 3D Installation Manager & Game Library**:
+  - Obsidian Black & Subtle Purple cyber pod chassis with glowing purple side fin light brackets.
+  - Interactive 3D carousel stage: Active center hero pod with full hardware telemetry and flanking inactive pods with smooth perspective morphing on selection.
+  - Real-time instance telemetry: Minecraft versions, mod loaders (Fabric, Forge, NeoForge, Quilt, Vanilla), real mod counts, RAM allocation, relative last played timestamps, and favorite stars.
+  - Contextual tools: Edit, Clone, Open Game Folder, Version Converter, Custom Launch, and Safe Deletion.
+* **Direct3D Real-Time 3D Player Stage**:
+  - Full player skin rendering on multi-mesh voxel characters with responsive mouse cursor look-at tracking.
+  - Custom expressive poses (Love / Cradle, Bedwars PVP Stance, Wave, Sitting, Relaxed, Salute).
+  - Sub-pixel breathing bob dynamics.
+* **Atmospheric Dynamic Wallpaper Engine**:
+  - Multi-image pack URI loading with smooth crossfade animations across 10+ themes.
+* **Universal Modrinth Sync & Mod Loader Suite**:
+  - 1-click downloads for Mods, Modpacks, Resource Packs, Shaders, and Data Packs with automatic `.jar` icon extraction.
+* **Fully Signed Windows Setup Installer**:
+  - Authenticode-signed standalone setup package (`VayuClientSetup.exe`) and portable executable (`VayuClient.exe`).
 
 ### 📦 Assets Included
 * `VayuClientSetup.exe` (Standalone Windows Setup Installer)

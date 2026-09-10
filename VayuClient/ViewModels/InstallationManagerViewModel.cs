@@ -72,10 +72,21 @@ namespace VayuClient.ViewModels
 
         public ObservableCollection<MinecraftInstance> Installations { get; } = new();
         public ObservableCollection<MinecraftInstance> FilteredInstallations { get; } = new();
+        public ObservableCollection<MinecraftInstance> FlankingLeftInstallations { get; } = new();
+        public ObservableCollection<MinecraftInstance> FlankingRightInstallations { get; } = new();
         public ObservableCollection<ModpackInfo> ModrinthProjects { get; } = new();
 
         [ObservableProperty]
         private bool _hasInstallations;
+
+        [ObservableProperty]
+        private bool _hasMultipleInstallations;
+
+        [ObservableProperty]
+        private bool _hasPreviousInstallation;
+
+        [ObservableProperty]
+        private bool _hasNextInstallation;
 
         [ObservableProperty]
         private MinecraftInstance? _selectedInstallation;
@@ -365,6 +376,91 @@ namespace VayuClient.ViewModels
             {
                 FilteredInstallations.Add(inst);
             }
+
+            UpdateFlankingInstances();
+        }
+
+        public void UpdateFlankingInstances()
+        {
+            FlankingLeftInstallations.Clear();
+            FlankingRightInstallations.Clear();
+
+            if (FilteredInstallations.Count == 0)
+            {
+                HasMultipleInstallations = false;
+                HasPreviousInstallation = false;
+                HasNextInstallation = false;
+                return;
+            }
+
+            HasMultipleInstallations = FilteredInstallations.Count > 1;
+
+            if (SelectedInstallation == null || !FilteredInstallations.Contains(SelectedInstallation))
+            {
+                SelectedInstallation = FilteredInstallations.FirstOrDefault(i => i.IsActive) ?? FilteredInstallations.FirstOrDefault();
+            }
+
+            if (SelectedInstallation == null)
+            {
+                HasPreviousInstallation = false;
+                HasNextInstallation = false;
+                return;
+            }
+
+            int idx = FilteredInstallations.IndexOf(SelectedInstallation);
+            if (idx < 0) idx = 0;
+
+            int total = FilteredInstallations.Count;
+            HasPreviousInstallation = total > 1;
+            HasNextInstallation = total > 1;
+
+            if (total == 2)
+            {
+                int otherIdx = (idx + 1) % total;
+                FlankingRightInstallations.Add(FilteredInstallations[otherIdx]);
+            }
+            else if (total == 3)
+            {
+                int leftIdx = (idx - 1 + total) % total;
+                int rightIdx = (idx + 1) % total;
+                FlankingLeftInstallations.Add(FilteredInstallations[leftIdx]);
+                FlankingRightInstallations.Add(FilteredInstallations[rightIdx]);
+            }
+            else if (total >= 4)
+            {
+                int l1 = (idx - 2 + total) % total;
+                int l2 = (idx - 1 + total) % total;
+                int r1 = (idx + 1) % total;
+                int r2 = (idx + 2) % total;
+
+                FlankingLeftInstallations.Add(FilteredInstallations[l1]);
+                FlankingLeftInstallations.Add(FilteredInstallations[l2]);
+                FlankingRightInstallations.Add(FilteredInstallations[r1]);
+                if (total > 4 || (r2 != l1 && r2 != l2))
+                {
+                    FlankingRightInstallations.Add(FilteredInstallations[r2]);
+                }
+            }
+        }
+
+        [RelayCommand]
+        public void SelectPreviousInstallation()
+        {
+            if (FilteredInstallations.Count <= 1 || SelectedInstallation == null) return;
+            int idx = FilteredInstallations.IndexOf(SelectedInstallation);
+            if (idx < 0) idx = 0;
+            int prevIdx = (idx - 1 + FilteredInstallations.Count) % FilteredInstallations.Count;
+            SelectInstallation(FilteredInstallations[prevIdx]);
+        }
+
+        [RelayCommand]
+        public void SelectNextInstallation()
+        {
+            if (FilteredInstallations.Count <= 1 || SelectedInstallation == null) return;
+            int idx = FilteredInstallations.IndexOf(SelectedInstallation);
+            if (idx < 0) idx = 0;
+            int nextIdx = (idx + 1) % FilteredInstallations.Count;
+            SelectInstallation(FilteredInstallations[nextIdx]);
         }
 
         [RelayCommand]
@@ -377,14 +473,18 @@ namespace VayuClient.ViewModels
         }
 
         [RelayCommand]
-        private void SelectInstallation(MinecraftInstance? instance)
+        public void SelectInstallation(MinecraftInstance? instance)
         {
             if (instance == null || _instanceService == null) return;
             _instanceService.SetActiveInstance(instance.InstanceId);
+            foreach (var inst in Installations)
+            {
+                inst.IsActive = (inst.InstanceId == instance.InstanceId);
+            }
             SelectedInstallation = instance;
             SelectedTargetInstance = instance;
-            LoadInstallations();
-            _main.ShowNotification("Active Instance Updated", $"Switched to {instance.Name}", NotificationType.Success);
+            UpdateFlankingInstances();
+            _main.ShowNotification("Active Instance", $"Switched to '{instance.Name}'", NotificationType.Success);
         }
 
         [RelayCommand]
