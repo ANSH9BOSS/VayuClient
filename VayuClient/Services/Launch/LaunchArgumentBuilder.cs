@@ -67,7 +67,8 @@ namespace VayuClient.Services.Launch
 
             if (!hasCustomXms)
             {
-                jvmArgs.Add($"-Xms{ramMB}M");
+                int initialHeap = Math.Min(1024, ramMB / 2);
+                jvmArgs.Add($"-Xms{initialHeap}M");
             }
             if (!hasCustomXmx)
             {
