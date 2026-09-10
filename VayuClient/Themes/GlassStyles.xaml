@@ -30,6 +30,7 @@
     <Geometry x:Key="VayuIconError">M 12,2 C 6.48,2 2,6.48 2,12 C 2,17.52 6.48,22 12,22 C 17.52,22 22,17.52 22,12 C 22,6.48 17.52,2 12,2 Z M 13,17 L 11,17 L 11,15 L 13,15 L 13,17 Z M 13,13 L 11,13 L 11,7 L 13,7 L 13,13 Z</Geometry>
     <Geometry x:Key="VayuIconLoading">M 12,4 V 1 L 8,5 L 12,9 V 6 C 15.31,6 18,8.69 18,12 C 18,13.01 17.75,13.97 17.3,14.8 L 18.76,16.26 C 19.54,15.03 20,13.57 20,12 C 20,7.58 16.42,4 12,4 Z M 12,18 C 8.69,18 6,15.31 6,12 C 6,10.99 6.25,10.03 6.7,9.2 L 5.24,7.74 C 4.46,8.97 4,10.43 4,12 C 4,16.42 7.58,20 12,20 V 23 L 16,19 L 12,15 V 18 Z</Geometry>
     <Geometry x:Key="VayuIconServer">M 4,1 L 20,1 C 21.1,1 22,1.9 22,3 L 22,7 C 22,8.1 21.1,9 20,9 L 4,9 C 2.9,9 2,8.1 2,7 L 2,3 C 2,1.9 2.9,1 4,1 Z M 4,11 L 20,11 C 21.1,11 22,11.9 22,13 L 22,17 C 22,18.1 21.1,19 20,19 L 4,19 C 2.9,19 2,18.1 2,17 L 2,13 C 2,11.9 2.9,11 4,11 Z M 6,6 C 6.83,6 7.5,5.33 7.5,4.5 C 7.5,3.67 6.83,3 6,3 C 5.17,3 4.5,3.67 4.5,4.5 C 4.5,5.33 5.17,6 6,6 Z M 6,16 C 6.83,16 7.5,15.33 7.5,14.5 C 7.5,13.67 6.83,13 6,13 C 5.17,13 4.5,13.67 4.5,14.5 C 4.5,15.33 5.17,16 6,16 Z</Geometry>
+    <Geometry x:Key="VayuIconTerminal">M 20,4 H 4 C 2.89,4 2,4.89 2,6 V 18 C 2,19.1 2.89,20 4,20 H 20 C 21.1,20 22,19.1 22,18 V 6 C 22,4.89 21.1,4 20,4 Z M 20,18 H 4 V 8 H 20 V 18 Z M 6.5,15.5 L 9.5,12.5 L 6.5,9.5 L 7.91,8.09 L 12.33,12.5 L 7.91,16.91 Z M 11.5,15.5 H 17.5 V 17.5 H 11.5 Z</Geometry>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- 1. GLOBAL DEFAULT CONTROL STYLES (Universal Font Inheritance)   -->
@@ -765,6 +766,45 @@
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="#2563EB"/>
                             <Setter Property="Foreground" Value="#FFFFFF"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 9b. VAYU TAB RADIO BUTTON (FOR DIALOGS & PAGES)  -->
+    <!-- ═══════════════════════════════════════════════ -->
+
+    <Style x:Key="VayuTabRadioButton" TargetType="RadioButton">
+        <Setter Property="Background" Value="#0F172A"/>
+        <Setter Property="BorderBrush" Value="#1E293B"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Foreground" Value="#94A3B8"/>
+        <Setter Property="FontFamily" Value="{StaticResource VayuFontFamily}"/>
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1E293B"/>
+                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#38BDF8"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1E3A8A"/>
+                            <Setter Property="Foreground" Value="#38BDF8"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#38BDF8"/>
                             <Setter Property="FontWeight" Value="Bold"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

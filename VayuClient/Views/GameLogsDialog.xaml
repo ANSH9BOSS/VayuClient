@@ -119,13 +119,13 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Click="CopyLogs_Click" Style="{StaticResource SecondaryGlassButton}" Height="32" Padding="14,0" Margin="0,0,8,0">
+                    <Button Click="CopyLogs_Click" Style="{StaticResource VayuDarkButton}" Height="32" Padding="14,0" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📋" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="COPY ALL LOGS" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Click="OpenFolder_Click" Style="{StaticResource SecondaryGlassButton}" Height="32" Padding="14,0">
+                    <Button Click="OpenFolder_Click" Style="{StaticResource VayuDarkButton}" Height="32" Padding="14,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📁" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="OPEN LOGS FOLDER" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -133,7 +133,7 @@
                     </Button>
                 </StackPanel>
 
-                <Button Grid.Column="2" Click="Close_Click" Style="{StaticResource PrimaryActionBtn}" Height="32" Padding="18,0">
+                <Button Grid.Column="2" Click="Close_Click" Style="{StaticResource VayuAccentButton}" Height="32" Padding="18,0">
                     <TextBlock Text="CLOSE MENU" FontSize="11" FontWeight="Black" VerticalAlignment="Center"/>
                 </Button>
             </Grid>

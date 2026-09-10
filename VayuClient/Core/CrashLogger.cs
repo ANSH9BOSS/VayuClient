@@ -233,8 +233,8 @@ Inner Stack Trace:
             if (string.IsNullOrEmpty(input)) return string.Empty;
 
             // Remove access tokens, session tokens, passwords, and emails
-            input = Regex.Replace(input, @"(accessToken|token|session|auth_session|password)=([^\s&""']+)", "$1=REDACTED", RegexOptions.IgnoreCase);
-            input = Regex.Replace(input, @"Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*", "Bearer REDACTED", RegexOptions.IgnoreCase);
+            input = Regex.Replace(input, @"(accessToken|token|session|auth_session|password)=([^\s&""']+)", "$1=[PROTECTED_TOKEN]", RegexOptions.IgnoreCase);
+            input = Regex.Replace(input, @"Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*", "Bearer [PROTECTED_TOKEN]", RegexOptions.IgnoreCase);
             input = Regex.Replace(input, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "[EMAIL_REDACTED]");
 
             return input;
