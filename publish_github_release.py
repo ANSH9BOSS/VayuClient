@@ -18,11 +18,11 @@ def get_version():
         vjson = os.path.join(base_dir, "version.json")
         with open(vjson, "r") as f:
             data = json.load(f)
-            v = data.get("version", "3.1.0")
+            v = data.get("version", "3.1.1")
             return v if v.startswith("v") else f"v{v}"
     except Exception as e:
         print(f"[Warning] Could not read version.json: {e}", flush=True)
-        return "v3.1.0"
+        return "v3.1.1"
 
 VERSION_TAG = get_version()
 RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Next-Gen 3D Game Library & Setup"
