@@ -87,6 +87,21 @@ public class VayuHUDClient implements ClientModInitializer {
                 LOGGER.warn("VayuUserCache init warning: {}", t.getMessage());
             }
 
+            // Register the local profile as soon as a play session begins.  The TAB-list mixin
+            // can be evaluated before Minecraft exposes its local player, so relying only on a
+            // direct identity comparison made the Vayu badge intermittently disappear.
+            try {
+                ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+                    if (client.player != null) {
+                        VayuUserCache.getInstance().pingServer(client.player.getGameProfile().getName());
+                    }
+                });
+                ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                    VayuUserCache.getInstance().onDisconnect());
+            } catch (Throwable t) {
+                LOGGER.warn("Vayu user-presence registration warning: {}", t.getMessage());
+            }
+
             try {
                 com.vayuclient.hud.discord.DiscordPresenceService.getInstance().start();
             } catch (Throwable ignored) {}

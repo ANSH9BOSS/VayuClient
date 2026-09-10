@@ -12,6 +12,8 @@ namespace VayuClient.Views
 {
     public partial class GameLogsDialog : Window
     {
+        private const int MaxDisplayedLogCharacters = 200_000;
+        private const int MaxReadPerRefresh = 16_000;
         private readonly string _logFilePath;
         private readonly string _instanceName;
         private CancellationTokenSource? _cts;
@@ -64,9 +66,19 @@ namespace VayuClient.Views
 
                             if (!string.IsNullOrEmpty(newContent))
                             {
+                                if (newContent.Length > MaxReadPerRefresh)
+                                {
+                                    newContent = "[Vayu] Log burst trimmed to keep the launcher responsive.\n" +
+                                                 newContent[^MaxReadPerRefresh..];
+                                }
+
                                 Dispatcher.Invoke(() =>
                                 {
                                     _rawLogs.Append(newContent);
+                                    if (_rawLogs.Length > MaxDisplayedLogCharacters)
+                                    {
+                                        _rawLogs.Remove(0, _rawLogs.Length - MaxDisplayedLogCharacters);
+                                    }
                                     ApplyFilter();
                                     if (ChkAutoScroll.IsChecked == true)
                                     {

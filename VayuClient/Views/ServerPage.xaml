@@ -5,23 +5,26 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="780" d:DesignWidth="1080"
-             Background="#070B14">
+             Background="#06070B">
 
     <Grid>
-        <!-- Background -->
+        <!-- ═══ AMBIENT OCEAN MONUMENT 3D BACKGROUND ═══ -->
         <Image Source="/Assets/Images/bg_ocean_monument.jpg"
                Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"
-               RenderOptions.BitmapScalingMode="HighQuality" Opacity="0.22"/>
+               RenderOptions.BitmapScalingMode="HighQuality" Opacity="0.18"/>
+
+        <!-- Deep Obsidian Gradient Overlay -->
         <Rectangle>
             <Rectangle.Fill>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#D0070B14" Offset="0.0"/>
-                    <GradientStop Color="#F5070B14" Offset="1.0"/>
+                    <GradientStop Color="#D806070B" Offset="0.0"/>
+                    <GradientStop Color="#EB06070B" Offset="0.55"/>
+                    <GradientStop Color="#FA06070B" Offset="1.0"/>
                 </LinearGradientBrush>
             </Rectangle.Fill>
         </Rectangle>
 
-        <Grid Margin="28,20,28,24">
+        <Grid Margin="28,20,28,22">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>  <!-- Page header -->
                 <RowDefinition Height="Auto"/>  <!-- VayuClient Network panel -->
@@ -30,49 +33,63 @@
                 <RowDefinition Height="Auto"/>  <!-- Status bar -->
             </Grid.RowDefinitions>
 
-            <!-- ═══ HEADER ═══ -->
-            <Grid Grid.Row="0" Margin="0,0,0,16">
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 1. TOP HEADER & SERVER ACTIONS                                  -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="0" Margin="0,0,0,18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource VayuIconServer}" Fill="{StaticResource VayuBrightBlueBrush}"
-                              Width="18" Height="18" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <Border Width="32" Height="32" CornerRadius="8" Background="#161028" BorderBrush="#3B2A60" BorderThickness="1.2" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#7C3AED" BlurRadius="10" ShadowDepth="1" Opacity="0.4"/>
+                            </Border.Effect>
+                            <Path Data="{StaticResource VayuIconServer}" Fill="#C084FC" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
                         <TextBlock Text="MINECRAFT SERVERS" FontSize="20" FontWeight="Black" Foreground="#FFFFFF" VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="Ping status and direct connection for your saved Minecraft multiplayer servers."
-                               FontSize="12" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,3,0,0"/>
+                               FontSize="12" Foreground="{StaticResource VayuTextMutedBrush}"/>
                 </StackPanel>
+
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="↻ Refresh All"
                             Command="{Binding RefreshAllCommand}"
                             IsEnabled="{Binding IsPingingAll, Converter={StaticResource InverseBoolConverter}}"
-                            Style="{StaticResource VayuDarkButton}" Padding="14,8" Margin="0,0,10,0"
-                            FontSize="12" Cursor="Hand"/>
+                            Style="{StaticResource Vayu3DButton}" Padding="15,8" Margin="0,0,10,0"
+                            FontSize="12"/>
                     <Button Content="＋ Add Server"
                             Command="{Binding BeginAddServerCommand}"
-                            Style="{StaticResource VayuPrimaryButton}" Padding="14,8"
-                            FontSize="12" Cursor="Hand"/>
+                            Style="{StaticResource Vayu3DPrimaryButton}" Padding="16,8"
+                            FontSize="12"/>
                 </StackPanel>
             </Grid>
 
-            <!-- ═══ VAYUCLIENT NETWORK DASHBOARD (real-time presence) ═══ -->
-            <Border Grid.Row="1" Margin="0,0,0,14" CornerRadius="10"
-                    BorderThickness="1" Padding="0">
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 2. VAYUCLIENT NETWORK DASHBOARD (3D Real-Time Presence)         -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="1" Margin="0,0,0,16" CornerRadius="12"
+                    BorderThickness="1.2" Padding="0">
                 <Border.BorderBrush>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#2563EB" Offset="0.0"/>
-                        <GradientStop Color="#7C3AED" Offset="1.0"/>
+                        <GradientStop Color="#4C1D95" Offset="0.0"/>
+                        <GradientStop Color="#7C3AED" Offset="0.5"/>
+                        <GradientStop Color="#C084FC" Offset="1.0"/>
                     </LinearGradientBrush>
                 </Border.BorderBrush>
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#0F1629" Offset="0.0"/>
-                        <GradientStop Color="#0D1220" Offset="1.0"/>
+                        <GradientStop Color="#0B0E18" Offset="0.0"/>
+                        <GradientStop Color="#141024" Offset="0.5"/>
+                        <GradientStop Color="#0A0D16" Offset="1.0"/>
                     </LinearGradientBrush>
                 </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="18" ShadowDepth="2" Opacity="0.35"/>
+                </Border.Effect>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -81,7 +98,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- LEFT: Header + player count + player list -->
-                    <StackPanel Grid.Column="0" Margin="18,14,14,14">
+                    <StackPanel Grid.Column="0" Margin="20,16,16,16">
 
                         <!-- Title + connection indicator -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -98,13 +115,16 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Ellipse.Style>
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect Color="#4ADE80" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                                    </Ellipse.Effect>
                                 </Ellipse>
                             </Grid>
-                            <TextBlock Text="VAYUCLIENT NETWORK" FontSize="11" FontWeight="Bold"
+                            <TextBlock Text="VAYUCLIENT NETWORK" FontSize="11.5" FontWeight="Black"
                                        Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                            <TextBlock Text=" · " Foreground="#334155" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding VayuNetworkStatus}" FontSize="10"
-                                       Foreground="{StaticResource VayuTextMutedBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text=" · " Foreground="#4C1D95" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding VayuNetworkStatus}" FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="#C084FC" VerticalAlignment="Center"/>
                         </StackPanel>
 
                         <!-- Player count headline -->
@@ -120,7 +140,7 @@
                                         <Setter Property="Foreground" Value="#FFFFFF"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsPresenceAvailable}" Value="False">
-                                                <Setter Property="Foreground" Value="#64748B"/>
+                                                <Setter Property="Foreground" Value="#7D7596"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -132,7 +152,7 @@
 
                         <!-- Empty state (connected but 0 players) -->
                         <TextBlock Text="No players connected yet."
-                                   FontSize="11" Foreground="#475569"
+                                   FontSize="11" Foreground="#7D7596"
                                    Margin="0,0,0,4">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -172,6 +192,7 @@
                             <ItemsControl.Template>
                                 <ControlTemplate TargetType="ItemsControl">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                                  Style="{StaticResource VayuScrollViewer}"
                                                   Focusable="False">
                                         <ItemsPresenter/>
                                     </ScrollViewer>
@@ -179,23 +200,30 @@
                             </ItemsControl.Template>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,3">
                                         <!-- Status dot -->
                                         <Ellipse Width="7" Height="7" Fill="#4ADE80"
-                                                 VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                                 VerticalAlignment="Center" Margin="0,0,8,0">
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect Color="#4ADE80" BlurRadius="4" ShadowDepth="0" Opacity="0.7"/>
+                                            </Ellipse.Effect>
+                                        </Ellipse>
                                         <!-- Username -->
                                         <TextBlock Text="{Binding Username}"
                                                    FontSize="12" FontWeight="SemiBold"
                                                    Foreground="#E2E8F0" VerticalAlignment="Center"/>
                                         <!-- Account type badge -->
-                                        <Border CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
+                                        <Border CornerRadius="4" Padding="5,1.5" Margin="8,0,0,0"
                                                 VerticalAlignment="Center">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#1E293B"/>
+                                                    <Setter Property="Background" Value="#16102A"/>
+                                                    <Setter Property="BorderBrush" Value="#2B1E48"/>
+                                                    <Setter Property="BorderThickness" Value="0.8"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsMicrosoft}" Value="True">
-                                                            <Setter Property="Background" Value="#1D4ED8"/>
+                                                            <Setter Property="Background" Value="#1E1438"/>
+                                                            <Setter Property="BorderBrush" Value="#7C3AED"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -204,11 +232,11 @@
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Text"       Value="OFFLINE"/>
-                                                        <Setter Property="Foreground" Value="#64748B"/>
+                                                        <Setter Property="Foreground" Value="#7D7596"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsMicrosoft}" Value="True">
                                                                 <Setter Property="Text"       Value="MSA"/>
-                                                                <Setter Property="Foreground" Value="#93C5FD"/>
+                                                                <Setter Property="Foreground" Value="#C084FC"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -221,7 +249,7 @@
                         </ItemsControl>
 
                         <!-- Updated timestamp -->
-                        <TextBlock Margin="0,8,0,0" FontSize="10" Foreground="#334155">
+                        <TextBlock Margin="0,8,0,0" FontSize="10" Foreground="#5A526E">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Text" Value="Updated in real time"/>
@@ -237,29 +265,35 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <!-- RIGHT: decorative accent column with icon -->
-                    <Border Grid.Column="1" Width="6" CornerRadius="0,10,10,0">
+                    <!-- RIGHT: decorative 3D cyber laser accent column -->
+                    <Border Grid.Column="1" Width="8" CornerRadius="0,12,12,0">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#2563EB" Offset="0.0"/>
-                                <GradientStop Color="#7C3AED" Offset="1.0"/>
+                                <GradientStop Color="#4C1D95" Offset="0.0"/>
+                                <GradientStop Color="#7C3AED" Offset="0.5"/>
+                                <GradientStop Color="#C084FC" Offset="1.0"/>
                             </LinearGradientBrush>
                         </Border.Background>
                     </Border>
                 </Grid>
             </Border>
 
-            <!-- ═══ ADD SERVER PANEL (inline, collapsible) ═══ -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 3. ADD SERVER PANEL (3D Inline Collapsible Command Deck)        -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
             <Border Grid.Row="2"
                     Visibility="{Binding IsAddingServer, Converter={StaticResource BoolToVis}}"
-                    CornerRadius="8" Background="#181E2E"
-                    BorderBrush="#2563EB" BorderThickness="1"
-                    Padding="18,14" Margin="0,0,0,14">
+                    CornerRadius="10" Background="{StaticResource VayuCardGradient}"
+                    BorderBrush="#7C3AED" BorderThickness="1.2"
+                    Padding="20,16" Margin="0,0,0,16">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="16" ShadowDepth="2" Opacity="0.4"/>
+                </Border.Effect>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="180"/>
-                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="190"/>
+                        <ColumnDefinition Width="95"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -267,55 +301,66 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.ColumnSpan="4" Text="ADD NEW SERVER" FontSize="10.5" FontWeight="Bold"
-                               Foreground="{StaticResource VayuBrightBlueBrush}" Margin="0,0,0,10"/>
+                    <TextBlock Grid.ColumnSpan="4" Text="ADD NEW MINECRAFT SERVER" FontSize="11" FontWeight="Black"
+                               Foreground="#C084FC" Margin="0,0,0,12"/>
 
-                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
-                        <TextBlock Text="Display Name" FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,0,0,4"/>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
+                        <TextBlock Text="Display Name" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding NewServerName, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource VayuTextBox}" Height="34"/>
+                                 Style="{StaticResource VayuTextBox}" Height="36"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,10,0">
-                        <TextBlock Text="Address (e.g. mc.hypixel.net)" FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,0,0,4"/>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,12,0">
+                        <TextBlock Text="Address (e.g. mc.hypixel.net)" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding NewServerAddress, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource VayuTextBox}" Height="34"/>
+                                 Style="{StaticResource VayuTextBox}" Height="36"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,10,0">
-                        <TextBlock Text="Port" FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,0,0,4"/>
+                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,12,0">
+                        <TextBlock Text="Port" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding NewServerPort, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource VayuTextBox}" Height="34"/>
+                                 Style="{StaticResource VayuTextBox}" Height="36"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Button Content="Add"    Command="{Binding ConfirmAddServerCommand}"
-                                Style="{StaticResource VayuPrimaryButton}" Padding="16,8" Margin="0,0,8,0"
-                                FontSize="12" Cursor="Hand"/>
+                        <Button Content="Add" Command="{Binding ConfirmAddServerCommand}"
+                                Style="{StaticResource Vayu3DPrimaryButton}" Padding="18,8" Margin="0,0,8,0"
+                                FontSize="12"/>
                         <Button Content="Cancel" Command="{Binding CancelAddServerCommand}"
-                                Style="{StaticResource VayuDarkButton}" Padding="12,8"
-                                FontSize="12" Cursor="Hand"/>
+                                Style="{StaticResource Vayu3DButton}" Padding="14,8"
+                                FontSize="12"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- ═══ MINECRAFT SERVER LIST ═══ -->
-            <Border Grid.Row="3" CornerRadius="8" Background="{StaticResource VayuSurfaceBrush}"
-                    BorderBrush="{StaticResource VayuBorderBrush}" BorderThickness="1">
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 4. 3D MINECRAFT SERVER LIST CONTAINER                           -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="3" CornerRadius="10" Background="{StaticResource VayuCardGradient}"
+                    BorderBrush="{StaticResource Vayu3DBorderBrush}" BorderThickness="1.2">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="2" Opacity="0.4"/>
+                </Border.Effect>
                 <Grid>
                     <!-- Empty state -->
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                Visibility="{Binding Servers.Count, Converter={StaticResource ZeroToVis}}">
-                        <Path Data="{StaticResource VayuIconServer}" Fill="{StaticResource VayuTextMutedBrush}"
-                              Width="44" Height="44" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,14"/>
-                        <TextBlock Text="No servers saved yet" FontSize="16" FontWeight="Bold"
+                                Visibility="{Binding Servers.Count, Converter={StaticResource ZeroToVis}}"
+                                Margin="32">
+                        <Border Width="60" Height="60" CornerRadius="14" Background="#161028" BorderBrush="#3B2A60" BorderThickness="1.2" Margin="0,0,0,16" HorizontalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#7C3AED" BlurRadius="12" ShadowDepth="1" Opacity="0.4"/>
+                            </Border.Effect>
+                            <Path Data="{StaticResource VayuIconServer}" Fill="#C084FC"
+                                  Width="26" Height="26" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="No servers saved yet" FontSize="16" FontWeight="Black"
                                    Foreground="#FFFFFF" HorizontalAlignment="Center"/>
                         <TextBlock Text="Click '＋ Add Server' to add a Minecraft Java Edition server."
                                    FontSize="12" Foreground="{StaticResource VayuTextMutedBrush}"
-                                   HorizontalAlignment="Center" Margin="0,6,0,16"/>
+                                   HorizontalAlignment="Center" Margin="0,6,0,18"/>
                         <Button Content="＋ Add Server" Command="{Binding BeginAddServerCommand}"
-                                Style="{StaticResource VayuPrimaryButton}" Padding="16,10"
-                                HorizontalAlignment="Center" FontSize="13" Cursor="Hand"/>
+                                Style="{StaticResource Vayu3DPrimaryButton}" Padding="18,9"
+                                HorizontalAlignment="Center" FontSize="12.5"/>
                     </StackPanel>
 
                     <!-- Server list with UI Virtualization -->
@@ -325,25 +370,38 @@
                               Visibility="{Binding Servers.Count, Converter={StaticResource NonZeroToVis}}"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                               VirtualizingStackPanel.IsVirtualizing="True"
-                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                              VirtualizingStackPanel.VirtualizationMode="Recycling"
+                              Padding="10">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,1" Background="Transparent">
+                                <Border CornerRadius="8" Padding="14,12" Margin="0,0,0,8" 
+                                        Background="#0B0E18" BorderBrush="#251C3D" BorderThickness="1.2">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="1" Opacity="0.35"/>
+                                    </Border.Effect>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="36"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="150"/>
-                                            <ColumnDefinition Width="90"/>
+                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="100"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Status Dot -->
+                                        <!-- 3D Status Beacon -->
                                         <Grid Grid.Column="0" VerticalAlignment="Center">
                                             <Ellipse Width="12" Height="12" Fill="#4ADE80"
-                                                     Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}"/>
+                                                     Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}">
+                                                <Ellipse.Effect>
+                                                    <DropShadowEffect Color="#4ADE80" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                                                </Ellipse.Effect>
+                                            </Ellipse>
                                             <Ellipse Width="12" Height="12" Fill="#F59E0B"
-                                                     Visibility="{Binding IsPinging, Converter={StaticResource BoolToVis}}"/>
+                                                     Visibility="{Binding IsPinging, Converter={StaticResource BoolToVis}}">
+                                                <Ellipse.Effect>
+                                                    <DropShadowEffect Color="#F59E0B" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                                                </Ellipse.Effect>
+                                            </Ellipse>
                                             <Ellipse Width="12" Height="12" Fill="#EF4444">
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
@@ -359,59 +417,64 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Ellipse.Style>
+                                                <Ellipse.Effect>
+                                                    <DropShadowEffect Color="#EF4444" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                                                </Ellipse.Effect>
                                             </Ellipse>
                                         </Grid>
 
                                         <!-- Server Info -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,10,0">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                                <TextBlock Text="★" FontSize="11" Foreground="#F59E0B" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Black" Foreground="#FFFFFF"/>
+                                                <TextBlock Text="★" FontSize="12" Foreground="#F59E0B" Margin="6,0,0,0" VerticalAlignment="Center"
                                                            Visibility="{Binding IsFavorite, Converter={StaticResource BoolToVis}}"/>
                                             </StackPanel>
-                                            <TextBlock Text="{Binding AddressDisplay}" FontSize="10.5" Foreground="{StaticResource VayuTextMutedBrush}"/>
-                                            <TextBlock Text="{Binding Motd}" FontSize="10.5" Foreground="#94A3B8"
-                                                       TextTrimming="CharacterEllipsis"
+                                            <TextBlock Text="{Binding AddressDisplay}" FontSize="11" Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding Motd}" FontSize="10.5" Foreground="#948EA5"
+                                                       TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
                                                        Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}"/>
                                         </StackPanel>
 
                                         <!-- Players + Version -->
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                            <TextBlock Text="{Binding StatusDisplay}" FontSize="11"
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0">
+                                            <TextBlock Text="{Binding StatusDisplay}" FontSize="11.5" FontWeight="SemiBold"
                                                        Foreground="{Binding IsOnline, Converter={StaticResource BoolToOnlineStatusBrush}}"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Text="{Binding ServerVersion}" FontSize="10"
-                                                       Foreground="{StaticResource VayuTextMutedBrush}"/>
+                                                       Foreground="{StaticResource VayuTextMutedBrush}" Margin="0,2,0,0"/>
                                         </StackPanel>
 
                                         <!-- Ping -->
-                                        <TextBlock Grid.Column="3" Text="{Binding PingDisplay}"
-                                                   FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
-                                                   HorizontalAlignment="Center"
-                                                   Foreground="{Binding PingMs, Converter={StaticResource PingToColorBrush}}"/>
+                                        <Border Grid.Column="3" Background="#120E22" BorderBrush="#2A1E44" BorderThickness="1" CornerRadius="6" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding PingDisplay}"
+                                                       FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{Binding PingMs, Converter={StaticResource PingToColorBrush}}"/>
+                                        </Border>
 
-                                        <!-- Action Buttons -->
+                                        <!-- 3D Action Buttons -->
                                         <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Button Content="⟳"
                                                     Command="{Binding DataContext.PingServerCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="Ping Server" Style="{StaticResource VayuIconButton}"
-                                                    Padding="8,4" Margin="2,0" Cursor="Hand"/>
+                                                    Padding="8,5" Margin="2,0"/>
                                             <Button Content="{Binding IsFavorite, Converter={StaticResource BoolToString}, ConverterParameter='★|☆'}"
                                                     Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="Toggle Favourite" Style="{StaticResource VayuIconButton}"
-                                                    Padding="8,4" Margin="2,0" Cursor="Hand"/>
+                                                    Padding="8,5" Margin="2,0"/>
                                             <Button Content="⎘"
                                                     Command="{Binding DataContext.CopyAddressCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="Copy Address" Style="{StaticResource VayuIconButton}"
-                                                    Padding="8,4" Margin="2,0" Cursor="Hand"/>
+                                                    Padding="8,5" Margin="2,0"/>
                                             <Button Content="🗑"
                                                     Command="{Binding DataContext.DeleteServerCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="Remove Server" Style="{StaticResource VayuIconButton}"
-                                                    Padding="8,4" Margin="2,0" Cursor="Hand"/>
+                                                    Padding="8,5" Margin="2,0" Foreground="#EF4444"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -421,7 +484,9 @@
                 </Grid>
             </Border>
 
-            <!-- ═══ STATUS BAR ═══ -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- 5. STATUS BAR                                                   -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
             <Border Grid.Row="4" Margin="0,10,0,0" Padding="4,2">
                 <TextBlock Text="{Binding StatusMessage}" FontSize="11"
                            Foreground="{StaticResource VayuTextMutedBrush}"

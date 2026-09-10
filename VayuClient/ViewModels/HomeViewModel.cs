@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VayuClient.Core;
@@ -33,6 +34,7 @@ namespace VayuClient.ViewModels
         private CancellationTokenSource? _partnerPingCts;
         private bool _disposed;
         private bool _isActivePage = true;
+        private readonly DispatcherTimer _telemetryTimer;
 
         // ─── Selected Instance Properties (Single Source of Truth) ────────────
 
@@ -75,22 +77,15 @@ namespace VayuClient.ViewModels
             }
         }
 
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _modCountCache = new(StringComparer.OrdinalIgnoreCase);
+
         public string ActiveInstanceModCountDisplay
         {
             get
             {
                 if (ActiveInstance == null) return "0 Mods";
-                try
-                {
-                    var modsDir = Path.Combine(ActiveInstance.GameDirectory, "mods");
-                    if (Directory.Exists(modsDir))
-                    {
-                        var jars = Directory.GetFiles(modsDir, "*.jar", SearchOption.TopDirectoryOnly);
-                        return $"{jars.Length} Mods";
-                    }
-                }
-                catch { }
-                return "0 Mods";
+                int count = GetCachedModCount(ActiveInstance);
+                return $"{count} Mods";
             }
         }
 
@@ -99,18 +94,38 @@ namespace VayuClient.ViewModels
             get
             {
                 if (ActiveInstance == null) return "0";
+                return GetCachedModCount(ActiveInstance).ToString();
+            }
+        }
+
+        private int GetCachedModCount(MinecraftInstance instance)
+        {
+            if (string.IsNullOrEmpty(instance.InstanceId)) return 0;
+            if (_modCountCache.TryGetValue(instance.InstanceId, out int cached)) return cached;
+
+            // Trigger asynchronous background calculation
+            _ = Task.Run(() =>
+            {
                 try
                 {
-                    var modsDir = Path.Combine(ActiveInstance.GameDirectory, "mods");
+                    var modsDir = Path.Combine(instance.GameDirectory, "mods");
+                    int count = 0;
                     if (Directory.Exists(modsDir))
                     {
                         var jars = Directory.GetFiles(modsDir, "*.jar", SearchOption.TopDirectoryOnly);
-                        return jars.Length.ToString();
+                        count = jars.Length;
                     }
+                    _modCountCache[instance.InstanceId] = count;
+                    Dispatch(() =>
+                    {
+                        OnPropertyChanged(nameof(ActiveInstanceModCountDisplay));
+                        OnPropertyChanged(nameof(ActiveInstanceModCountNumber));
+                    });
                 }
                 catch { }
-                return "0";
-            }
+            });
+
+            return 0;
         }
 
         public string ActiveInstanceHeroSubtitle => ActiveInstance != null
@@ -127,13 +142,13 @@ namespace VayuClient.ViewModels
 
         // ─── Hardware Telemetry Metrics (Real System Data) ─────────────────────
         [ObservableProperty]
-        private string _cpuUsageDisplay = "8%";
+        private string _cpuUsageDisplay = "…";
 
         [ObservableProperty]
-        private string _ramUsageDisplay = "4.1 GB";
+        private string _ramUsageDisplay = "…";
 
         [ObservableProperty]
-        private string _gpuUsageDisplay = "3%";
+        private string _gpuUsageDisplay = "N/A";
 
         [ObservableProperty]
         private string _systemStatusText = "Idle";
@@ -247,6 +262,8 @@ namespace VayuClient.ViewModels
             _instanceService = ServiceLocator.Resolve<IInstanceService>();
             _javaService = ServiceLocator.Resolve<IJavaRuntimeService>();
             _serverService = ServiceLocator.Resolve<IServerService>();
+            _telemetryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            _telemetryTimer.Tick += (_, _) => RefreshHardwareTelemetry();
 
             try { _backendApi = ServiceLocator.Resolve<BackendApiClient>(); } catch { }
             try { _signalR = ServiceLocator.Resolve<SignalRClientService>(); } catch { }
@@ -339,6 +356,7 @@ namespace VayuClient.ViewModels
             PopulateContentCards();
             PopulatePartneredServers();
             RefreshProfile();
+            RefreshHardwareTelemetry();
         }
 
         // ─── Lifecycle ────────────────────────────────────────────────────────
@@ -354,6 +372,8 @@ namespace VayuClient.ViewModels
         {
             _isActivePage = true;
             RefreshProfile();
+            RefreshHardwareTelemetry();
+            _telemetryTimer.Start();
             if (IsConsoleExpanded)
             {
                 LauncherLogs = CrashLogger.GetLiveLogsText();
@@ -366,6 +386,7 @@ namespace VayuClient.ViewModels
         public void Deactivate()
         {
             _isActivePage = false;
+            _telemetryTimer.Stop();
             _partnerPingCts?.Cancel();
         }
 
@@ -374,6 +395,7 @@ namespace VayuClient.ViewModels
             if (_disposed) return;
             _disposed = true;
             _isActivePage = false;
+            _telemetryTimer.Stop();
             _partnerPingCts?.Cancel();
             _partnerPingCts?.Dispose();
         }
@@ -413,28 +435,33 @@ namespace VayuClient.ViewModels
             OnPropertyChanged(nameof(ActiveInstanceBadgeDetails));
             OnPropertyChanged(nameof(HasActiveInstance));
 
-            try
-            {
-                var hwService = ServiceLocator.Resolve<Services.Hardware.IHardwareInfoService>();
-                if (hwService != null)
-                {
-                    var hw = hwService.GetHardwareProfile();
-                    if (hw != null)
-                    {
-                        double usedRam = Math.Max(1.0, hw.TotalRamGB - hw.AvailableRamGB);
-                        RamUsageDisplay = $"{usedRam:0.0} GB";
-                        GpuUsageDisplay = hw.DedicatedVramGB > 0 ? $"{hw.DedicatedVramGB:0.0} GB" : "3%";
-                        CpuUsageDisplay = $"{Math.Max(4, Math.Min(35, hw.LogicalProcessors * 2))}%";
-                    }
-                }
-            }
-            catch { }
+            RefreshHardwareTelemetry();
 
             SystemStatusText = HasRunningSessions ? "Playing" : (IsBusy ? "Launching" : "Idle");
 
             if (ActiveInstance != null && !_userManuallyOverrodeWallpaper)
             {
                 HeroBackgroundPath = ResolveArtworkForInstance(ActiveInstance);
+            }
+        }
+
+        private void RefreshHardwareTelemetry()
+        {
+            try
+            {
+                var hwService = ServiceLocator.Resolve<Services.Hardware.IHardwareInfoService>();
+                var hw = hwService.GetHardwareProfile();
+                double usedRam = Math.Max(0, hw.TotalRamGB - hw.AvailableRamGB);
+                RamUsageDisplay = $"{usedRam:0.0} GB";
+                // Adapter memory is capacity, so the UI deliberately labels this as VRAM rather than GPU usage.
+                GpuUsageDisplay = hw.DedicatedVramGB > 0 ? $"{hw.DedicatedVramGB:0.0} GB" : "N/A";
+                var cpuUsage = hwService.GetSystemCpuUsagePercent();
+                CpuUsageDisplay = cpuUsage.HasValue ? $"{cpuUsage.Value:0}%" : "…";
+            }
+            catch
+            {
+                CpuUsageDisplay = "N/A";
+                RamUsageDisplay = "N/A";
             }
         }
 

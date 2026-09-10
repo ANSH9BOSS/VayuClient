@@ -108,6 +108,15 @@ namespace VayuClient.Views
         public void Maximize_Click_Test() => Maximize_Click(this, new RoutedEventArgs());
         public void Nav_Click_Test(string page) => _vm.NavigateToCommand.Execute(page);
 
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape || _vm.CurrentPage == "Home")
+                return;
+
+            _vm.NavigateTo("Home");
+            e.Handled = true;
+        }
+
         // ─── Page Transition ───
 
         private void PlayPageTransition()

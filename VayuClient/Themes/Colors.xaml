@@ -2,54 +2,54 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- VayuClient Blue + White Edition Color System                    -->
+    <!-- VAYU CLIENT — 3D OBSIDIAN + ELECTRIC PURPLE COLOR SYSTEM         -->
     <!-- Developer: ANSH9BOSS                                            -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
 
-    <!-- Base Dark Navy Backgrounds -->
-    <Color x:Key="VayuDarkColor">#0B1220</Color>
-    <Color x:Key="VayuBgAltColor">#0F172A</Color>
-    <Color x:Key="VayuBgDarkColor">#111827</Color>
-    <Color x:Key="VayuSidebarColor">#0B1220</Color>
+    <!-- Base 3D Dark Obsidian Backgrounds -->
+    <Color x:Key="VayuDarkColor">#06070B</Color>
+    <Color x:Key="VayuBgAltColor">#0A0D16</Color>
+    <Color x:Key="VayuBgDarkColor">#080A10</Color>
+    <Color x:Key="VayuSidebarColor">#06070B</Color>
 
-    <!-- Secondary Panels & Surfaces -->
-    <Color x:Key="VayuSurfaceColor">#151F32</Color>
-    <Color x:Key="VayuSurfaceLightColor">#1B2638</Color>
-    <Color x:Key="VayuSurfaceElevatedColor">#1E293B</Color>
+    <!-- Secondary 3D Panels & Layered Surfaces -->
+    <Color x:Key="VayuSurfaceColor">#0F0C1B</Color>
+    <Color x:Key="VayuSurfaceLightColor">#161228</Color>
+    <Color x:Key="VayuSurfaceElevatedColor">#1C1633</Color>
 
-    <!-- Subtle Modern Surfaces -->
-    <Color x:Key="VayuGlassColor">#151F32</Color>
-    <Color x:Key="VayuGlassHoverColor">#1E3A66</Color>
-    <Color x:Key="VayuGlassActiveColor">#2563EB</Color>
-    <Color x:Key="VayuGlassCardColor">#151F32</Color>
-    <Color x:Key="VayuGlassBorderColor">#243247</Color>
-    <Color x:Key="VayuGlassBorderHoverColor">#3B82F6</Color>
-    <Color x:Key="VayuGlassHighlightColor">#33FFFFFF</Color>
+    <!-- Dimensional Glass & Bevel Surfaces -->
+    <Color x:Key="VayuGlassColor">#0E0A1A</Color>
+    <Color x:Key="VayuGlassHoverColor">#1A1230</Color>
+    <Color x:Key="VayuGlassActiveColor">#241445</Color>
+    <Color x:Key="VayuGlassCardColor">#0D0918</Color>
+    <Color x:Key="VayuGlassBorderColor">#1F1733</Color>
+    <Color x:Key="VayuGlassBorderHoverColor">#582C99</Color>
+    <Color x:Key="VayuGlassHighlightColor">#40FFFFFF</Color>
 
-    <!-- Blue + White Brand Accents -->
-    <Color x:Key="VayuAccentColor">#2563EB</Color>
-    <Color x:Key="VayuBrightBlueColor">#3B82F6</Color>
-    <Color x:Key="VayuLightBlueColor">#60A5FA</Color>
+    <!-- Electric Purple & Crisp White Brand Accents -->
+    <Color x:Key="VayuAccentColor">#A855F7</Color>
+    <Color x:Key="VayuBrightBlueColor">#A855F7</Color> <!-- Mapped to Electric Purple -->
+    <Color x:Key="VayuLightBlueColor">#C084FC</Color>
     <Color x:Key="VayuWhiteColor">#FFFFFF</Color>
-    <Color x:Key="VayuAccentLightColor">#60A5FA</Color>
-    <Color x:Key="VayuAccentDarkColor">#1D4ED8</Color>
-    <Color x:Key="VayuAccentGlowColor">#402563EB</Color>
-    <Color x:Key="VayuSecondaryColor">#3B82F6</Color>
-    <Color x:Key="VayuOrangeHighlightColor">#60A5FA</Color>
+    <Color x:Key="VayuAccentLightColor">#C084FC</Color>
+    <Color x:Key="VayuAccentDarkColor">#7C3AED</Color>
+    <Color x:Key="VayuAccentGlowColor">#60A855F7</Color>
+    <Color x:Key="VayuSecondaryColor">#7C3AED</Color>
+    <Color x:Key="VayuOrangeHighlightColor">#D8B4FE</Color>
 
-    <!-- High-Contrast Text Tokens -->
-    <Color x:Key="VayuTextColor">#F8FAFC</Color>
-    <Color x:Key="VayuTextDimColor">#94A3B8</Color>
-    <Color x:Key="VayuTextMutedColor">#64748B</Color>
-    <Color x:Key="VayuBorderColor">#243247</Color>
-    <Color x:Key="VayuHoverColor">#1E3A66</Color>
-    <Color x:Key="VayuSelectedColor">#2563EB</Color>
+    <!-- High-Contrast 3D Text Tokens -->
+    <Color x:Key="VayuTextColor">#FFFFFF</Color>
+    <Color x:Key="VayuTextDimColor">#9E94B8</Color>
+    <Color x:Key="VayuTextMutedColor">#6C6382</Color>
+    <Color x:Key="VayuBorderColor">#1E1730</Color>
+    <Color x:Key="VayuHoverColor">#1A1230</Color>
+    <Color x:Key="VayuSelectedColor">#A855F7</Color>
 
     <!-- Semantic Status Tokens -->
-    <Color x:Key="VayuSuccessColor">#22C55E</Color>
+    <Color x:Key="VayuSuccessColor">#10B981</Color>
     <Color x:Key="VayuWarningColor">#F59E0B</Color>
     <Color x:Key="VayuErrorColor">#EF4444</Color>
-    <Color x:Key="VayuInfoColor">#3B82F6</Color>
+    <Color x:Key="VayuInfoColor">#A855F7</Color>
 
     <!-- ═══ Solid Brushes ═══ -->
     <SolidColorBrush x:Key="VayuDarkBrush" Color="{StaticResource VayuDarkColor}"/>
@@ -90,41 +90,59 @@
     <SolidColorBrush x:Key="VayuInfoBrush" Color="{StaticResource VayuInfoColor}"/>
 
     <!-- Category tag brushes -->
-    <SolidColorBrush x:Key="VayuPurpleAccentBrush" Color="#8B5CF6"/>
+    <SolidColorBrush x:Key="VayuPurpleAccentBrush" Color="#A855F7"/>
     <SolidColorBrush x:Key="VayuCyanAccentBrush" Color="#38BDF8"/>
-    <SolidColorBrush x:Key="VayuGreenAccentBrush" Color="#22C55E"/>
-    <SolidColorBrush x:Key="VayuBlueAccentBrush" Color="#2563EB"/>
+    <SolidColorBrush x:Key="VayuGreenAccentBrush" Color="#10B981"/>
+    <SolidColorBrush x:Key="VayuBlueAccentBrush" Color="#6366F1"/>
 
-    <!-- Gradients -->
+    <!-- ═══ 3D Bevel & Dimensional Gradients ═══ -->
     <LinearGradientBrush x:Key="VayuBackgroundGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#0B1220" Offset="0.0"/>
-        <GradientStop Color="#0F172A" Offset="1.0"/>
+        <GradientStop Color="#06070B" Offset="0.0"/>
+        <GradientStop Color="#0A0D16" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="VayuSidebarGradient" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#0B1220" Offset="0.0"/>
-        <GradientStop Color="#080D17" Offset="1.0"/>
+        <GradientStop Color="#06070B" Offset="0.0"/>
+        <GradientStop Color="#050508" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="VayuAccentGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#2563EB" Offset="0.0"/>
-        <GradientStop Color="#3B82F6" Offset="1.0"/>
+        <GradientStop Color="#7C3AED" Offset="0.0"/>
+        <GradientStop Color="#A855F7" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="VayuPlayGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#2563EB" Offset="0.0"/>
-        <GradientStop Color="#3B82F6" Offset="1.0"/>
+        <GradientStop Color="#4C1D95" Offset="0.0"/>
+        <GradientStop Color="#8B5CF6" Offset="0.7"/>
+        <GradientStop Color="#A855F7" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="VayuHeroGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#1E293B" Offset="0.0"/>
-        <GradientStop Color="#0F172A" Offset="0.6"/>
-        <GradientStop Color="#0B1220" Offset="1.0"/>
+        <GradientStop Color="#140D26" Offset="0.0"/>
+        <GradientStop Color="#0A0D16" Offset="0.6"/>
+        <GradientStop Color="#06070B" Offset="1.0"/>
     </LinearGradientBrush>
 
+    <!-- 3D Dimensional Card Surface (Top-lit Bevel) -->
     <LinearGradientBrush x:Key="VayuCardGradient" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#151F32" Offset="0.0"/>
-        <GradientStop Color="#111827" Offset="1.0"/>
+        <GradientStop Color="#140E24" Offset="0.0"/>
+        <GradientStop Color="#0C0817" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Vayu3DButtonTopBevel" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#281A42" Offset="0.0"/>
+        <GradientStop Color="#130B22" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Vayu3DButtonAccentBevel" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#C084FC" Offset="0.0"/>
+        <GradientStop Color="#8B5CF6" Offset="0.3"/>
+        <GradientStop Color="#6D28D9" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Vayu3DBorderBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#3E206A" Offset="0.0"/>
+        <GradientStop Color="#181128" Offset="1.0"/>
     </LinearGradientBrush>
 
 </ResourceDictionary>

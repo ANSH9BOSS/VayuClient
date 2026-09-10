@@ -10,6 +10,20 @@ namespace VayuClient.Services.Hardware
     {
         private HardwareProfile? _cachedProfile;
         private readonly object _lock = new();
+        private readonly object _cpuSampleLock = new();
+        private bool _hasCpuSample;
+        private ulong _previousIdleTime;
+        private ulong _previousKernelTime;
+        private ulong _previousUserTime;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct FILETIME
+        {
+            public uint dwLowDateTime;
+            public uint dwHighDateTime;
+
+            public ulong ToUInt64() => ((ulong)dwHighDateTime << 32) | dwLowDateTime;
+        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         private class MEMORYSTATUSEX
@@ -34,65 +48,133 @@ namespace VayuClient.Services.Hardware
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetSystemTimes(out FILETIME idleTime, out FILETIME kernelTime, out FILETIME userTime);
+
+        public HardwareInfoService()
+        {
+            // Build instant zero-latency baseline profile (< 0.1ms)
+            _cachedProfile = CreateFastBaselineProfile();
+
+            // Asynchronously populate full WMI details in background without blocking UI thread
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var enriched = DetectHardwareDetailed();
+                    lock (_lock)
+                    {
+                        _cachedProfile = enriched;
+                    }
+                }
+                catch { }
+            });
+        }
+
         public HardwareProfile GetHardwareProfile(bool forceRefresh = false)
         {
             lock (_lock)
             {
-                if (_cachedProfile != null && !forceRefresh)
+                if (_cachedProfile == null)
                 {
-                    // Refresh dynamic values (available RAM and free disk space)
-                    RefreshDynamicMetrics(_cachedProfile);
-                    return _cachedProfile;
+                    _cachedProfile = CreateFastBaselineProfile();
                 }
 
-                _cachedProfile = DetectHardwareSynchronous();
+                // Refresh lightweight dynamic metrics (RAM & Disk)
+                RefreshDynamicMetrics(_cachedProfile);
                 return _cachedProfile;
             }
         }
 
         public async Task<HardwareProfile> GetHardwareProfileAsync(bool forceRefresh = false)
         {
-            if (_cachedProfile != null && !forceRefresh)
+            if (!forceRefresh && _cachedProfile != null)
             {
                 RefreshDynamicMetrics(_cachedProfile);
                 return _cachedProfile;
             }
 
-            return await Task.Run(() => GetHardwareProfile(forceRefresh));
+            return await Task.Run(() =>
+            {
+                var profile = DetectHardwareDetailed();
+                lock (_lock)
+                {
+                    _cachedProfile = profile;
+                }
+                return profile;
+            });
         }
 
-        private HardwareProfile DetectHardwareSynchronous()
+        public double? GetSystemCpuUsagePercent()
+        {
+            if (!GetSystemTimes(out var idle, out var kernel, out var user))
+            {
+                return null;
+            }
+
+            var idleNow = idle.ToUInt64();
+            var kernelNow = kernel.ToUInt64();
+            var userNow = user.ToUInt64();
+
+            lock (_cpuSampleLock)
+            {
+                if (!_hasCpuSample)
+                {
+                    _previousIdleTime = idleNow;
+                    _previousKernelTime = kernelNow;
+                    _previousUserTime = userNow;
+                    _hasCpuSample = true;
+                    return null;
+                }
+
+                var idleDelta = idleNow - _previousIdleTime;
+                var totalDelta = (kernelNow - _previousKernelTime) + (userNow - _previousUserTime);
+                _previousIdleTime = idleNow;
+                _previousKernelTime = kernelNow;
+                _previousUserTime = userNow;
+
+                if (totalDelta == 0)
+                {
+                    return null;
+                }
+
+                return Math.Clamp((totalDelta - Math.Min(idleDelta, totalDelta)) * 100.0 / totalDelta, 0.0, 100.0);
+            }
+        }
+
+        private HardwareProfile CreateFastBaselineProfile()
         {
             var profile = new HardwareProfile
             {
-                LogicalProcessors = Environment.ProcessorCount,
-                OperatingSystemName = $"{Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")})"
+                LogicalProcessors = Math.Max(1, Environment.ProcessorCount),
+                PhysicalCores = Math.Max(1, Environment.ProcessorCount / 2),
+                OperatingSystemName = $"{Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")})",
+                CpuName = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? $"{Environment.ProcessorCount}-Core Processor",
+                GpuName = "Hardware Acceleration Active"
             };
 
-            // 1. RAM Detection via Win32 API
-            try
-            {
-                var memStatus = new MEMORYSTATUSEX();
-                if (GlobalMemoryStatusEx(memStatus))
-                {
-                    profile.TotalPhysicalRamBytes = (long)memStatus.ullTotalPhys;
-                    profile.AvailablePhysicalRamBytes = (long)memStatus.ullAvailPhys;
-                }
-            }
-            catch
-            {
-                // Fallback default
-                profile.TotalPhysicalRamBytes = 8L * 1024 * 1024 * 1024;
-                profile.AvailablePhysicalRamBytes = 4L * 1024 * 1024 * 1024;
-            }
+            RefreshDynamicMetrics(profile);
+            ComputeRecommendations(profile);
+            return profile;
+        }
 
-            // 2. CPU Detection via WMI
+        private HardwareProfile DetectHardwareDetailed()
+        {
+            var profile = CreateFastBaselineProfile();
+
+            // 1. CPU Detection via WMI (Background Task)
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT Name, NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor");
                 foreach (ManagementObject obj in searcher.Get())
                 {
-                    profile.CpuName = obj["Name"]?.ToString()?.Trim() ?? profile.CpuName;
+                    var name = obj["Name"]?.ToString()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        profile.CpuName = name;
+                    }
+
                     if (int.TryParse(obj["NumberOfCores"]?.ToString(), out int cores) && cores > 0)
                     {
                         profile.PhysicalCores = cores;
@@ -104,13 +186,9 @@ namespace VayuClient.Services.Hardware
                     break;
                 }
             }
-            catch
-            {
-                profile.CpuName = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "Multi-Core CPU";
-                profile.PhysicalCores = Math.Max(1, Environment.ProcessorCount / 2);
-            }
+            catch { }
 
-            // 3. GPU Detection via WMI
+            // 2. GPU Detection via WMI (Background Task)
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT Name, AdapterRAM FROM Win32_VideoController");
@@ -131,7 +209,6 @@ namespace VayuClient.Services.Hardware
                         primaryGpu = gpuName;
                     }
 
-                    // If discrete GPU found (NVIDIA / AMD Radeon / Intel Arc), prioritize it
                     bool isDiscrete = gpuName.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) ||
                                      gpuName.Contains("Radeon", StringComparison.OrdinalIgnoreCase) ||
                                      gpuName.Contains("RTX", StringComparison.OrdinalIgnoreCase) ||
@@ -151,26 +228,9 @@ namespace VayuClient.Services.Hardware
                     profile.DedicatedVramBytes = maxVram;
                 }
             }
-            catch
-            {
-                profile.GpuName = "DirectX Hardware Acceleration Available";
-            }
-
-            // 4. Free Disk Space Detection on install drive
-            try
-            {
-                string root = Path.GetPathRoot(AppDomain.CurrentDomain.BaseDirectory) ?? "C:\\";
-                var drive = new DriveInfo(root);
-                if (drive.IsReady)
-                {
-                    profile.FreeDiskSpaceBytes = drive.AvailableFreeSpace;
-                }
-            }
             catch { }
 
-            // 5. Intelligent Recommendations
             ComputeRecommendations(profile);
-
             return profile;
         }
 
@@ -181,6 +241,7 @@ namespace VayuClient.Services.Hardware
                 var memStatus = new MEMORYSTATUSEX();
                 if (GlobalMemoryStatusEx(memStatus))
                 {
+                    profile.TotalPhysicalRamBytes = (long)memStatus.ullTotalPhys;
                     profile.AvailablePhysicalRamBytes = (long)memStatus.ullAvailPhys;
                 }
 

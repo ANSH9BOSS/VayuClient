@@ -6,7 +6,7 @@ using System.Windows.Shapes;
 namespace VayuClient.Controls
 {
     /// <summary>
-    /// Lightweight, zero-overhead static Dark Navy ambient background canvas.
+    /// Lightweight, zero-overhead static Obsidian and Vayu-purple ambient background canvas.
     /// Free of continuous CompositionTarget rendering loops for maximum launcher performance.
     /// </summary>
     public class AnimatedBackground : Canvas
@@ -26,7 +26,8 @@ namespace VayuClient.Controls
         {
             Children.Clear();
 
-            // Subtle top-left soft blue ambient glow (static vector, 0% CPU overhead)
+            // Static purple ambient lighting keeps the shell connected to the Vayu visual system
+            // without an idle render loop or costly image overlays.
             var glow1 = new Ellipse
             {
                 Width = 500,
@@ -37,8 +38,8 @@ namespace VayuClient.Controls
                 {
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop(Color.FromRgb(37, 99, 235), 0.0),
-                        new GradientStop(Color.FromArgb(0, 37, 99, 235), 1.0)
+                        new GradientStop(Color.FromRgb(124, 58, 237), 0.0),
+                        new GradientStop(Color.FromArgb(0, 124, 58, 237), 1.0)
                     }
                 }
             };
@@ -46,7 +47,7 @@ namespace VayuClient.Controls
             SetTop(glow1, -100);
             Children.Add(glow1);
 
-            // Subtle bottom-right soft blue ambient glow
+            // A quieter counter-light adds material separation without overpowering content.
             var glow2 = new Ellipse
             {
                 Width = 600,
@@ -57,8 +58,8 @@ namespace VayuClient.Controls
                 {
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop(Color.FromRgb(59, 130, 246), 0.0),
-                        new GradientStop(Color.FromArgb(0, 59, 130, 246), 1.0)
+                        new GradientStop(Color.FromRgb(168, 85, 247), 0.0),
+                        new GradientStop(Color.FromArgb(0, 168, 85, 247), 1.0)
                     }
                 }
             };

@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:core="clr-namespace:VayuClient.Core"
+             xmlns:controls="clr-namespace:VayuClient.Controls"
              mc:Ignorable="d"
              d:DesignHeight="720" d:DesignWidth="1200"
              Background="#06070B"
@@ -23,7 +24,7 @@
                         <Border x:Name="CardBd" CornerRadius="12" Background="#0C0A14" BorderBrush="#1C172B" BorderThickness="1" Padding="14,8">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Border Width="28" Height="28" CornerRadius="6" Background="#181329" Margin="0,0,10,0" ClipToBounds="True">
-                                    <Image Source="{Binding Converter={StaticResource SkinHeadImage}}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                    <controls:PlayerBody3D Profile="{Binding}" DisplayMode="HeadOnly"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" MaxWidth="120" TextTrimming="CharacterEllipsis"/>
@@ -149,11 +150,11 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- GPU Chip -->
+                    <!-- VRAM capacity chip -->
                     <Border CornerRadius="8" Background="#0C0A14" BorderBrush="#1C172B" BorderThickness="1" Padding="10,5" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="🎮" FontSize="9" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="GPU" FontSize="9.5" FontWeight="Black" Foreground="#7D7596" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="VRAM" FontSize="9.5" FontWeight="Black" Foreground="#7D7596" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding GpuUsageDisplay}" FontSize="10.5" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -179,13 +180,13 @@
             <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,6,0,10">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
 
-                    <!-- ─── 1. LEFT: 3D FACETED DIAMOND AVATAR FRAMING ─── -->
-                    <Grid Width="220" Height="200" Margin="0,0,44,0" VerticalAlignment="Center">
+                    <!-- ─── 1. LEFT: 3D RUNNING PLAYER SKIN SHOWCASE ─── -->
+                    <Grid Width="230" Height="240" Margin="0,0,44,0" VerticalAlignment="Center">
                         
                         <!-- Layered Faceted Glass Diamonds (Tilted & Layered with Purple Cyber Glow) -->
-                        <Canvas Width="220" Height="200">
+                        <Canvas Width="230" Height="240">
                             <!-- Back Layer 1 (Dark Obsidian Shadow Diamond) -->
-                            <Path Data="M 45,8 L 185,8 L 145,178 L 5,178 Z" 
+                            <Path Data="M 45,8 L 195,8 L 155,218 L 5,218 Z" 
                                   Fill="#120A22" Stroke="#311956" StrokeThickness="1.2" Opacity="0.85">
                                 <Path.Effect>
                                     <DropShadowEffect Color="#7C3AED" BlurRadius="32" ShadowDepth="0" Opacity="0.35"/>
@@ -193,15 +194,15 @@
                             </Path>
 
                             <!-- Accent Facet Plate (Angled Top-Right Cut) -->
-                            <Path Data="M 125,2 L 210,2 L 175,85 L 90,85 Z"
+                            <Path Data="M 135,2 L 220,2 L 185,105 L 100,105 Z"
                                   Fill="#28114C" Stroke="#6B21A8" StrokeThickness="1" Opacity="0.55"/>
 
                             <!-- Accent Facet Plate (Angled Bottom-Left Cut) -->
-                            <Path Data="M 28,95 L 115,95 L 80,180 L -7,180 Z"
+                            <Path Data="M 28,115 L 115,115 L 80,220 L -7,220 Z"
                                   Fill="#180C30" Stroke="#4C1D95" StrokeThickness="1" Opacity="0.45"/>
 
                             <!-- Front Layer (Glowing Purple Diamond Frame) -->
-                            <Path Data="M 60,20 L 200,20 L 160,190 L 20,190 Z" 
+                            <Path Data="M 60,20 L 210,20 L 170,230 L 20,230 Z" 
                                   Fill="#0D0719" Stroke="#A855F7" StrokeThickness="1.6">
                                 <Path.Effect>
                                     <DropShadowEffect Color="#A855F7" BlurRadius="26" ShadowDepth="0" Opacity="0.55"/>
@@ -210,7 +211,7 @@
                         </Canvas>
 
                         <!-- Glowing Purple Ambient Radial Backlight -->
-                        <Ellipse Width="110" Height="110" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,8,0,0">
+                        <Ellipse Width="140" Height="140" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,8,0,0">
                             <Ellipse.Fill>
                                 <RadialGradientBrush>
                                     <GradientStop Color="#60A855F7" Offset="0.0"/>
@@ -220,17 +221,15 @@
                             </Ellipse.Fill>
                         </Ellipse>
 
-                        <!-- Active Instance / Minotar Avatar Head -->
-                        <Border Width="96" Height="96" CornerRadius="12" Background="#140D26" 
+                        <!-- Active Instance / 3D Running Player Skin Body -->
+                        <Border Width="140" Height="190" CornerRadius="16" Background="#140D26" 
                                 BorderBrush="#5B29A6" BorderThickness="1.2" 
                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,8,0,0"
                                 ClipToBounds="True">
                             <Border.Effect>
-                                <DropShadowEffect Color="#A855F7" BlurRadius="22" ShadowDepth="0" Opacity="0.65"/>
+                                <DropShadowEffect Color="#A855F7" BlurRadius="24" ShadowDepth="0" Opacity="0.65"/>
                             </Border.Effect>
-                            <Image Source="{Binding ActiveProfile, Converter={StaticResource SkinHeadImage}}" 
-                                   RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                   Stretch="Uniform"/>
+                            <controls:PlayerBody3D Profile="{Binding ActiveProfile}"/>
                         </Border>
                     </Grid>
 
@@ -383,7 +382,7 @@
                             <Border Visibility="{Binding HasRunningSessions, Converter={StaticResource BoolToVis}}"
                                     Height="56" CornerRadius="28" 
                                     Background="#0A1814" BorderBrush="#10B981" BorderThickness="1.5"
-                                    Padding="16,6" Margin="0,64,0,0">
+                                    Padding="16,6">
                                 <Grid VerticalAlignment="Center">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>

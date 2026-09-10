@@ -477,6 +477,7 @@ namespace VayuClient.Services.Launch
 
                 Directory.CreateDirectory(effectiveGameDirectory);
                 Directory.CreateDirectory(nativesDir);
+                SanitizeBrightnessPlusConfig(effectiveGameDirectory);
 
                 Process? process = null;
                 var javaCandidates = new List<string> { argsResult.JavaExecutablePath };
@@ -665,24 +666,8 @@ namespace VayuClient.Services.Launch
 
                 GameSessionStarted?.Invoke(session);
 
-                // Open custom Glassmorphic Live Game Output Console
-                try
-                {
-                    string liveLogDir = Path.Combine(effectiveGameDirectory, "logs");
-                    Directory.CreateDirectory(liveLogDir);
-                    string liveLogFile = Path.Combine(liveLogDir, "latest.log");
-                    if (!File.Exists(liveLogFile))
-                    {
-                        File.WriteAllText(liveLogFile, $"[{DateTime.Now:HH:mm:ss}] [VayuClient v2.1.0] Starting Minecraft {instance.MinecraftVersion} ({instance.Name} • {profile.Username})...\n");
-                    }
-
-                    // Open custom live log menu inside the launcher
-                    Views.GameLogsDialog.ShowDialogSafe(instance.Name, liveLogFile);
-                }
-                catch (Exception ex)
-                {
-                    Log($"[Game Logs]: {ex.Message}");
-                }
+                // Logs remain available from the running-session UI. Never steal focus or open a
+                // second window while the player is launching Minecraft.
 
                 // 12. Asynchronous Process Lifecycle Monitoring (Non-blocking)
                 _ = Task.Run(async () =>
@@ -779,6 +764,35 @@ namespace VayuClient.Services.Launch
                 catch { }
 
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Brightness Plus can persist values that are invalid in current Minecraft releases.
+        /// Reset the problematic saved state before launch, while leaving every other mod setting alone.
+        /// </summary>
+        private void SanitizeBrightnessPlusConfig(string gameDirectory)
+        {
+            try
+            {
+                string path = Path.Combine(gameDirectory, "config", "brightnessplus.json");
+                if (!File.Exists(path)) return;
+
+                var config = JObject.Parse(File.ReadAllText(path));
+                bool isInvalid = config.Value<double?>("1") is > 1.0 ||
+                                 config.Value<double?>("2") is > 1.0;
+                if (!isInvalid) return;
+
+                config["toggled"] = false;
+                config["last"] = 1;
+                config["1"] = 1.0;
+                config["2"] = 1.0;
+                File.WriteAllText(path, config.ToString(Newtonsoft.Json.Formatting.None));
+                CrashLogger.LogMessage("[Brightness Plus] Reset invalid saved brightness before launch to prevent repeated Minecraft render errors.");
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.LogMessage($"[Brightness Plus] Could not validate saved brightness: {ex.Message}");
             }
         }
 

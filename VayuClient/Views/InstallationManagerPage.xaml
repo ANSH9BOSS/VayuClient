@@ -5,27 +5,40 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="780" d:DesignWidth="1100"
-             Background="#070B14">
+             Background="#06070B"
+             FontFamily="{StaticResource VayuFontFamily}">
 
     <Grid>
-        <!-- ═══ AMBIENT CYBER NETHER BACKGROUND ═══ -->
+        <!-- ═══ AMBIENT 3D CYBER NETHER BACKGROUND ═══ -->
         <Image Source="/Assets/Images/bg_cyber_nether.jpg" 
                Stretch="UniformToFill" 
                HorizontalAlignment="Center" 
                VerticalAlignment="Center"
                RenderOptions.BitmapScalingMode="HighQuality"
-               Opacity="0.25"/>
+               Opacity="0.18"/>
 
-        <!-- Dark Radial & Linear Gradient Overlay for High Readability -->
+        <!-- Dark Radial & Linear Gradient Overlay for High 3D Contrast -->
         <Rectangle>
             <Rectangle.Fill>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#D0070B14" Offset="0.0"/>
-                    <GradientStop Color="#E6070B14" Offset="0.5"/>
-                    <GradientStop Color="#FA070B14" Offset="1.0"/>
+                    <GradientStop Color="#D806070B" Offset="0.0"/>
+                    <GradientStop Color="#EB06070B" Offset="0.5"/>
+                    <GradientStop Color="#FA06070B" Offset="1.0"/>
                 </LinearGradientBrush>
             </Rectangle.Fill>
         </Rectangle>
+
+        <!-- Ambient Purple Accent Light Glow -->
+        <Ellipse Width="650" Height="450" HorizontalAlignment="Right" VerticalAlignment="Top"
+                 Margin="0,-100,-150,0" IsHitTestVisible="False" Opacity="0.07">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#A855F7" Offset="0.0"/>
+                    <GradientStop Color="#7C3AED" Offset="0.5"/>
+                    <GradientStop Color="Transparent" Offset="1.0"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
 
         <Grid Margin="28,18,28,20">
             <Grid.RowDefinitions>
@@ -54,9 +67,9 @@
                                 <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ActiveTab}" Value="Installations">
-                                        <Setter Property="Foreground" Value="#38BDF8"/>
+                                        <Setter Property="Foreground" Value="#C084FC"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,2.5"/>
-                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                        <Setter Property="BorderBrush" Value="#A855F7"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -72,9 +85,9 @@
                                 <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ActiveTab}" Value="Modpacks">
-                                        <Setter Property="Foreground" Value="#38BDF8"/>
+                                        <Setter Property="Foreground" Value="#C084FC"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,2.5"/>
-                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                        <Setter Property="BorderBrush" Value="#A855F7"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -90,9 +103,9 @@
                                 <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ActiveTab}" Value="Mods">
-                                        <Setter Property="Foreground" Value="#38BDF8"/>
+                                        <Setter Property="Foreground" Value="#C084FC"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,2.5"/>
-                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                        <Setter Property="BorderBrush" Value="#A855F7"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -108,9 +121,9 @@
                                 <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ActiveTab}" Value="Resource Packs">
-                                        <Setter Property="Foreground" Value="#38BDF8"/>
+                                        <Setter Property="Foreground" Value="#C084FC"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,2.5"/>
-                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                        <Setter Property="BorderBrush" Value="#A855F7"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -126,9 +139,9 @@
                                 <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ActiveTab}" Value="Shaders">
-                                        <Setter Property="Foreground" Value="#38BDF8"/>
+                                        <Setter Property="Foreground" Value="#C084FC"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,2.5"/>
-                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                        <Setter Property="BorderBrush" Value="#A855F7"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -144,9 +157,9 @@
                                 <Setter Property="Foreground" Value="{StaticResource VayuTextDimBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ActiveTab}" Value="Data Packs">
-                                        <Setter Property="Foreground" Value="#38BDF8"/>
+                                        <Setter Property="Foreground" Value="#C084FC"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,2.5"/>
-                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                        <Setter Property="BorderBrush" Value="#A855F7"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -176,7 +189,7 @@
                             Style="{StaticResource VayuDarkButton}" Padding="13,8" Margin="0,0,8,0" ToolTip="Convert modpack / instance to any Minecraft version">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="🔄" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Convert Version" FontSize="12" Foreground="#38BDF8" FontWeight="Bold"/>
+                            <TextBlock Text="Convert Version" FontSize="12" Foreground="#C084FC" FontWeight="Bold"/>
                         </StackPanel>
                     </Button>
 
@@ -213,14 +226,14 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Search Box -->
-                    <Border Grid.Column="0" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,14,0">
+                    <!-- 3D Search Box -->
+                    <Border Grid.Column="0" Background="#0D0A18" BorderBrush="#261E38" BorderThickness="1.2" CornerRadius="8" Padding="10,6" Margin="0,0,14,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Path Grid.Column="0" Data="{StaticResource VayuIconSearch}" Fill="#64748B" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Path Grid.Column="0" Data="{StaticResource VayuIconSearch}" Fill="#7C3AED" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBox Grid.Column="1" Text="{Binding LibrarySearchQuery, UpdateSourceTrigger=PropertyChanged}"
                                      Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontFamily="{StaticResource VayuFontFamily}" FontSize="12.5"
                                      VerticalAlignment="Center"/>
@@ -229,7 +242,7 @@
 
                     <!-- Filter Chips (Loaders & Favorites) -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="FILTER:" FontSize="10.5" FontWeight="Black" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Text="FILTER:" FontSize="10" FontWeight="Black" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <ItemsControl ItemsSource="{Binding LibraryLoaders}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -247,16 +260,16 @@
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="RadioButton">
-                                                            <Border x:Name="ChipBorder" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="10,4">
+                                                            <Border x:Name="ChipBorder" Background="#0D0A18" BorderBrush="#261E38" BorderThickness="1" CornerRadius="12" Padding="10,4">
                                                                 <TextBlock Text="{TemplateBinding Content}" FontSize="11" FontWeight="Bold" Foreground="#94A3B8"/>
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsChecked" Value="True">
-                                                                    <Setter TargetName="ChipBorder" Property="Background" Value="#1E3A8A"/>
-                                                                    <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                                                    <Setter TargetName="ChipBorder" Property="Background" Value="#251644"/>
+                                                                    <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#A855F7"/>
                                                                 </Trigger>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#2563EB"/>
+                                                                    <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#7C3AED"/>
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -272,7 +285,7 @@
 
                     <!-- Sort Dropdown -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="SORT:" FontSize="10.5" FontWeight="Black" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="SORT:" FontSize="10" FontWeight="Black" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <ComboBox ItemsSource="{Binding LibrarySortOptions}" SelectedItem="{Binding LibrarySortBy}"
                                   Style="{StaticResource VayuComboBox}" Width="130" Height="30"/>
                     </StackPanel>
@@ -296,13 +309,13 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,10,0">
+                    <Border Grid.Column="0" Background="#0D0A18" BorderBrush="#261E38" BorderThickness="1.2" CornerRadius="8" Padding="10,6" Margin="0,0,10,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Path Grid.Column="0" Data="{StaticResource VayuIconSearch}" Fill="#64748B" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Path Grid.Column="0" Data="{StaticResource VayuIconSearch}" Fill="#7C3AED" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBox Grid.Column="1" Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
                                      Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontFamily="{StaticResource VayuFontFamily}" FontSize="12.5"
                                      VerticalAlignment="Center"/>
@@ -318,7 +331,7 @@
             <!-- 3. MAIN GAME LIBRARY CONTENT GRID                               -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
             <Grid Grid.Row="2">
-                <!-- ─── TAB: INSTALLATIONS (PREMIUM GAME LIBRARY CARDS GRID) ─── -->
+                <!-- ─── TAB: INSTALLATIONS (3D GAME LIBRARY CARDS GRID) ─── -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ScrollViewer.Style>
                         <Style TargetType="ScrollViewer" BasedOn="{StaticResource VayuScrollViewer}">
@@ -334,10 +347,10 @@
                     <StackPanel>
                         <!-- Empty State -->
                         <Border Visibility="{Binding HasInstallations, Converter={StaticResource InverseBoolToVis}}"
-                                CornerRadius="12" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1"
+                                CornerRadius="14" Background="#0A0D16" BorderBrush="#2D2248" BorderThickness="1.2"
                                 Padding="40,40" Margin="0,20,0,0">
                             <StackPanel HorizontalAlignment="Center">
-                                <Path Data="{StaticResource VayuIconInstances}" Fill="#38BDF8" Width="44" Height="44" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <Path Data="{StaticResource VayuIconInstances}" Fill="#A855F7" Width="44" Height="44" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                                 <TextBlock Text="Game Library is Empty" FontSize="18" FontWeight="Black" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
                                 <TextBlock Text="Create your first isolated Minecraft installation or explore popular modpacks." FontSize="13" Foreground="#94A3B8" Margin="0,6,0,24" HorizontalAlignment="Center"/>
                                 <Button Style="{StaticResource VayuAccentButton}" Padding="20,10" Command="{Binding NewInstallationCommand}" HorizontalAlignment="Center">
@@ -349,7 +362,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Responsive Game Library Cards Grid -->
+                        <!-- Responsive 3D Game Library Cards Grid -->
                         <ItemsControl ItemsSource="{Binding FilteredInstallations}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -358,17 +371,27 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Width="310" Height="360" Margin="0,0,16,20" CornerRadius="14" 
-                                            Background="#0C1322" BorderThickness="1.5"
+                                    <Border Width="310" Height="365" Margin="0,0,16,20" CornerRadius="14" 
+                                            Background="#0A0D16" BorderThickness="1.5"
                                             ClipToBounds="True">
-                                        <!-- Active vs Regular Border Style -->
+                                        <!-- Active vs Regular 3D Border Style -->
                                         <Border.Style>
                                             <Style TargetType="Border">
-                                                <Setter Property="BorderBrush" Value="#1E293B"/>
+                                                <Setter Property="BorderBrush" Value="#251E38"/>
+                                                <Setter Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="4" Opacity="0.4"/>
+                                                    </Setter.Value>
+                                                </Setter>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
-                                                        <Setter Property="Background" Value="#0F1B30"/>
+                                                        <Setter Property="BorderBrush" Value="#A855F7"/>
+                                                        <Setter Property="Background" Value="#120E22"/>
+                                                        <Setter Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#7C3AED" BlurRadius="20" ShadowDepth="0" Opacity="0.4"/>
+                                                            </Setter.Value>
+                                                        </Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -389,16 +412,16 @@
                                                 <Rectangle>
                                                     <Rectangle.Fill>
                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                            <GradientStop Color="#20000000" Offset="0.0"/>
-                                                            <GradientStop Color="#A00C1322" Offset="0.6"/>
-                                                            <GradientStop Color="#FF0C1322" Offset="1.0"/>
+                                                            <GradientStop Color="#10000000" Offset="0.0"/>
+                                                            <GradientStop Color="#A00A0D16" Offset="0.6"/>
+                                                            <GradientStop Color="#FF0A0D16" Offset="1.0"/>
                                                         </LinearGradientBrush>
                                                     </Rectangle.Fill>
                                                 </Rectangle>
 
                                                 <!-- Top Badge: Loader Pill -->
                                                 <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,12,0,0"
-                                                        CornerRadius="6" Background="#CC070B14" BorderBrush="{Binding LoaderAccentColor}" BorderThickness="1"
+                                                        CornerRadius="6" Background="#CC06070B" BorderBrush="{Binding LoaderAccentColor}" BorderThickness="1"
                                                         Padding="8,3">
                                                     <TextBlock Text="{Binding LoaderBadgeText}" FontSize="10.5" FontWeight="Black" Foreground="{Binding LoaderAccentColor}"/>
                                                 </Border>
@@ -415,7 +438,7 @@
                                                     </Border>
 
                                                     <!-- Active Checkmark Badge -->
-                                                    <Border Background="#2563EB" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,6,0"
+                                                    <Border Background="#6B21A8" BorderBrush="#C084FC" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,6,0"
                                                             Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
                                                         <TextBlock Text="✓ ACTIVE" FontSize="10" FontWeight="Black" Foreground="#FFFFFF"/>
                                                     </Border>
@@ -423,7 +446,7 @@
                                                     <!-- Favorite Star Button -->
                                                     <Button Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}"
-                                                            Background="#CC070B14" BorderBrush="#1E293B" BorderThickness="1" Width="26" Height="26" Cursor="Hand">
+                                                            Background="#CC06070B" BorderBrush="#261E38" BorderThickness="1" Width="26" Height="26" Cursor="Hand">
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border CornerRadius="13" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
@@ -446,7 +469,7 @@
                                                 </StackPanel>
                                             </Grid>
 
-                                            <!-- 2. Instance Metadata & Specs -->
+                                            <!-- 2. Instance Metadata & 3D Specs -->
                                             <StackPanel Grid.Row="1" Margin="14,8,14,10">
                                                 <!-- Instance Name -->
                                                 <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Black" Foreground="#FFFFFF" 
@@ -454,10 +477,10 @@
 
                                                 <!-- Subtitle: Minecraft Version + Loader -->
                                                 <TextBlock Text="{Binding DisplaySubtitle, StringFormat='Minecraft {0}'}" 
-                                                           FontSize="12" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                                                           FontSize="12" FontWeight="Bold" Foreground="#C084FC" Margin="0,0,0,10"/>
 
-                                                <!-- Specs Grid (RAM, Mods, Profile, Last Played) -->
-                                                <Border Background="#070B14" BorderBrush="#162238" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                                <!-- 3D Specs Inset Panel (RAM, Mods, Profile, Last Played) -->
+                                                <Border Background="#06070D" BorderBrush="#1C162E" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
                                                     <Grid>
                                                         <Grid.RowDefinitions>
                                                             <RowDefinition Height="Auto"/>
@@ -483,7 +506,7 @@
                                                         <!-- Profile Spec -->
                                                         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
                                                             <TextBlock Text="⚡ " FontSize="10.5"/>
-                                                            <TextBlock Text="{Binding PerformanceProfile}" FontSize="11" FontWeight="Bold" Foreground="#10B981"/>
+                                                            <TextBlock Text="{Binding PerformanceProfile}" FontSize="11" FontWeight="Bold" Foreground="#A855F7"/>
                                                         </StackPanel>
 
                                                         <!-- Last Played -->
@@ -496,7 +519,7 @@
                                             </StackPanel>
 
                                             <!-- 3. Action Buttons Footer -->
-                                            <Border Grid.Row="2" Background="#080E1A" BorderBrush="#162238" BorderThickness="0,1,0,0" Padding="12,10">
+                                            <Border Grid.Row="2" Background="#080710" BorderBrush="#1C162E" BorderThickness="0,1,0,0" Padding="12,10">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -510,6 +533,7 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
 
+                                                        <!-- 3D Play Button -->
                                                         <Button Grid.Column="0" 
                                                                 Command="{Binding DataContext.PlayInstanceDirectlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
@@ -519,7 +543,7 @@
                                                                     <Setter Property="Template">
                                                                         <Setter.Value>
                                                                             <ControlTemplate TargetType="Button">
-                                                                                <Border x:Name="PlayBtnBorder" CornerRadius="8" Background="#1E3A8A" BorderBrush="#2563EB" BorderThickness="1" Padding="10,7">
+                                                                                <Border x:Name="PlayBtnBorder" CornerRadius="8" Background="#1E1335" BorderBrush="#7C3AED" BorderThickness="1.2" Padding="10,7">
                                                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                                                         <Path Data="{StaticResource VayuIconPlay}" Fill="#FFFFFF" Width="10" Height="10" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                                                         <TextBlock x:Name="PlayBtnText" Text="SELECT &amp; PLAY" FontSize="11" FontWeight="Black" Foreground="#FFFFFF"/>
@@ -527,12 +551,12 @@
                                                                                 </Border>
                                                                                 <ControlTemplate.Triggers>
                                                                                     <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                                        <Setter TargetName="PlayBtnBorder" Property="Background" Value="#2563EB"/>
-                                                                                        <Setter TargetName="PlayBtnBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                                                                        <Setter TargetName="PlayBtnBorder" Property="Background" Value="#7C3AED"/>
+                                                                                        <Setter TargetName="PlayBtnBorder" Property="BorderBrush" Value="#C084FC"/>
                                                                                         <Setter TargetName="PlayBtnText" Property="Text" Value="PLAY NOW"/>
                                                                                     </DataTrigger>
                                                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                                                        <Setter TargetName="PlayBtnBorder" Property="Background" Value="#38BDF8"/>
+                                                                                        <Setter TargetName="PlayBtnBorder" Property="Background" Value="#9333EA"/>
                                                                                     </Trigger>
                                                                                 </ControlTemplate.Triggers>
                                                                             </ControlTemplate>
@@ -558,7 +582,7 @@
                                                         <Button Command="{Binding DataContext.OpenCustomLaunchModalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
                                                                 Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Launch as Custom Player / Concurrent Session">
-                                                            <TextBlock Text="⚡" FontSize="11" Foreground="#38BDF8" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="⚡" FontSize="11" Foreground="#C084FC" HorizontalAlignment="Center"/>
                                                         </Button>
 
                                                         <!-- Convert Version -->
@@ -572,7 +596,7 @@
                                                         <Button Command="{Binding DataContext.OpenCloneModalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
                                                                 Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" Margin="0,0,3,0" ToolTip="Clone Instance (Duplicate with mods/configs)">
-                                                            <TextBlock Text="⧉" FontSize="12" FontWeight="Bold" Foreground="#A78BFA" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="⧉" FontSize="12" FontWeight="Bold" Foreground="#C084FC" HorizontalAlignment="Center"/>
                                                         </Button>
 
                                                         <!-- Inspect Specs -->
@@ -632,7 +656,7 @@
                             <ItemsControl ItemsSource="{Binding ModrinthProjects}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Margin="0,0,0,12" Padding="16,14" CornerRadius="10" Background="#0C1322" BorderBrush="#1E293B" BorderThickness="1">
+                                        <Border Margin="0,0,0,12" Padding="16,14" CornerRadius="12" Background="#0A0D16" BorderBrush="#261E38" BorderThickness="1.2">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -641,7 +665,7 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Project Icon -->
-                                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#162238" Margin="0,0,16,0" ClipToBounds="True">
+                                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#141021" BorderBrush="#3B2E58" BorderThickness="1" Margin="0,0,16,0" ClipToBounds="True">
                                                     <Image Source="{Binding IconUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 </Border>
 
@@ -649,8 +673,8 @@
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
                                                         <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="Black" Foreground="#FFFFFF" Margin="0,0,8,0"/>
-                                                        <Border Background="#1E3A8A" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding ProjectType}" FontSize="10" FontWeight="Bold" Foreground="#38BDF8"/>
+                                                        <Border Background="#1C1335" BorderBrush="#7C3AED" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding ProjectType}" FontSize="10" FontWeight="Bold" Foreground="#C084FC"/>
                                                         </Border>
                                                     </StackPanel>
                                                     <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#94A3B8" TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
@@ -674,11 +698,14 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 4. INSTANCE INSPECT MODAL DRAWER                                -->
+        <!-- 4. INSTANCE INSPECT 3D MODAL DRAWER                             -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Visibility="{Binding IsInspectOpen, Converter={StaticResource BoolToVis}}" Background="#B0000000">
-            <Border Width="480" MaxHeight="600" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+        <Grid Visibility="{Binding IsInspectOpen, Converter={StaticResource BoolToVis}}" Background="#D0000000">
+            <Border Width="480" MaxHeight="600" Background="#0D0C18" BorderBrush="#7C3AED" BorderThickness="1.5" CornerRadius="14" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="30" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <StackPanel>
                     <!-- Modal Header -->
                     <Grid Margin="0,0,0,16">
@@ -689,16 +716,16 @@
                     </Grid>
 
                     <!-- Details Box -->
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,16">
+                    <Border Background="#07060D" BorderBrush="#2A1F40" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,16">
                         <StackPanel>
-                            <TextBlock Text="{Binding InspectingInstance.Name}" FontSize="16" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding InspectingInstance.Name}" FontSize="16" FontWeight="Black" Foreground="#C084FC" Margin="0,0,0,4"/>
                             <TextBlock Text="{Binding InspectingInstance.DisplaySubtitle, StringFormat='Loader: {0}'}" FontSize="12.5" FontWeight="Bold" Foreground="#E2E8F0" Margin="0,0,0,10"/>
                             
                             <TextBlock Text="Allocated Memory:" FontSize="11" Foreground="#64748B"/>
                             <TextBlock Text="{Binding InspectingInstance.DisplayRam}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,8"/>
 
                             <TextBlock Text="Performance Profile:" FontSize="11" Foreground="#64748B"/>
-                            <TextBlock Text="{Binding InspectingInstance.PerformanceProfile}" FontSize="12" FontWeight="Bold" Foreground="#10B981" Margin="0,0,0,8"/>
+                            <TextBlock Text="{Binding InspectingInstance.PerformanceProfile}" FontSize="12" FontWeight="Bold" Foreground="#A855F7" Margin="0,0,0,8"/>
 
                             <TextBlock Text="Installed Mods Count:" FontSize="11" Foreground="#64748B"/>
                             <TextBlock Text="{Binding InspectingInstance.DisplayModCount}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,8"/>
@@ -715,16 +742,19 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 5. EDIT INSTANCE MODAL                                          -->
+        <!-- 5. EDIT INSTANCE 3D MODAL                                       -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Visibility="{Binding IsEditModalOpen, Converter={StaticResource BoolToVis}}" Background="#B0000000">
-            <Border Width="480" Background="#0C1322" BorderBrush="#2563EB" BorderThickness="1.5" CornerRadius="14" Padding="24"
+        <Grid Visibility="{Binding IsEditModalOpen, Converter={StaticResource BoolToVis}}" Background="#D0000000">
+            <Border Width="480" Background="#0D0C18" BorderBrush="#7C3AED" BorderThickness="1.5" CornerRadius="14" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="30" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <StackPanel>
                     <TextBlock Text="Edit Installation Configuration" FontSize="17" FontWeight="Black" Foreground="#FFFFFF" Margin="0,0,0,16"/>
 
                     <TextBlock Text="INSTALLATION NAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
                         <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
                     </Border>
 
@@ -748,15 +778,18 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 6. MODPACK CREATION / INSTALLATION MODAL                        -->
+        <!-- 6. MODPACK CREATION / INSTALLATION 3D MODAL                     -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Visibility="{Binding IsModpackModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
-            <Border Width="500" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+        <Grid Visibility="{Binding IsModpackModalOpen, Converter={StaticResource BoolToVis}}" Background="#D0000000">
+            <Border Width="500" Background="#0D0C18" BorderBrush="#7C3AED" BorderThickness="1.5" CornerRadius="14" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="30" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Data="{StaticResource VayuIconDownload}" Fill="#38BDF8" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Path Data="{StaticResource VayuIconDownload}" Fill="#C084FC" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Install Modpack Instance" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
                         </StackPanel>
                         <Button Command="{Binding CancelModpackInstallCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
@@ -765,7 +798,7 @@
                     </Grid>
 
                     <TextBlock Text="NEW INSTANCE NAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
                         <TextBox Text="{Binding ModpackInstanceName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
                     </Border>
 
@@ -788,15 +821,18 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 7. TARGET INSTANCE SELECTOR MODAL (MODS, SHADERS, PACKS)         -->
+        <!-- 7. TARGET INSTANCE SELECTOR 3D MODAL                            -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Visibility="{Binding IsTargetInstanceModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
-            <Border Width="500" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+        <Grid Visibility="{Binding IsTargetInstanceModalOpen, Converter={StaticResource BoolToVis}}" Background="#D0000000">
+            <Border Width="500" Background="#0D0C18" BorderBrush="#7C3AED" BorderThickness="1.5" CornerRadius="14" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="30" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Data="{StaticResource VayuIconMods}" Fill="#38BDF8" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Path Data="{StaticResource VayuIconMods}" Fill="#C084FC" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding TargetContentType, StringFormat='Install {0}'}" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
                         </StackPanel>
                         <Button Command="{Binding CancelTargetInstanceCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
@@ -804,9 +840,9 @@
                         </Button>
                     </Grid>
 
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16">
                         <StackPanel>
-                            <TextBlock Text="{Binding PendingContentProject.Title}" FontSize="15" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,0,3"/>
+                            <TextBlock Text="{Binding PendingContentProject.Title}" FontSize="15" FontWeight="Black" Foreground="#C084FC" Margin="0,0,0,3"/>
                             <TextBlock Text="{Binding PendingContentProject.Description}" FontSize="11.5" Foreground="#94A3B8" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Border>
@@ -817,7 +853,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="{Binding Loader, StringFormat=' ({0}'}" Foreground="#38BDF8" Margin="4,0,0,0"/>
+                                    <TextBlock Text="{Binding Loader, StringFormat=' ({0}'}" Foreground="#C084FC" Margin="4,0,0,0"/>
                                     <TextBlock Text="{Binding MinecraftVersion, StringFormat=' {0})'}" Foreground="#94A3B8"/>
                                 </StackPanel>
                             </DataTemplate>
@@ -833,15 +869,18 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 8. CLONE INSTANCE MODAL                                         -->
+        <!-- 8. CLONE INSTANCE 3D MODAL                                      -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Visibility="{Binding IsCloneModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
-            <Border Width="480" Background="#0C1322" BorderBrush="#A78BFA" BorderThickness="1.5" CornerRadius="14" Padding="24"
+        <Grid Visibility="{Binding IsCloneModalOpen, Converter={StaticResource BoolToVis}}" Background="#D0000000">
+            <Border Width="480" Background="#0D0C18" BorderBrush="#A78BFA" BorderThickness="1.5" CornerRadius="14" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="30" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="⧉" FontSize="18" FontWeight="Bold" Foreground="#A78BFA" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="⧉" FontSize="18" FontWeight="Bold" Foreground="#C084FC" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Clone Installation" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
                         </StackPanel>
                         <Button Command="{Binding CloseCloneModalCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
@@ -849,20 +888,20 @@
                         </Button>
                     </Grid>
 
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
                         <StackPanel>
-                            <TextBlock Text="SOURCE INSTANCE" FontSize="9" FontWeight="Black" Foreground="#A78BFA" Margin="0,0,0,3"/>
+                            <TextBlock Text="SOURCE INSTANCE" FontSize="9" FontWeight="Black" Foreground="#C084FC" Margin="0,0,0,3"/>
                             <TextBlock Text="{Binding CloningInstance.Name}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
                             <TextBlock Text="{Binding CloningInstance.DisplaySubtitle}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <TextBlock Text="NEW INSTANCE NAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,14">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,14">
                         <TextBox Text="{Binding CloneNewName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
                     </Border>
 
-                    <CheckBox IsChecked="{Binding CloneCopyData}" Margin="0,0,0,20">
+                    <CheckBox IsChecked="{Binding CloneCopyData}" Style="{StaticResource VayuCheckBox}" Margin="0,0,0,20">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Copy installed mods, config files, and options" FontSize="11.5" Foreground="#CBD5E1"/>
                         </StackPanel>
@@ -877,15 +916,18 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- 9. LAUNCH WITH CUSTOM NAME MODAL                                -->
+        <!-- 9. LAUNCH WITH CUSTOM NAME 3D MODAL                             -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <Grid Visibility="{Binding IsCustomLaunchModalOpen, Converter={StaticResource BoolToVis}}" Background="#CC000000">
-            <Border Width="460" Background="#0C1322" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="14" Padding="24"
+        <Grid Visibility="{Binding IsCustomLaunchModalOpen, Converter={StaticResource BoolToVis}}" Background="#D0000000">
+            <Border Width="460" Background="#0D0C18" BorderBrush="#7C3AED" BorderThickness="1.5" CornerRadius="14" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="30" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="⚡" FontSize="18" Foreground="#38BDF8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="⚡" FontSize="18" Foreground="#C084FC" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Launch with Custom Name" FontSize="17" FontWeight="Black" Foreground="#FFFFFF"/>
                         </StackPanel>
                         <Button Command="{Binding CloseCustomLaunchModalCommand}" Style="{StaticResource VayuDarkButton}" Width="28" Height="28" Padding="0" HorizontalAlignment="Right">
@@ -893,16 +935,16 @@
                         </Button>
                     </Grid>
 
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
                         <StackPanel>
-                            <TextBlock Text="TARGET INSTANCE" FontSize="9" FontWeight="Black" Foreground="#38BDF8" Margin="0,0,0,3"/>
+                            <TextBlock Text="TARGET INSTANCE" FontSize="9" FontWeight="Black" Foreground="#C084FC" Margin="0,0,0,3"/>
                             <TextBlock Text="{Binding CustomLaunchTargetInstance.Name}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
                             <TextBlock Text="{Binding CustomLaunchTargetInstance.DisplaySubtitle}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <TextBlock Text="PLAYER USERNAME" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                    <Border Background="#070B14" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,20">
+                    <Border Background="#07060D" BorderBrush="#261E38" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,20">
                         <TextBox Text="{Binding CustomLaunchPlayerName, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" FontSize="12.5"/>
                     </Border>
 

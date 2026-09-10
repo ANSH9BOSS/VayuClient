@@ -33,5 +33,8 @@ namespace VayuClient.Services.Hardware
     {
         HardwareProfile GetHardwareProfile(bool forceRefresh = false);
         Task<HardwareProfile> GetHardwareProfileAsync(bool forceRefresh = false);
+
+        /// <summary>Returns the current total system CPU use, or null until a second sample is available.</summary>
+        double? GetSystemCpuUsagePercent();
     }
 }
