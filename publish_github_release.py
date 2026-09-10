@@ -16,7 +16,7 @@ def get_version():
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         vjson = os.path.join(base_dir, "version.json")
-        with open(vjson, "r") as f:
+        with open(vjson, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
             v = data.get("version", "3.1.2")
             return v if v.startswith("v") else f"v{v}"
