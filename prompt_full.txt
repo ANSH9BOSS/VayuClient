@@ -1,0 +1,746 @@
+<USER_REQUEST>
+fix these and in game library make a horizontal 3d carousel and release a new update on github and rebuild the mod manager VAYU CLIENT — BUILD THE NEW MOD MANAGER
+
+We now have the APPROVED visual design for the new Vayu Mod Manager.
+
+Use the provided Mod Manager design image as the PRIMARY VISUAL REFERENCE.
+
+IMPORTANT:
+
+The image is a DESIGN REFERENCE ONLY.
+
+Do NOT copy its fake data.
+
+The real Vayu codebase is the source of truth for:
+- installed mods
+- mod versions
+- mod loaders
+- Minecraft versions
+- enabled/disabled state
+- dependencies
+- conflicts
+- compatibility
+- update state
+- installation
+- Modrinth data
+- active Minecraft instance
+
+==================================================
+GOAL
+==================================================
+
+Rebuild the current Mods screen so it closely matches the provided design.
+
+The final result should feel like the same Vayu product as:
+
+- Home
+- Installation Manager
+- Accounts
+
+but the Mods screen should use the new approved Mod Manager composition.
+
+Do not invent another visual direction.
+
+==================================================
+APPROVED VISUAL CONCEPT
+==================================================
+
+The main screen is built around ONE selected mod.
+
+The selected mod is the main 3D object.
+
+A small number of related mods surround it.
+
+The rest of the features are accessed from the selected-mod interface.
+
+This is NOT a giant dashboard.
+
+This is NOT a wall of cards.
+
+This is NOT a flat list.
+
+==================================================
+VAYU DESIGN LANGUAGE
+==================================================
+
+Use:
+
+BLACK / OBSIDIAN
+WHITE
+SUBTLE ELECTRIC PURPLE
+
+Style:
+
+- futuristic
+- premium
+- minimal
+- 3D
+- clean
+- high-end
+- fluid
+
+Do NOT use the old blue-heavy design.
+
+==================================================
+3D COMPONENTS
+==================================================
+
+Continue the shared Vayu 3D design language.
+
+The following should feel dimensional:
+
+- selected mod object
+- related mod objects
+- buttons
+- toggle
+- dropdown
+- search
+- filters
+- panels
+- dialogs
+- icons
+- account avatar
+- bottom dock
+
+3D should come from:
+
+- depth
+- layered surfaces
+- dimensional edges
+- subtle shading
+- controlled lighting
+- slight perspective
+
+Do NOT add giant glow everywhere.
+
+Do NOT turn the interface into a sci-fi movie HUD.
+
+==================================================
+MAIN MOD OBJECT
+==================================================
+
+Build the main selected-mod area to closely match the reference.
+
+Show the REAL selected mod:
+
+- actual mod icon
+- actual mod name
+- actual author
+- actual version
+- actual loader
+- actual installation state
+- actual enabled/disabled state
+- actual compatibility information
+
+The selected mod should be the visual focus.
+
+Use a dimensional frame/object.
+
+==================================================
+RELATED MOD OBJECTS
+==================================================
+
+Show a SMALL number of related mods around the selected mod.
+
+Use actual mod data.
+
+Relationship lines can show:
+
+- dependency
+- conflict
+- related
+- compatible
+
+Use restrained colors:
+
+Purple = dependency
+Red = conflict
+White = related
+Green = compatible/installed
+
+Do NOT create a giant graph.
+
+Only show the most useful relationships around the selected mod.
+
+==================================================
+MOD ACTIONS
+==================================================
+
+Keep actual functionality.
+
+The selected mod should support existing actions such as:
+
+- enable/disable
+- install
+- update
+- remove
+- open mod page
+- other existing actions
+
+Use compact 3D controls.
+
+Do not create fake actions.
+
+==================================================
+MOD ANALYSIS CONTROLS
+==================================================
+
+The approved design has these analysis modes:
+
+HEALTH
+PERFORMANCE
+COMPATIBILITY
+DEPENDENCIES
+CONFLICTS
+UPDATES
+
+These are NOT six separate pages.
+
+They are six contextual states of the SAME Mod Manager.
+
+When the user clicks one:
+
+the selected mod becomes the focus
++
+the surrounding UI MORPHS
++
+that information becomes visible.
+
+==================================================
+MORPHING
+==================================================
+
+This is very important.
+
+Do NOT implement:
+
+click Performance → completely new page.
+
+Instead:
+
+NORMAL MOD STATE
+→
+PERFORMANCE STATE
+
+NORMAL MOD STATE
+→
+COMPATIBILITY STATE
+
+NORMAL MOD STATE
+→
+DEPENDENCY STATE
+
+etc.
+
+The same 3D interface should transform.
+
+Examples:
+
+PERFORMANCE:
+selected mod expands/repositions
+related mods move slightly
+performance information appears around it
+
+DEPENDENCIES:
+relationship connections become more prominent
+dependency mods move closer
+optional/required relationships appear
+
+CONFLICTS:
+conflicting mods become visually emphasized
+
+UPDATES:
+mods needing updates move forward
+
+HEALTH:
+overall installation/mod health becomes visible
+
+The transition must feel like one interface changing state.
+
+==================================================
+PERFORMANCE LAB
+==================================================
+
+Implement the visual concept for:
+
+FPS IMPACT
+RAM IMPACT
+CPU IMPACT
+STARTUP IMPACT
+
+IMPORTANT:
+
+Only use real measured or genuinely available data.
+
+Do NOT invent benchmark numbers.
+
+If Vayu does not currently have real measured mod-level performance data:
+
+show the feature in a state that clearly indicates the data is unavailable/estimated, rather than pretending it is measured.
+
+Do not fake statistics.
+
+==================================================
+COMPATIBILITY
+==================================================
+
+Use real compatibility information where available:
+
+- Minecraft version
+- loader
+- dependency status
+- version compatibility
+- conflicts
+
+Display:
+
+COMPATIBLE
+WARNING
+INCOMPATIBLE
+
+based on actual data.
+
+Do not fake results.
+
+==================================================
+MOD HEALTH
+==================================================
+
+Create a useful health state.
+
+Potential real states:
+
+- Healthy
+- Needs Update
+- Missing Dependency
+- Conflict Detected
+- Compatibility Warning
+
+Determine the actual state from available Vayu data.
+
+Do not invent a score unless the application actually calculates one.
+
+==================================================
+DEPENDENCY / MOD UNIVERSE
+==================================================
+
+When Dependencies or Conflicts is selected, show the relationship view.
+
+Use actual dependency/conflict information from the mod metadata and Vayu's existing systems.
+
+Do not show fake relationships.
+
+==================================================
+CHANGE PREVIEW
+==================================================
+
+Before installing/updating/removing a mod, provide a visual change preview where practical.
+
+Show actual changes:
+
++ dependency
+- removed
+~ changed
+! conflict
+
+Do NOT invent these values.
+
+The preview should use a compact Vayu 3D confirmation state.
+
+==================================================
+FIND PROBLEM
+==================================================
+
+Add the "Find Problem" capability where it can be supported by the existing architecture.
+
+The UI should allow the user to investigate likely mod problems.
+
+Important:
+
+Do not claim certainty when there is only a guess.
+
+Clearly distinguish:
+
+likely cause
+possible cause
+confirmed issue
+
+Use the real diagnostics available from Vayu.
+
+If the current backend does not support this yet, build the visual entry point and report what backend capability is still needed.
+
+Do NOT fake the result.
+
+==================================================
+SNAPSHOTS / TIME MACHINE
+==================================================
+
+Add the approved UI concept for:
+
+SNAPSHOTS
+
+and:
+
+MOD HISTORY / TIME MACHINE
+
+The idea is to save and restore mod configurations and view changes over time.
+
+IMPORTANT:
+
+Only implement functionality the current backend can safely support.
+
+If snapshot/history support does not exist yet:
+
+- build the UI foundation
+- connect to existing state where possible
+- clearly report what backend work remains
+
+Do not create fake history entries.
+
+==================================================
+MOD LOADOUTS
+==================================================
+
+Support the concept of mod loadouts such as:
+
+PVP
+LOW-END
+SMP
+CUSTOM
+
+Use the existing architecture if profile/loadout support already exists.
+
+If it does not exist:
+
+build the UI structure cleanly and report the required backend work.
+
+Do not fake switching.
+
+==================================================
+DRAG & DROP
+==================================================
+
+Keep the approved:
+
+DRAG MOD HERE
+
+interaction.
+
+Use the existing drag/drop `.jar` functionality.
+
+The visual should feel like a physical 3D mod object entering the active installation.
+
+Do not create a fake drop zone if the current backend does not support the action.
+
+==================================================
+SEARCH
+==================================================
+
+Keep the search field.
+
+Search actual mods.
+
+Support the existing search behavior.
+
+Do not hardcode results.
+
+==================================================
+FILTERS
+==================================================
+
+Use:
+
+ALL
+PERFORMANCE
+PVP
+HUD
+UTILITY
+VISUAL
+WORLD
+GAMEPLAY
+
+Only show/filter categories that correspond to actual mod categorization in Vayu.
+
+Keep the exact Vayu visual style.
+
+==================================================
+INSTANCE SELECTOR
+==================================================
+
+The current Minecraft installation must come from real Vayu state.
+
+Show:
+
+actual instance
+actual loader
+
+Allow switching using the existing instance functionality.
+
+Do not hardcode example instance names.
+
+==================================================
+QUICK ACTIONS
+==================================================
+
+Keep existing useful actions such as:
+
+ADD .JAR
+OPEN MODS FOLDER
+CHECK FOR UPDATES
+IMPORT FROM FILE
+EXPORT MOD LIST
+
+Use only actions that actually exist in Vayu.
+
+Use compact 3D controls.
+
+==================================================
+INSTALLED MODS
+==================================================
+
+Keep access to the installed mod collection.
+
+The reference uses a compact strip of installed mods.
+
+Recreate that concept.
+
+Use actual installed mods.
+
+Show:
+
+- actual icon
+- name
+- enabled state
+- version
+- update state
+
+The user should still be able to manage many mods efficiently.
+
+==================================================
+GLOBAL BOTTOM DOCK
+==================================================
+
+Use the SAME global Vayu dock already established.
+
+Items:
+
+HOME
+INSTALLATION MANAGER
+MODS
+SERVERS
+SETTINGS
+ACCOUNT
+
+Do NOT redesign the dock.
+
+MODS should be the active global state.
+
+==================================================
+BACKGROUND
+==================================================
+
+Use the same Vayu dark background language.
+
+No giant Minecraft environment.
+
+No large sci-fi room.
+
+No giant decorative 3D scenery.
+
+The 3D mod objects ARE the main visual elements.
+
+==================================================
+TYPOGRAPHY
+==================================================
+
+Use the Vayu modern sans-serif system.
+
+No Minecraft pixel font for normal UI text.
+
+Keep the hierarchy close to the approved design:
+
+MOD MANAGER
+selected mod
+technical details
+small statuses
+
+==================================================
+REAL DATA RULE
+==================================================
+
+THIS IS CRITICAL.
+
+The image is only a visual reference.
+
+Never copy from the image:
+
+- mod names
+- authors
+- versions
+- download counts
+- compatibility
+- dependency counts
+- dates
+- installation names
+- usernames
+
+Use the actual Vayu application data.
+
+If no data is available:
+use the appropriate loading/empty/unavailable state.
+
+==================================================
+ARCHITECTURE
+==================================================
+
+Preserve the existing backend.
+
+Do not rewrite:
+
+- Services
+- Core
+- Models
+- ModLoaderInstaller
+- DownloadService
+- InstanceService
+- LaunchService
+- Modrinth integration
+- authentication
+- Minecraft engine
+
+Use the current MVVM architecture.
+
+Create reusable UI components instead of duplicating XAML.
+
+==================================================
+PERFORMANCE
+==================================================
+
+Vayu is designed for potato PCs.
+
+Keep the 3D UI lightweight.
+
+Use:
+
+- simple geometry
+- limited dynamic lighting
+- cached assets
+- small textures
+- event-driven animations
+
+Avoid:
+
+- massive 3D environments
+- huge polygon counts
+- heavy blur
+- ray tracing
+- particle systems
+- infinite animations
+- constant idle rendering
+- expensive full-screen effects
+
+The screen should LOOK extremely advanced without behaving like a game engine.
+
+==================================================
+VISUAL ACCURACY
+==================================================
+
+Compare the implementation against the supplied design.
+
+Pay attention to:
+
+- central mod object size
+- related mod placement
+- spacing
+- search/filter position
+- analysis controls
+- installed-mod strip
+- top controls
+- global dock
+- black/purple/white balance
+- 3D depth
+- overall density
+
+Do not add random UI elements.
+
+==================================================
+IMPLEMENTATION ORDER
+==================================================
+
+1. Inspect current Mods implementation.
+2. Inspect ModsViewModel and related services.
+3. Identify existing real data and functionality.
+4. Reuse the global Vayu 3D component system.
+5. Build the approved Mod Manager shell.
+6. Build the selected-mod 3D object.
+7. Build related-mod objects.
+8. Build the analysis state system.
+9. Build morph transitions.
+10. Connect real data.
+11. Connect existing actions.
+12. Add supported advanced features.
+13. Test everything.
+14. Optimize.
+
+==================================================
+TESTING
+==================================================
+
+After implementation:
+
+- Build the project.
+- Run Vayu.
+- Open Mods.
+- Verify actual instance data.
+- Verify actual mods.
+- Verify enable/disable.
+- Verify install.
+- Verify update.
+- Verify remove.
+- Verify search.
+- Verify filters.
+- Verify real compatibility.
+- Verify dependency information.
+- Verify conflict information.
+- Verify drag/drop.
+- Verify global dock.
+- Verify morphing.
+- Verify no fake data.
+- Verify no runtime errors.
+
+==================================================
+FINAL RULE
+==================================================
+
+Do NOT make the Mods page a giant dashboard.
+
+The selected mod is the main context.
+
+Advanced features appear through MORPHING and interaction.
+
+The final experience should feel:
+
+simple at first glance
+powerful when explored
+3D
+premium
+fast
+uniquely Vayu
+
+Build the actual working Vayu Mod Manager from the approved design.
+
+Do not redesign other pages in this task.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T14:16:53+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\Services\Updates\UpdateService.cs (LANGUAGE_CSHARP)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClientBackend\Entities\NewsEntity.cs (LANGUAGE_CSHARP)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-hud-mod\src\main\java\com\vayuclient\hud\gui\screens\HudOverlayScreen.java (LANGUAGE_JAVA)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-hud-mod\src\main\java\com\vayuclient\hud\gui\screens\StoreScreen.java (LANGUAGE_JAVA)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\Views\HomePage.xaml.cs (LANGUAGE_CSHARP)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\version.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>

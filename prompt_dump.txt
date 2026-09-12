@@ -1,0 +1,155 @@
+<USER_REQUEST>
+fix these and in game library make a horizontal 3d carousel and release a new update on github and rebuild the mod manager VAYU CLIENT — BUILD THE NEW MOD MANAGER
+
+We now have the APPROVED visual design for the new Vayu Mod Manager.
+
+Use the provided Mod Manager design image as the PRIMARY VISUAL REFERENCE.
+
+IMPORTANT:
+
+The image is a DESIGN REFERENCE ONLY.
+
+Do NOT copy its fake data.
+
+The real Vayu codebase is the source of truth for:
+- installed mods
+- mod versions
+- mod loaders
+- Minecraft versions
+- enabled/disabled state
+- dependencies
+- conflicts
+- compatibility
+- update state
+- installation
+- Modrinth data
+- active Minecraft instance
+
+==================================================
+GOAL
+==================================================
+
+Rebuild the current Mods screen so it closely matches the provided design.
+
+The final result should feel like the same Vayu product as:
+
+- Home
+- Installation Manager
+- Accounts
+
+but the Mods screen should use the new approved Mod Manager composition.
+
+Do not invent another visual direction.
+
+==================================================
+APPROVED VISUAL CONCEPT
+==================================================
+
+The main screen is built around ONE selected mod.
+
+The selected mod is the main 3D object.
+
+A small number of related mods surround it.
+
+The rest of the features are accessed from the selected-mod interface.
+
+This is NOT a giant dashboard.
+
+This is NOT a wall of cards.
+
+This is NOT a flat list.
+
+==================================================
+VAYU DESIGN LANGUAGE
+==================================================
+
+Use:
+
+BLACK / OBSIDIAN
+WHITE
+SUBTLE ELECTRIC PURPLE
+
+Style:
+
+- futuristic
+- premium
+- minimal
+- 3D
+- clean
+- high-end
+- fluid
+
+Do NOT use the old blue-heavy design.
+
+==================================================
+3D COMPONENTS
+==================================================
+
+Continue the shared Vayu 3D design language.
+
+The following 
+<truncated 12421 bytes>
+imize.
+
+==================================================
+TESTING
+==================================================
+
+After implementation:
+
+- Build the project.
+- Run Vayu.
+- Open Mods.
+- Verify actual instance data.
+- Verify actual mods.
+- Verify enable/disable.
+- Verify install.
+- Verify update.
+- Verify remove.
+- Verify search.
+- Verify filters.
+- Verify real compatibility.
+- Verify dependency information.
+- Verify conflict information.
+- Verify drag/drop.
+- Verify global dock.
+- Verify morphing.
+- Verify no fake data.
+- Verify no runtime errors.
+
+==================================================
+FINAL RULE
+==================================================
+
+Do NOT make the Mods page a giant dashboard.
+
+The selected mod is the main context.
+
+Advanced features appear through MORPHING and interaction.
+
+The final experience should feel:
+
+simple at first glance
+powerful when explored
+3D
+premium
+fast
+uniquely Vayu
+
+Build the actual working Vayu Mod Manager from the approved design.
+
+Do not redesign other pages in this task.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-12T14:16:53+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\Services\Updates\UpdateService.cs (LANGUAGE_CSHARP)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClientBackend\Entities\NewsEntity.cs (LANGUAGE_CSHARP)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-hud-mod\src\main\java\com\vayuclient\hud\gui\screens\HudOverlayScreen.java (LANGUAGE_JAVA)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\vayuclient-hud-mod\src\main\java\com\vayuclient\hud\gui\screens\StoreScreen.java (LANGUAGE_JAVA)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\VayuClient\Views\HomePage.xaml.cs (LANGUAGE_CSHARP)
+- c:\Users\ANSH\.gemini\antigravity-ide\scratch\VayuClient\version.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>
