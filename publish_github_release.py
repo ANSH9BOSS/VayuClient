@@ -188,7 +188,7 @@ def main():
     except:
         pass
 
-    existing_assets = {a["name"]: a["id"] for a in release.get("assets", [])}
+    existing_assets = {a["name"]: a for a in release.get("assets", [])}
 
     for file_path in files_to_upload:
         if not os.path.exists(file_path):
@@ -196,11 +196,16 @@ def main():
             continue
 
         filename = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
 
-        # Delete existing asset if present to ensure fresh overwrite
+        # Skip if already fully uploaded with matching size
         if filename in existing_assets:
-            asset_id = existing_assets[filename]
-            print(f"[GitHub] Removing existing asset {filename} (ID: {asset_id}) for fresh upload...", flush=True)
+            existing = existing_assets[filename]
+            if existing.get("state") == "uploaded" and existing.get("size") == file_size:
+                print(f"[Skip] {filename} already fully uploaded ({file_size} bytes).", flush=True)
+                continue
+            asset_id = existing["id"]
+            print(f"[GitHub] Removing incomplete/outdated asset {filename} (ID: {asset_id}) for fresh upload...", flush=True)
             del_url = f"https://api.github.com/repos/{REPO}/releases/assets/{asset_id}"
             del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
             try:
