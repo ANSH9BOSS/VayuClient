@@ -25,23 +25,27 @@ def get_version():
         return "v3.1.2"
 
 VERSION_TAG = get_version()
-RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Next-Gen 3D Game Library & Setup"
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Global 3D Component System & Launcher Redesign"
 RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
-* **Brand New Hardware 3D Installation Manager & Game Library**:
-  - Obsidian Black & Subtle Purple cyber pod chassis with glowing purple side fin light brackets.
-  - Interactive 3D carousel stage: Active center hero pod with full hardware telemetry and flanking inactive pods with smooth perspective morphing on selection.
-  - Real-time instance telemetry: Minecraft versions, mod loaders (Fabric, Forge, NeoForge, Quilt, Vanilla), real mod counts, RAM allocation, relative last played timestamps, and favorite stars.
-  - Contextual tools: Edit, Clone, Open Game Folder, Version Converter, Custom Launch, and Safe Deletion.
-* **Direct3D Real-Time 3D Player Stage**:
-  - Full player skin rendering on multi-mesh voxel characters with responsive mouse cursor look-at tracking.
-  - Custom expressive poses (Love / Cradle, Bedwars PVP Stance, Wave, Sitting, Relaxed, Salute).
-  - Sub-pixel breathing bob dynamics.
-* **Atmospheric Dynamic Wallpaper Engine**:
-  - Multi-image pack URI loading with smooth crossfade animations across 10+ themes.
-* **Universal Modrinth Sync & Mod Loader Suite**:
-  - 1-click downloads for Mods, Modpacks, Resource Packs, Shaders, and Data Packs with automatic `.jar` icon extraction.
+* **Brand New Global 3D Component System**:
+  - Reusable physical 3D design language across all launcher pages with top-lit specular rim highlights and performance-biased drop shadows.
+  - `Vayu3DButton` supporting 5 distinct visual states: Normal (specular bevel), Hover (-1.5px lift), Pressed (+1.5px depression), Disabled (0.4 opacity), and Active (`Tag="Active"`).
+  - Tactile `Vayu3DCheckBox`, smooth slide-fade `Vayu3DComboBox`, precision `Vayu3DSlider`, and `VayuFloatingSurface`.
+* **Reusable Domain 3D Controls**:
+  - `VayuInstanceCard`: Dual-mode card supporting expansive **Hero Card Mode** (full specs, RAM pill, quick launch) and streamlined **Compact Row Mode** (48px high density list).
+  - `VayuModCard`: Embedded physical 3D toggle switch (`VayuToggleSwitch`) and dynamic compatibility badge (`COMPATIBLE` in emerald vs `INCOMPATIBLE` in crimson).
+  - `VayuServerCard`: Multi-tier ping status (<60ms green, 60-150ms amber, >150ms red, offline gray), MOTD preview, player count pill, and quick connect.
+  - `VayuDialog`: Reusable borderless floating modal window with 180ms entry animation (`Scale 0.96 -> 1.0`, `Translate Y 8 -> 0`, `Opacity 0 -> 1`), draggable header, and footer actions.
+  - `VayuNotificationToast`: Multi-severity toast notifications (Info, Success, Warning, Error) with slide-in animation.
+* **Refined 3D Player Avatar (`PlayerHead3D`)**:
+  - Clean 1:1 isometric square framing (48x48 default), dual-layer hat/hair mesh, active highlight state, and responsive hover tilt.
+* **Unified Spatial PageMorphTransition Engine**:
+  - Dock-sequence-aware directional flow: Home (0) -> InstallationManager (1) -> Mods (2) -> Servers (3) -> Settings (4) -> Accounts (5) -> Versions (6).
+  - Directional sliding (+16px / -16px) + 200ms scale/opacity cross-fading with zero CPU overhead at idle.
+* **Symmetrical Accent Themes**:
+  - Dynamic runtime switching between **Vayu Purple (#A855F7)** and **Vayu Sky Blue (#0EA5E9)**.
 * **Official Windows Setup Package**:
   - Authenticode SHA256-signed standalone installer with desktop shortcuts, start menu registration, and automatic update capabilities.
 

@@ -1,9 +1,9 @@
 ﻿{
-    "lastUpdated":  "2026-09-12",
-    "version":  "3.3.0",
+    "lastUpdated":  "2026-09-16",
+    "version":  "3.3.1",
     "developer":  "ANSH9BOSS",
     "major":  3,
-    "patch":  0,
+    "patch":  1,
     "productName":  "VayuClient",
     "minor":  3
 }
