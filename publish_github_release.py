@@ -25,10 +25,18 @@ def get_version():
         return "v3.1.2"
 
 VERSION_TAG = get_version()
-RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Global 3D Component System & Launcher Redesign"
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Multi-Instance Launching & In-Game JAR Distribution"
 RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
+* **Simultaneous Multi-Instance Launching**:
+  - Independent parallel launch lifecycles: launch multiple Minecraft instances simultaneously without blocking the launcher UI.
+  - Per-instance progress tracking (`LaunchingInstances`), dedicated process monitoring, and real-time stdout/stderr log streaming.
+  - Granular Stop / Kill control for every active instance directly from the UI.
+* **Automatic In-Game JAR Distribution & Update Pipeline**:
+  - Direct integration with official Vayu GitHub Releases for seamless in-game client JAR updates.
+  - Cryptographic verification via SHA-256 digests and temp download integrity checks before atomic deployment to instances.
+  - Resilient network handling with offline grace mode, fallback channels, and automatic rollback on corrupt downloads.
 * **Brand New Global 3D Component System**:
   - Reusable physical 3D design language across all launcher pages with top-lit specular rim highlights and performance-biased drop shadows.
   - `Vayu3DButton` supporting 5 distinct visual states: Normal (specular bevel), Hover (-1.5px lift), Pressed (+1.5px depression), Disabled (0.4 opacity), and Active (`Tag="Active"`).

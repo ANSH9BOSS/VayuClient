@@ -1,0 +1,117 @@
+name: Vayu In-Game Client Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g. v3.3.2)'
+        required: true
+        default: 'v3.3.2'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build Production JARs & Publish Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build In-Game Client JARs
+        shell: pwsh
+        run: |
+          Write-Host "Building Vayu in-game universal client artifacts..." -ForegroundColor Cyan
+          python vayuclient-hud-mod/build_vayuclient_hud.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "In-game JAR build script failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+
+      - name: Execute In-Game Client Tests
+        shell: pwsh
+        run: |
+          Write-Host "Running automated universal HUD validation suite..." -ForegroundColor Cyan
+          python test_universal_hud.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Universal HUD validation tests failed!"
+            exit 1
+          }
+
+      - name: Validate & Prepare Production Artifacts
+        id: prep
+        shell: pwsh
+        run: |
+          $distDir = "vayuclient-hud-mod/dist"
+          if (-not (Test-Path $distDir)) {
+            Write-Error "dist directory $distDir does not exist!"
+            exit 1
+          }
+
+          $jars = Get-ChildItem -Path $distDir -Filter "vayuclient-hud-*.jar"
+          if ($jars.Count -eq 0) {
+            Write-Error "Zero production JAR artifacts located in $distDir!"
+            exit 1
+          }
+
+          Write-Host "Found $($jars.Count) production JARs in $distDir." -ForegroundColor Green
+
+          # Generate SHA256SUMS.txt
+          $checksums = @()
+          foreach ($jar in $jars) {
+            if ($jar.Length -lt 1000000) {
+              Write-Error "JAR $($jar.Name) is suspiciously small ($($jar.Length) bytes)!"
+              exit 1
+            }
+            $hash = (Get-FileHash -Path $jar.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            $checksums += "$hash  $($jar.Name)"
+            Write-Host "-> $($jar.Name): $hash ($($jar.Length) bytes)"
+          }
+
+          # Also create deterministic unified alias: VayuClient.jar (defaulting to latest universal 1.21.11)
+          $primaryJar = $jars | Where-Object { $_.Name -like "*1.21.11*" -or $_.Name -like "*26.2*" } | Select-Object -First 1
+          if ($primaryJar) {
+            $unifiedPath = Join-Path $distDir "VayuClient.jar"
+            Copy-Item -Path $primaryJar.FullName -Destination $unifiedPath -Force
+            $unifiedHash = (Get-FileHash -Path $unifiedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $checksums += "$unifiedHash  VayuClient.jar"
+            Write-Host "-> Created unified production alias: VayuClient.jar ($unifiedHash)" -ForegroundColor Green
+          }
+
+          $checksumPath = Join-Path $distDir "SHA256SUMS.txt"
+          $checksums | Set-Content -Path $checksumPath -Encoding utf8
+          Write-Host "Successfully generated $checksumPath." -ForegroundColor Green
+
+      - name: Publish Official GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name || inputs.release_tag }}
+          name: VayuClient ${{ github.ref_name || inputs.release_tag }} - Universal In-Game Client
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            vayuclient-hud-mod/dist/vayuclient-hud-*.jar
+            vayuclient-hud-mod/dist/VayuClient.jar
+            vayuclient-hud-mod/dist/vayu_hud_manifest.json
+            vayuclient-hud-mod/dist/SHA256SUMS.txt
