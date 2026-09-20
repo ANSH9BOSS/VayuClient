@@ -216,37 +216,64 @@ def main():
             if existing.get("state") == "uploaded" and existing.get("size") == file_size:
                 print(f"[Skip] {filename} already fully uploaded ({file_size} bytes).", flush=True)
                 continue
-            asset_id = existing["id"]
-            print(f"[GitHub] Removing incomplete/outdated asset {filename} (ID: {asset_id}) for fresh upload...", flush=True)
-            del_url = f"https://api.github.com/repos/{REPO}/releases/assets/{asset_id}"
-            del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
-            try:
-                with urllib.request.urlopen(del_req):
-                    pass
-            except Exception as e:
-                print(f"[Warning] Failed deleting asset: {e}", flush=True)
 
         upload_url = f"{upload_base}?name={urllib.parse.quote(filename)}"
-        print(f"[GitHub] Uploading {filename} ({os.path.getsize(file_path)} bytes) via curl...", flush=True)
+        uploaded_successfully = False
 
-        curl_cmd = [
-            "curl.exe",
-            "-X", "POST",
-            "-H", f"Authorization: Bearer {token}",
-            "-H", "Content-Type: application/octet-stream",
-            "--data-binary", f"@{file_path}",
-            "--progress-bar",
-            upload_url
-        ]
+        for attempt in range(1, 4):
+            # Fetch latest release assets to ensure we clean up any partial or stale artifact with this name
+            try:
+                with urllib.request.urlopen(urllib.request.Request(get_url, headers=headers)) as resp:
+                    cur_release = json.loads(resp.read().decode())
+                    for a in cur_release.get("assets", []):
+                        if a["name"] == filename:
+                            if a.get("state") == "uploaded" and a.get("size") == file_size:
+                                print(f"[Skip] {filename} is already fully uploaded ({file_size} bytes).", flush=True)
+                                uploaded_successfully = True
+                                break
+                            aid = a["id"]
+                            print(f"[GitHub] Cleaning partial asset {filename} (ID: {aid}) before upload...", flush=True)
+                            del_url = f"https://api.github.com/repos/{REPO}/releases/assets/{aid}"
+                            try:
+                                with urllib.request.urlopen(urllib.request.Request(del_url, headers=headers, method="DELETE")):
+                                    pass
+                            except Exception as del_err:
+                                print(f"[Warning] Could not delete partial asset {filename}: {del_err}", flush=True)
+            except Exception:
+                pass
 
-        try:
-            res = subprocess.run(curl_cmd, capture_output=True, text=True, check=True)
-            print(f"[GitHub] Successfully uploaded {filename}!", flush=True)
-        except subprocess.CalledProcessError as err:
-            print(f"[Error] Failed uploading {filename}: {err.stderr or err.stdout}", flush=True)
+            if uploaded_successfully:
+                break
+
+            print(f"[GitHub] Uploading {filename} ({file_size} bytes) [Attempt {attempt}/3]...", flush=True)
+
+            curl_cmd = [
+                "curl.exe",
+                "--http1.1",
+                "-X", "POST",
+                "-H", f"Authorization: Bearer {token}",
+                "-H", "Content-Type: application/octet-stream",
+                "--data-binary", f"@{file_path}",
+                "--connect-timeout", "60",
+                "--progress-bar",
+                upload_url
+            ]
+
+            try:
+                res = subprocess.run(curl_cmd, capture_output=True, text=True, check=True)
+                print(f"[GitHub] Successfully uploaded {filename}!", flush=True)
+                uploaded_successfully = True
+                break
+            except subprocess.CalledProcessError as err:
+                print(f"[Warning] Attempt {attempt}/3 failed for {filename}: {err.stderr or err.stdout or err}", flush=True)
+                import time
+                time.sleep(3)
+
+        if not uploaded_successfully:
+            print(f"[Error] Permanent failure uploading {filename} after 3 attempts.", flush=True)
 
     print("\n==========================================================", flush=True)
-    print(f" SUCCESS: GitHub Release {VERSION_TAG} is now LIVE!", flush=True)
+    print(f" SUCCESS: GitHub Release {VERSION_TAG} processing completed!", flush=True)
     print(f"   VayuClientSetup.exe + HUD JARs + manifest uploaded.", flush=True)
     print(f" URL: https://github.com/{REPO}/releases/tag/{VERSION_TAG}", flush=True)
     print("==========================================================\n", flush=True)
