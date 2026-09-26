@@ -25,35 +25,30 @@ def get_version():
         return "v3.1.2"
 
 VERSION_TAG = get_version()
-RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Multi-Instance Launching & In-Game JAR Distribution"
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - In-Game HUD Redesign, Sci-Fi ClickGUI & Universal Multi-Target Runtime"
 RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
+* **Redesigned In-Game HUD Mod (Neon Purple & Obsidian Glass)**:
+  - Modern dark metallic obsidian glass aesthetic (`#07080D`, `#0A0B12`, `#161424`) with neon purple accents (`#C084FC`, `#A855F7`, `#D8B4FE`).
+  - Beveled glass capsules with drop shadow, gunmetal bevel borders, and neon purple top bevel highlights.
+* **Sci-Fi ClickGUI Customization Screen & Module Cards**:
+  - Full-screen cybernetic hub with glowing category tabs (HUD, Combat, Movement, Render, Player, Utility).
+  - Real-time search filter with animated purple cursor and reactive card grid.
+  - Interactive sliding switches with animated thumb knob and quick-access gear buttons.
+  - Slide-out module settings drawer with scissor-safe dropdowns, color pickers, sliders, and keybind listeners.
+* **Illuminated Keystrokes & Armor Dock**:
+  - Beveled dark glass keycaps with neon purple keypress illumination (`0xFFA855F7`) and smooth release animations.
+  - Floating armor durability capsule dock with dynamic gradient status bars.
+* **Universal Multi-Target Compilation (17 Targets)**:
+  - Universal JAR build compiled for 17 target Minecraft versions across 1.21.x and 26.x with Fabric, Quilt, and NeoForge support.
 * **Simultaneous Multi-Instance Launching**:
   - Independent parallel launch lifecycles: launch multiple Minecraft instances simultaneously without blocking the launcher UI.
   - Per-instance progress tracking (`LaunchingInstances`), dedicated process monitoring, and real-time stdout/stderr log streaming.
-  - Granular Stop / Kill control for every active instance directly from the UI.
 * **Automatic In-Game JAR Distribution & Update Pipeline**:
   - Direct integration with official Vayu GitHub Releases for seamless in-game client JAR updates.
   - Cryptographic verification via SHA-256 digests and temp download integrity checks before atomic deployment to instances.
   - Resilient network handling with offline grace mode, fallback channels, and automatic rollback on corrupt downloads.
-* **Brand New Global 3D Component System**:
-  - Reusable physical 3D design language across all launcher pages with top-lit specular rim highlights and performance-biased drop shadows.
-  - `Vayu3DButton` supporting 5 distinct visual states: Normal (specular bevel), Hover (-1.5px lift), Pressed (+1.5px depression), Disabled (0.4 opacity), and Active (`Tag="Active"`).
-  - Tactile `Vayu3DCheckBox`, smooth slide-fade `Vayu3DComboBox`, precision `Vayu3DSlider`, and `VayuFloatingSurface`.
-* **Reusable Domain 3D Controls**:
-  - `VayuInstanceCard`: Dual-mode card supporting expansive **Hero Card Mode** (full specs, RAM pill, quick launch) and streamlined **Compact Row Mode** (48px high density list).
-  - `VayuModCard`: Embedded physical 3D toggle switch (`VayuToggleSwitch`) and dynamic compatibility badge (`COMPATIBLE` in emerald vs `INCOMPATIBLE` in crimson).
-  - `VayuServerCard`: Multi-tier ping status (<60ms green, 60-150ms amber, >150ms red, offline gray), MOTD preview, player count pill, and quick connect.
-  - `VayuDialog`: Reusable borderless floating modal window with 180ms entry animation (`Scale 0.96 -> 1.0`, `Translate Y 8 -> 0`, `Opacity 0 -> 1`), draggable header, and footer actions.
-  - `VayuNotificationToast`: Multi-severity toast notifications (Info, Success, Warning, Error) with slide-in animation.
-* **Refined 3D Player Avatar (`PlayerHead3D`)**:
-  - Clean 1:1 isometric square framing (48x48 default), dual-layer hat/hair mesh, active highlight state, and responsive hover tilt.
-* **Unified Spatial PageMorphTransition Engine**:
-  - Dock-sequence-aware directional flow: Home (0) -> InstallationManager (1) -> Mods (2) -> Servers (3) -> Settings (4) -> Accounts (5) -> Versions (6).
-  - Directional sliding (+16px / -16px) + 200ms scale/opacity cross-fading with zero CPU overhead at idle.
-* **Symmetrical Accent Themes**:
-  - Dynamic runtime switching between **Vayu Purple (#A855F7)** and **Vayu Sky Blue (#0EA5E9)**.
 * **Official Windows Setup Package**:
   - Authenticode SHA256-signed standalone installer with desktop shortcuts, start menu registration, and automatic update capabilities.
 
