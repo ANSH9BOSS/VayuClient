@@ -242,15 +242,18 @@ def main():
 
             print(f"[GitHub] Uploading {filename} ({file_size} bytes) [Attempt {attempt}/3]...", flush=True)
 
+            curl_exe = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "curl.exe")
+            if not os.path.exists(curl_exe):
+                curl_exe = "curl.exe"
+
             curl_cmd = [
-                "curl.exe",
+                curl_exe,
                 "--http1.1",
                 "-X", "POST",
                 "-H", f"Authorization: Bearer {token}",
                 "-H", "Content-Type: application/octet-stream",
                 "--data-binary", f"@{file_path}",
                 "--connect-timeout", "60",
-                "--progress-bar",
                 upload_url
             ]
 
@@ -259,10 +262,32 @@ def main():
                 print(f"[GitHub] Successfully uploaded {filename}!", flush=True)
                 uploaded_successfully = True
                 break
-            except subprocess.CalledProcessError as err:
-                print(f"[Warning] Attempt {attempt}/3 failed for {filename}: {err.stderr or err.stdout or err}", flush=True)
-                import time
-                time.sleep(3)
+            except Exception as err:
+                print(f"[Warning] curl upload failed for {filename} ({err}), trying urllib...", flush=True)
+                try:
+                    with open(file_path, "rb") as f_data:
+                        body_data = f_data.read()
+                    req = urllib.request.Request(
+                        upload_url,
+                        data=body_data,
+                        headers={
+                            "Authorization": f"Bearer {token}",
+                            "Content-Type": "application/octet-stream",
+                            "Accept": "application/vnd.github+json",
+                            "User-Agent": "VayuClient-ReleaseBot",
+                            "X-GitHub-Api-Version": "2022-11-28"
+                        },
+                        method="POST"
+                    )
+                    with urllib.request.urlopen(req, timeout=180) as r:
+                        if r.status in (200, 201):
+                            print(f"[GitHub] Successfully uploaded {filename} via urllib!", flush=True)
+                            uploaded_successfully = True
+                            break
+                except Exception as url_err:
+                    print(f"[Warning] Attempt {attempt}/3 failed for {filename}: {url_err}", flush=True)
+                    import time
+                    time.sleep(3)
 
         if not uploaded_successfully:
             print(f"[Error] Permanent failure uploading {filename} after 3 attempts.", flush=True)

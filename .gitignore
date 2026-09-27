@@ -36,3 +36,13 @@ VayuClientSetup/Resources/*.zip
 upload_to_github.ps1
 *.secret
 scratch/
+scratch_*
+*.class
+*.tiny
+test_remapped.jar
+mojang_*.txt
+test_out.txt
+prompt_*.txt
+fix_mixin_targets.py
+/*.jar
+
