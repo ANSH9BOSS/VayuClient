@@ -205,8 +205,8 @@ def main():
         filename = os.path.basename(file_path)
         file_size = os.path.getsize(file_path)
 
-        # Skip if already fully uploaded with matching size
-        if filename in existing_assets:
+        # Skip if already fully uploaded with matching size (never skip manifest)
+        if filename != "vayu_hud_manifest.json" and filename in existing_assets:
             existing = existing_assets[filename]
             if existing.get("state") == "uploaded" and existing.get("size") == file_size:
                 print(f"[Skip] {filename} already fully uploaded ({file_size} bytes).", flush=True)
@@ -222,12 +222,12 @@ def main():
                     cur_release = json.loads(resp.read().decode())
                     for a in cur_release.get("assets", []):
                         if a["name"] == filename:
-                            if a.get("state") == "uploaded" and a.get("size") == file_size:
+                            if filename != "vayu_hud_manifest.json" and a.get("state") == "uploaded" and a.get("size") == file_size:
                                 print(f"[Skip] {filename} is already fully uploaded ({file_size} bytes).", flush=True)
                                 uploaded_successfully = True
                                 break
                             aid = a["id"]
-                            print(f"[GitHub] Cleaning partial asset {filename} (ID: {aid}) before upload...", flush=True)
+                            print(f"[GitHub] Cleaning partial or outdated asset {filename} (ID: {aid}) before upload...", flush=True)
                             del_url = f"https://api.github.com/repos/{REPO}/releases/assets/{aid}"
                             try:
                                 with urllib.request.urlopen(urllib.request.Request(del_url, headers=headers, method="DELETE")):
