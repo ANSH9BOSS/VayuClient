@@ -119,9 +119,14 @@ def build_manifest():
     hud_product_version = "0.0.0"
 
     jar_files = sorted(
-        [f for f in os.listdir(MODS_DIR) if f.endswith(".jar")],
-        reverse=True  # newest first (1.9.1 before 1.9.0 before 1.8.x)
+        [f for f in os.listdir(MODS_DIR) if f.endswith(".jar") and "vayuclient-hud-2.1.1" in f],
+        reverse=True
     )
+    if not jar_files:
+        jar_files = sorted(
+            [f for f in os.listdir(MODS_DIR) if f.endswith(".jar") and "vayuclient-hud-2.1.0" in f],
+            reverse=True
+        )
 
     print(f"Scanning {len(jar_files)} JARs in {MODS_DIR}...")
 

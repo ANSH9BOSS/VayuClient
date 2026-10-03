@@ -25,37 +25,36 @@ def get_version():
         return "v3.1.2"
 
 VERSION_TAG = get_version()
-RELEASE_TITLE = f"VayuClient {VERSION_TAG} - 3D Mod Manager, Universal Multi-Target Runtime & Protocol Hardening"
+RELEASE_TITLE = f"VayuClient {VERSION_TAG} - Lunar Optimization Engine, Persistent HUD Enforcement & Universal Multi-Target Runtime"
 RELEASE_NOTES = f"""## 🌌 VayuClient {VERSION_TAG} Official Release
 
 ### ⚡ Key Highlights & Features
-* **Horizontal 3D Carousel & Rebuilt Mod Manager**:
-  - Rebuilt Mod Manager navigation featuring a horizontal 3D card carousel with smooth keyboard arrow support.
-  - Per-instance mod state management (enable/disable), Modrinth registry search, dependency resolution, and real-time compatibility checks.
-* **MixinExtras 0.5.5 Runtime Compatibility Upgrade**:
-  - Embedded MixinExtras 0.5.5 runtime layer, resolving the critical `ClassCastException` caused by `@Redirect` array annotations in client mods (e.g. ViaFabricPlus, ModernFix, Baritone).
-  - Cleaned up mixin transformation pipelines for rock-solid stability during Minecraft startup.
-* **Multiplayer Server Connectivity & Protocol Hardening**:
-  - Enhanced network configuration listener handling for dynamic registries (Jukebox songs, Enchantments, Trim patterns).
-  - Automatically isolates conflicting server-side content mods to prevent client-side `Network Protocol Error` disconnections when connecting to external servers.
-* **Redesigned In-Game HUD Mod (Neon Purple & Obsidian Glass)**:
-  - Modern dark metallic obsidian glass aesthetic (`#07080D`, `#0A0B12`, `#161424`) with neon purple accents (`#C084FC`, `#A855F7`, `#D8B4FE`).
-  - Beveled glass capsules with drop shadow, gunmetal bevel borders, and neon purple top bevel highlights.
-* **Sci-Fi ClickGUI Customization Screen & Module Cards**:
-  - Full-screen cybernetic hub with glowing category tabs (HUD, Combat, Movement, Render, Player, Utility).
-  - Real-time search filter with animated purple cursor and reactive card grid.
-  - Interactive sliding switches with animated thumb knob and quick-access gear buttons.
+* **Lunar-Grade Optimization Engine & Performance Suite**:
+  - **FastMath Trigonometric Engine**: 16-bit precomputed sin/cos lookup table, drastically reducing CPU floating-point overhead during animations and camera rotations.
+  - **Entity Culling**: Frustum and distance-based culling for non-visible entities, marker armor stands, and distant mobs, recovering massive GPU draw call throughput.
+  - **FastChest & Tile Entity Culling**: Skips expensive dynamic rendering on distant and occluded chests/shulkers.
+  - **Particle Culling**: Occlusion culling for smoke, flame, and combat particles.
+  - **Dynamic FPS & Battery Saver**: Throttles framerate to 15 FPS when minimized or unfocused to keep CPU/GPU thermals cool.
+  - **Smart Memory & GC Tuning**: Periodic low-pause memory cleanups during pause screens and menus without gameplay micro-stutters.
+  - **Auto-Configured Mod Stack**: Seamless max-performance configs generated for Sodium, FerriteCore, ImmediatelyFast, and EntityCulling.
+* **Persistent HUD Deployment Enforcement**:
+  - Automatically verifies and deploys the authoritative universal HUD JAR on every launch across all instances and session workspaces.
+  - Purges obsolete and conflicting JARs automatically to ensure 100% active HUD parity.
+* **Lunar Client Parity & Complete Module Customization**:
+  - Bracket customization: toggles for `[ ]` brackets, custom bracket colors (`bracket_color`), and prefix toggles (`show_prefix`).
+  - Dual aesthetics: flat classic Lunar boxes (`classic_lunar`) with 1px border alongside cybernetic neon obsidian glass panels (`vayu_glass`).
+  - Nether Portal coordinate conversions in `CoordinatesModule` (`Nether: X/8, Y, Z/8` / `Overworld: X*8, Y, Z*8`).
+  - CPS counters on LMB & RMB keystroke buttons, armor durability indicators with safe offline preview, and Roman numeral potion badges.
+  - Chroma / rainbow cycling and center-dot crosshair toggles.
 * **Universal Multi-Target Compilation (17 Targets)**:
   - Universal JAR build compiled for 17 target Minecraft versions across 1.21.x and 26.x with Fabric, Quilt, and NeoForge support.
-* **Simultaneous Multi-Instance Launching**:
-  - Independent parallel launch lifecycles: launch multiple Minecraft instances simultaneously without blocking the launcher UI.
 * **Official Windows Setup Package**:
-  - Authenticode SHA256-signed standalone installer with desktop shortcuts, start menu registration, and automatic update capabilities.
+  - Authenticode SHA256-signed standalone installer with desktop shortcuts and automatic updater.
 
 ### 📦 Assets Included
 * `VayuClientSetup.exe` (Standalone Windows Setup Installer)
-* `vayu_hud_manifest.json` (HUD Artifact Manifest v2.1.0)
-* `vayuclient-hud-2.1.0-mc*.jar` — Universal HUD JARs for all supported Minecraft versions (1.21 – 1.21.11, 26.x)
+* `vayu_hud_manifest.json` (HUD Artifact Manifest v2.1.1)
+* `vayuclient-hud-2.1.1-mc*.jar` — Universal HUD JARs for all 17 supported Minecraft versions (1.21 – 1.21.11, 26.x)
 """
 
 def get_github_token():
@@ -160,15 +159,24 @@ def main():
         os.path.join(dist_dir, "VayuClientSetup.exe")
     ]
 
-    # Add the HUD manifest
+    # Add the HUD manifest and the 17 universal JARs specified in the manifest
     manifest_path = os.path.join(mods_dir, "vayu_hud_manifest.json")
     if os.path.exists(manifest_path):
         files_to_upload.append(manifest_path)
-
-    # Add all HUD JAR files
-    if os.path.isdir(mods_dir):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as mf:
+                m_data = json.load(mf)
+                for art in m_data.get("artifacts", []):
+                    fname = art.get("artifactFilename")
+                    if fname:
+                        fpath = os.path.join(mods_dir, fname)
+                        if os.path.exists(fpath):
+                            files_to_upload.append(fpath)
+        except Exception as ex:
+            print(f"[Warning] Failed parsing manifest artifacts: {ex}", flush=True)
+    elif os.path.isdir(mods_dir):
         for f in sorted(os.listdir(mods_dir)):
-            if f.endswith(".jar") and "vayuclient-hud" in f:
+            if f.endswith(".jar") and "vayuclient-hud-2.1.0" in f:
                 files_to_upload.append(os.path.join(mods_dir, f))
 
     target_filenames = {os.path.basename(p) for p in files_to_upload}
